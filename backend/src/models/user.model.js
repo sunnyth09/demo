@@ -7,10 +7,26 @@ export const createUser = (data)=>{
   );
 };
 
-export const findByEmail = (email)=>{
-  return db.query("SELECT * FROM users WHERE email=?", [email]);
+export const findByEmail = async (email)=>{
+  const [rows] = await db.query(
+    "SELECT * FROM users WHERE email=?",
+    [email]
+  );
+  return rows;
 };
 
-export const getAllCategories = ()=>{
-  return db.query("SELECT * FROM categories");
+export const findById = async (id)=>{
+  const [rows] = await db.query(
+    "SELECT * FROM users WHERE id=?",
+    [id]
+  );
+  return rows;
+};
+
+export const getAllCategories = (page = 1, limit = 10)=>{
+  const offset = (page - 1) * limit;
+  return db.query(
+    "SELECT * FROM categories LIMIT ? OFFSET ?",
+    [limit, offset]
+  );
 };
