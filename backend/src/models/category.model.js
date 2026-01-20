@@ -34,7 +34,7 @@ export const bulkUpdate = async (ids, data) => {
 };
 
 
-// Xóa tất cả
+// xóa tất cả
 export const deleteAllCategories = async () => {
     await db.query("DELETE FROM categories");
 };
