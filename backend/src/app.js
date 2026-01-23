@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 import authRoute from "./routes/auth.route.js";
 import productRoute from "./routes/product.route.js";
 import categoryRoute from "./routes/category.route.js";
+import statisticsRoute from "./routes/statistics.route.js";
+import userRoute from "./routes/user.route.js";
 import { initBucket } from "./services/minio.service.js";
 
 dotenv.config();
@@ -26,6 +28,8 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoute);
 app.use("/api/products", productRoute);
 app.use("/api/categories", categoryRoute);
+app.use("/api/statistics", statisticsRoute);
+app.use("/api/user", userRoute);
 
 app.use((req,res)=>{
   res.status(404).json({

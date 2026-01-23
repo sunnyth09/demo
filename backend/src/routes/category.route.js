@@ -10,22 +10,21 @@ import {
   bulkRemove,
   removeAll
 } from "../controllers/category.controller.js";
+import { checkToken, checkAdmin } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.get("/", listCategories);
-router.get("/:id", getCategory);
+router.get("/", listCategories); // Ai cũng xem được
+router.get("/:id", getCategory); // Ai cũng xem được
 
-router.post("/", create);
+// Chỉ Admin mới được thêm/sửa/xóa
+router.post("/", checkToken, checkAdmin, create);
 
-router.put("/bulk", bulkUpdate);
+router.put("/bulk", checkToken, checkAdmin, bulkUpdate);
+router.put("/:id", checkToken, checkAdmin, update);
 
-
-router.put("/:id", update);
-
-router.delete("/", removeAll);
-router.delete("/bulk", bulkRemove);
-
-router.delete("/:id", remove);
+router.delete("/", checkToken, checkAdmin, removeAll);
+router.delete("/bulk", checkToken, checkAdmin, bulkRemove);
+router.delete("/:id", checkToken, checkAdmin, remove);
 
 export default router;

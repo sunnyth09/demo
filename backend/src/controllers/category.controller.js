@@ -1,102 +1,131 @@
-import * as Category from "../models/category.model.js";
-
+import * as CategoryService from "../services/category.service.js";
 
 // lấy danh sách
 export const listCategories = async (req, res) => {
-  const data = await Category.getAllCategories();
-  res.json(data);
+  try {
+    const data = await CategoryService.getCategories();
+    res.json({
+      status: true,
+      data: data
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: false,
+      message: err.message
+    });
+  }
 };
 
 // lấy chi tiết
 export const getCategory = async (req, res) => {
-  const data = await Category.getCategoryById(req.params.id);
-  if (!data)
-    return res.status(404).json({ msg: "Không tìm thấy danh mục" });
-  res.json(data);
+  try {
+    const data = await CategoryService.getCategoryDetail(req.params.id);
+    res.json({
+      status: true,
+      data: data
+    });
+  } catch (err) {
+    // Check if error is "Not found" to return 404?
+    res.status(500).json({
+      status: false,
+      message: err.message
+    });
+  }
 };
 
 // tạo
 export const create = async (req, res) => {
-  if (!req.body.name) {
-    return res.status(400).json({ msg: "Vui lòng nhập tên" });
+  try {
+    const result = await CategoryService.create(req.body);
+    res.json({ status: true, msg: "Thêm thành công", data: result });
+  } catch (err) {
+    res.status(500).json({
+      status: false,
+      message: err.message
+    });
   }
-
-  const id = await Category.createCategory({
-    name: req.body.name
-  });
-
-  res.json({ msg: "Thêm thành công", id });
 };
-
 
 // cập nhật 1 item
 export const update = async (req, res) => {
-  const { id } = req.params;
-  const data = req.body;
-
-  if (!data.name) {
-    return res.status(400).json({ msg: "Vui lòng nhập tên" });
+  try {
+    const { id } = req.params;
+    await CategoryService.update(id, req.body);
+    res.json({
+      status: true,
+      msg: "Cập nhật thành công"
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: false,
+      message: err.message
+    });
   }
-
-  await Category.bulkUpdate([id], data);
-
-  res.json({
-    msg: "Cập nhật thành công"
-  });
 };
 
 // cập nhật nhiều
 export const bulkUpdate = async (req, res) => {
-  const { id, data } = req.body;
-
-  if (!id || !id.length) {
-    return res.status(400).json({ msg: "vui lòng nhập id" });
+  try {
+    const { id, data } = req.body;
+    await CategoryService.bulkUpdate(id, data);
+    res.json({
+      status: true,
+      msg: "Cập nhật thành công",
+      updatedIds: id
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: false,
+      message: err.message
+    });
   }
-  
-  if (!data || !data.name) {
-      return res.status(400).json({ msg: "Vui lòng nhập tên cần sửa" });
-  }
-
-  await Category.bulkUpdate(id, data);
-
-  res.json({
-    msg: "Cập nhật thành công",
-    updatedIds: id
-  });
 };
-
-
 
 // xóa 1 item
 export const remove = async (req, res) => {
-  const { id } = req.params;
-  
-  await Category.bulkDelete([id]);
-
-  res.json({
-    msg: "Xóa thành công"
-  });
+  try {
+    const { id } = req.params;
+    await CategoryService.remove(id);
+    res.json({
+      status: true,
+      msg: "Xóa thành công"
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: false,
+      message: err.message
+    });
+  }
 };
 
 // xóa tất cả
 export const removeAll = async (req, res) => {
-  await Category.deleteAllCategories();
-  res.json({ msg: "Đã xóa toàn bộ danh mục" });
+  try {
+    await CategoryService.removeAll();
+    res.json({ status: true, msg: "Đã xóa toàn bộ danh mục" });
+  } catch (err) {
+    res.status(500).json({
+      status: false,
+      message: err.message
+    });
+  }
 };
 
 // xóa nhiều
 export const bulkRemove = async (req, res) => {
-  const { id } = req.body;
-
-  if (!id || !id.length) {
-    return res.status(400).json({ msg: "vui lòng nhập id" });
+  try {
+    const { id } = req.body;
+    await CategoryService.bulkRemove(id);
+    res.json({
+      status: true,
+      msg: "Xóa thành công",
+      deletedIds: id
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: false,
+      message: err.message
+    });
   }
-
-  await Category.bulkDelete(id);
-
-  res.json({
-    msg: "Xóa thành công",
-    deletedIds: id
-  });
 };
 

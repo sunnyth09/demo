@@ -1,6 +1,6 @@
 import { body, validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
-import { findById } from "../models/user.model.js";
+import { User } from "../models/sequelize/index.js";
 
 export const registerValidate = [
   body("name").notEmpty().withMessage("Tên không được rỗng"),
@@ -44,13 +44,32 @@ export const checkToken = async (req, res, next) => {
       process.env.JWT_SECRET
     );
 
-    const user = await findById(decoded.id);
+    // Sử dụng Sequelize User model
+    const user = await User.findByPk(decoded.id, {
+      attributes: ['id', 'name', 'email', 'role', 'created_at']
+    });
 
-    req.user = user[0]; 
+    if (!user) {
+      return res.status(401).json({
+        message: "Token không hợp lệ"
+      });
+    }
+
+    req.user = user.toJSON();
     next();
   } catch (err) {
     return res.status(401).json({
       message: "Token không hợp lệ"
+    });
+  }
+};
+
+export const checkAdmin = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') {
+    next();
+  } else {
+    return res.status(403).json({
+      message: "Bạn không có quyền thực hiện hành động này"
     });
   }
 };
