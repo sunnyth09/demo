@@ -30,6 +30,7 @@ const routes = [
       { path: '', name: 'home', component: Home, meta: { title: 'Trang chủ' } },
       { path: 'about', name: 'about', component: About, meta: { title: 'Giới thiệu' } },
       { path: 'products', name: 'products', component: Products, meta: { title: 'Sản phẩm' } },
+      { path: 'products/:id', name: 'product-detail', component: () => import('@/views/ProductDetail.vue'), meta: { title: 'Chi tiết sản phẩm' } },
       { path: 'login', name: 'login', component: Login, meta: { title: 'Đăng nhập' } },
       { path: 'register', name: 'register', component: Register, meta: { title: 'Đăng ký' } },
       { path: 'cart', name: 'cart', component: () => import('@/views/Cart.vue'), meta: { title: 'Giỏ hàng' } },

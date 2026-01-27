@@ -64,7 +64,7 @@
         <div v-if="activeTab === 'profile'" class="bg-card rounded-xl border p-6">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-bold">Thông tin cá nhân</h2>
-            <button class="text-sm text-primary hover:underline">Chỉnh sửa</button>
+            <button @click="openProfileModal" class="text-sm text-primary hover:underline">Chỉnh sửa</button>
           </div>
           <div class="grid sm:grid-cols-2 gap-y-6 gap-x-12">
             <div>
@@ -136,11 +136,30 @@
         <div v-if="activeTab === 'address'" class="bg-card rounded-xl border p-6">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-bold">Sổ địa chỉ</h2>
-            <button class="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+            <button 
+              @click="openAddAddressModal"
+              class="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
               + Thêm địa chỉ mới
             </button>
           </div>
-          <div class="text-center py-12">
+          <div v-if="addresses.length > 0" class="space-y-4">
+             <div v-for="addr in addresses" :key="addr.id" class="border rounded-lg p-4 relative group">
+                <div class="flex justify-between items-start">
+                   <div>
+                      <p class="font-bold text-gray-900">{{ addr.name }} <span class="font-normal text-gray-500 text-sm">| {{ addr.phone }}</span></p>
+                      <p class="text-gray-600 mt-1">{{ addr.street }}</p>
+                      <p class="text-gray-600">{{ addr.ward }}, {{ addr.district }}, {{ addr.city }}</p>
+                      <span v-if="addr.is_default" class="inline-block mt-2 px-2 py-0.5 border border-primary text-primary text-xs rounded">Mặc định</span>
+                   </div>
+                   <div class="flex gap-2">
+                      <button @click="openEditAddressModal(addr)" class="text-primary hover:underline text-sm">Sửa</button>
+                      <button @click="deleteAddress(addr.id)" class="text-red-500 hover:underline text-sm">Xóa</button>
+                   </div>
+                </div>
+             </div>
+          </div>
+          <div v-else class="text-center py-12">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
             <p class="text-muted-foreground">Chưa có địa chỉ nào</p>
           </div>
@@ -148,22 +167,199 @@
       </div>
     </div>
   </div>
+
+  <!-- Profile Modal -->
+  <div v-if="showProfileModal" class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showProfileModal = false"></div>
+    <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6 m-4 animate-in fade-in zoom-in-95 duration-200">
+       <h3 class="text-lg font-bold mb-4">Chỉnh sửa thông tin</h3>
+       <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Họ và tên</label>
+            <input v-model="profileForm.name" type="text" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          </div>
+          <!-- <div><label>Phone...</label>...</div> -->
+       </div>
+       <div class="flex justify-end gap-3 mt-6">
+          <button @click="showProfileModal = false" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Hủy</button>
+          <button @click="updateProfile" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Lưu thay đổi</button>
+       </div>
+    </div>
+  </div>
+
+  <!-- Address Modal -->
+  <div v-if="showAddressModal" class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showAddressModal = false"></div>
+    <div class="relative bg-white rounded-xl shadow-xl w-full max-w-lg p-6 m-4 animate-in fade-in zoom-in-95 duration-200">
+       <h3 class="text-lg font-bold mb-4">{{ isEditingAddress ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới' }}</h3>
+       <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+             <div>
+               <label class="block text-sm font-medium mb-1">Họ và tên</label>
+               <input v-model="addressForm.name" type="text" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+             </div>
+             <div>
+               <label class="block text-sm font-medium mb-1">Số điện thoại</label>
+               <input v-model="addressForm.phone" type="text" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+             </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Tỉnh / Thành phố</label>
+            <input v-model="addressForm.city" type="text" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+             <div>
+               <label class="block text-sm font-medium mb-1">Quận / Huyện</label>
+               <input v-model="addressForm.district" type="text" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+             </div>
+             <div>
+               <label class="block text-sm font-medium mb-1">Phường / Xã</label>
+               <input v-model="addressForm.ward" type="text" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+             </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Địa chỉ cụ thể</label>
+            <input v-model="addressForm.street" type="text" placeholder="Số nhà, tên đường..." class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          </div>
+          <div class="flex items-center gap-2">
+             <input v-model="addressForm.is_default" type="checkbox" id="dafaultAddr" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+             <label for="dafaultAddr" class="text-sm text-gray-700">Đặt làm địa chỉ mặc định</label>
+          </div>
+       </div>
+       <div class="flex justify-end gap-3 mt-6">
+          <button @click="showAddressModal = false" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Hủy</button>
+          <button @click="saveAddress" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Lưu địa chỉ</button>
+       </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const API_URL = 'http://localhost:3000/api'
 
 const activeTab = ref('profile')
+const recentOrders = ref([])
+
+// Profile Management
+const showProfileModal = ref(false)
+const profileForm = reactive({
+  name: '',
+  phone: '' // Nếu user model có phone
+})
+
+const openProfileModal = () => {
+  profileForm.name = authStore.user?.name || ''
+  showProfileModal.value = true
+}
+
+const updateProfile = async () => {
+  // Demo update profile - cần backend API update user
+  // Tạm thời chỉ cập nhật store
+  authStore.user.name = profileForm.name
+  showProfileModal.value = false
+  // TODO: Call API /api/user/profile
+}
+
+// Address Management
+const addresses = ref([])
+const showAddressModal = ref(false)
+const isEditingAddress = ref(false)
+const addressForm = reactive({
+  id: null,
+  name: '',
+  phone: '',
+  city: '',
+  district: '',
+  ward: '',
+  street: '',
+  is_default: false
+})
+
+const fetchAddresses = async () => {
+  try {
+    const res = await fetch(`${API_URL}/addresses`, {
+      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+    })
+    const json = await res.json()
+    if (json.status) {
+      addresses.value = json.data
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const openAddAddressModal = () => {
+  isEditingAddress.value = false
+  Object.assign(addressForm, {
+    id: null, name: '', phone: '', city: '', district: '', ward: '', street: '', is_default: false
+  })
+  showAddressModal.value = true
+}
+
+const openEditAddressModal = (addr) => {
+  isEditingAddress.value = true
+  Object.assign(addressForm, addr)
+  showAddressModal.value = true
+}
+
+const saveAddress = async () => {
+  try {
+    const url = isEditingAddress.value 
+      ? `${API_URL}/addresses/${addressForm.id}` 
+      : `${API_URL}/addresses`
+    
+    const method = isEditingAddress.value ? 'PUT' : 'POST'
+    
+    const res = await fetch(url, {
+      method,
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authStore.accessToken}`
+      },
+      body: JSON.stringify(addressForm)
+    })
+    
+    const json = await res.json()
+    if (json.status) {
+      showAddressModal.value = false
+      fetchAddresses()
+    } else {
+      alert(json.message) // Simple alert for now
+    }
+  } catch (error) {
+    alert('Có lỗi xảy ra')
+  }
+}
+
+const deleteAddress = async (id) => {
+  if (!confirm('Bạn có chắc muốn xóa địa chỉ này?')) return
+  try {
+    const res = await fetch(`${API_URL}/addresses/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+    })
+    const json = await res.json()
+    if (json.status) {
+      fetchAddresses()
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
 
 // Redirect nếu chưa đăng nhập
 onMounted(() => {
   if (!authStore.isAuthenticated) {
     router.push('/login')
+  } else {
+    fetchAddresses()
   }
 })
 
@@ -171,9 +367,6 @@ onMounted(() => {
 const userInitial = computed(() => {
   return authStore.user?.name?.charAt(0)?.toUpperCase() || 'U'
 })
-
-// Demo data - sau này sẽ lấy từ API
-const recentOrders = ref([])
 
 const formatCurrency = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value)
 

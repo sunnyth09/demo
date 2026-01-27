@@ -13,7 +13,7 @@ async function seedCategories() {
     const [res1] = await db.query("INSERT INTO categories(name, icon, parent_id) VALUES(?, ?, ?)", ['Sách Trong Nước', 'book', null]);
     const id1 = res1.insertId;
     
-    const [res2] = await db.query("INSERT INTO categories(name, icon, parent_id) VALUES(?, ?, ?)", ['Foreign Books', 'globe', null]);
+    const [res2] = await db.query("INSERT INTO categories(name, icon, parent_id) VALUES(?, ?, ?)", ['Sách Nước Ngoài', 'globe', null]);
     const id2 = res2.insertId;
 
     const [res3] = await db.query("INSERT INTO categories(name, icon, parent_id) VALUES(?, ?, ?)", ['VPP - Học Sinh', 'pencil', null]);
@@ -41,16 +41,29 @@ async function seedCategories() {
     await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Bài Học Kinh Doanh', id1_2]);
     await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Quản Trị', id1_2]);
 
-    // Level 2 - Foreign Books
-    const [res2_1] = await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Fiction', id2]);
+    // Level 2 - Sách Nước Ngoài
+    const [res2_1] = await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Văn Học', id2]);
     const id2_1 = res2_1.insertId;
     
-    const [res2_2] = await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Non-Fiction', id2]);
+    const [res2_2] = await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Phi Hư Cấu', id2]);
     const id2_2 = res2_2.insertId;
 
-    // Level 3 - Fiction
-    await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Contemporary', id2_1]);
-    await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Thriller', id2_1]);
+    const [res2_3] = await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Sách Thiếu Nhi', id2]);
+    
+    const [res2_4] = await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Giáo Trình & Học Thuật', id2]);
+
+    // Level 3 - Văn Học (Fiction)
+    await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Văn Học Đương Đại', id2_1]);
+    await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Trinh Thám & Ly Kỳ', id2_1]);
+    await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Khoa Học Viễn Tưởng & Fantasy', id2_1]);
+    await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Lãng Mạn', id2_1]);
+    await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Cổ Điển', id2_1]);
+
+    // Level 3 - Phi Hư Cấu (Non-Fiction)
+    await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Kinh Doanh', id2_2]);
+    await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Kỹ Năng Sống', id2_2]);
+    await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Tiểu Sử & Hồi Ký', id2_2]);
+    await db.query("INSERT INTO categories(name, parent_id) VALUES(?, ?)", ['Lịch Sử', id2_2]);
 
     console.log("Seeding complete.");
     process.exit(0);

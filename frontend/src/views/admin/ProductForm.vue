@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="flex items-center gap-4">
       <router-link 
-        to="/admin/products"
+        :to="backLink"
         class="p-2 rounded-full hover:bg-accent transition-colors"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -146,12 +146,9 @@
         <!-- Description -->
         <div class="border-t pt-6">
           <label class="block text-sm font-medium mb-2">Mô tả sản phẩm</label>
-          <textarea 
-            v-model="form.description" 
-            rows="5"
-            class="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
-            placeholder="Nhập mô tả chi tiết sản phẩm..."
-          ></textarea>
+          <div class="bg-white rounded-md border text-gray-900">
+            <div id="editor-container" class="h-64" style="min-height: 200px;"></div>
+          </div>
         </div>
         
         <!-- Thumbnail Upload -->
@@ -299,7 +296,7 @@
         <!-- Actions -->
         <div class="flex items-center gap-4 pt-6 border-t mt-8">
           <router-link 
-            to="/admin/products"
+            :to="backLink"
             class="px-6 py-2.5 border rounded-md hover:bg-accent transition-colors font-medium"
           >
             Hủy bỏ
@@ -360,6 +357,13 @@ const API_URL = 'http://localhost:3000/api'
 
 const isEditing = computed(() => route.params.id !== undefined)
 const productId = computed(() => route.params.id)
+
+const backLink = computed(() => {
+  if (route.query.page) {
+    return { path: '/admin/products', query: { page: route.query.page } }
+  }
+  return '/admin/products'
+})
 
 const categories = ref([])
 const saving = ref(false)
@@ -575,7 +579,11 @@ const saveProduct = async () => {
       showToast(isEditing.value ? 'Cập nhật thành công!' : 'Thêm mới thành công!')
       // Redirect back to list after short delay
       setTimeout(() => {
-        router.push('/admin/products')
+        if (route.query.page) {
+          router.push({ path: '/admin/products', query: { page: route.query.page } })
+        } else {
+          router.push('/admin/products')
+        }
       }, 1000)
     } else {
       showToast(json.message || 'Có lỗi xảy ra', 'error')
@@ -588,8 +596,52 @@ const saveProduct = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   fetchCategories()
-  fetchProductDetail()
+  await fetchProductDetail()
+  
+  // Ensure Quill is loaded (fallback if index.html didn't load it)
+  if (!window.Quill) {
+    await new Promise((resolve) => {
+      const script = document.createElement('script')
+      script.src = 'https://cdn.quilljs.com/1.3.6/quill.min.js'
+      script.onload = resolve
+      document.head.appendChild(script)
+      
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = 'https://cdn.quilljs.com/1.3.6/quill.snow.css'
+      document.head.appendChild(link)
+    })
+  }
+
+  // Initialize Quill
+  if (document.getElementById('editor-container') && window.Quill) {
+    const Quill = window.Quill
+    const quill = new Quill('#editor-container', {
+      theme: 'snow',
+      placeholder: 'Nhập mô tả chi tiết sản phẩm...',
+      modules: {
+        toolbar: [
+          [{ 'header': [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          [{ 'color': [] }, { 'background': [] }], 
+          ['link', 'clean']
+        ]
+      }
+    })
+    
+    // Set initial content
+    if (form.value.description) {
+      // Use clipboard to properly parse HTML or just innerHTML
+      quill.root.innerHTML = form.value.description
+    }
+    
+    // Sync change
+    quill.on('text-change', () => {
+      form.value.description = quill.root.innerHTML
+    })
+  }
 })
 </script>

@@ -24,9 +24,9 @@ async function seedFull() {
     }
 
     // --- Level 1 ---
-    const idVN = await insertCat('Sách Tiếng Việt', 'book', null);
-    const idForeign = await insertCat('Foreign Books', 'globe', null);
-    const idVPP = await insertCat('VPP & Quà Tặng', 'gift', null);
+    const idVN = await insertCat('Sách Trong Nước', 'book', null);
+    const idForeign = await insertCat('Sách Nước Ngoài', 'globe', null);
+    const idVPP = await insertCat('VPP - Học Sinh', 'pencil', null);
     const idToys = await insertCat('Đồ Chơi', 'puzzle-piece', null);
 
     // --- Level 2 (VN) ---
@@ -38,10 +38,10 @@ async function seedFull() {
     const idVN_NgoaiNgu = await insertCat('Sách Ngoại Ngữ', null, idVN);
 
     // --- Level 2 (Foreign) ---
-    const idF_Fiction = await insertCat('Fiction', null, idForeign);
-    const idF_NonFiction = await insertCat('Non-Fiction', null, idForeign);
-    const idF_Children = await insertCat('Children\'s Books', null, idForeign);
-    const idF_Academic = await insertCat('Academic', null, idForeign);
+    const idF_Fiction = await insertCat('Văn Học', null, idForeign);
+    const idF_NonFiction = await insertCat('Phi Hư Cấu', null, idForeign);
+    const idF_Children = await insertCat('Sách Thiếu Nhi', null, idForeign);
+    const idF_Academic = await insertCat('Giáo Trình & Học Thuật', null, idForeign);
 
     // --- Level 2 (VPP) ---
     const idVPP_But = await insertCat('Bút & Mực', null, idVPP);
@@ -70,17 +70,17 @@ async function seedFull() {
     categoryIds.vn_vanhoc_tn = await insertCat('Văn Học Thiếu Nhi', null, idVN_ThieuNhi);
 
     // --- Level 3 (Foreign - Fiction) ---
-    categoryIds.f_contemporary = await insertCat('Contemporary', null, idF_Fiction);
-    categoryIds.f_thriller = await insertCat('Thriller & Mystery', null, idF_Fiction);
-    categoryIds.f_scifi = await insertCat('Sci-Fi & Fantasy', null, idF_Fiction);
-    categoryIds.f_romance = await insertCat('Romance', null, idF_Fiction);
-    categoryIds.f_classics = await insertCat('Classics', null, idF_Fiction);
+    categoryIds.f_contemporary = await insertCat('Văn Học Đương Đại', null, idF_Fiction);
+    categoryIds.f_thriller = await insertCat('Trinh Thám & Ly Kỳ', null, idF_Fiction);
+    categoryIds.f_scifi = await insertCat('Khoa Học Viễn Tưởng & Fantasy', null, idF_Fiction);
+    categoryIds.f_romance = await insertCat('Lãng Mạn', null, idF_Fiction);
+    categoryIds.f_classics = await insertCat('Cổ Điển', null, idF_Fiction);
 
     // --- Level 3 (Foreign - Non-Fiction) ---
-    categoryIds.f_business = await insertCat('Business', null, idF_NonFiction);
-    categoryIds.f_selfhelp = await insertCat('Self-Help', null, idF_NonFiction);
-    categoryIds.f_biography = await insertCat('Biography', null, idF_NonFiction);
-    categoryIds.f_history = await insertCat('History', null, idF_NonFiction);
+    categoryIds.f_business = await insertCat('Kinh Doanh', null, idF_NonFiction);
+    categoryIds.f_selfhelp = await insertCat('Kỹ Năng Sống', null, idF_NonFiction);
+    categoryIds.f_biography = await insertCat('Tiểu Sử & Hồi Ký', null, idF_NonFiction);
+    categoryIds.f_history = await insertCat('Lịch Sử', null, idF_NonFiction);
 
     console.log("Categories seeded successfully.");
 

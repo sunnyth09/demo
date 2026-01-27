@@ -5,8 +5,9 @@ export const getAll = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const offset = parseInt(req.query.offset) || 0;
     const category_id = req.query.category_id ? parseInt(req.query.category_id) : null;
+    const search = req.query.search || null;
     
-    const products = await ProductService.getProducts({ limit, offset, category_id });
+    const products = await ProductService.getProducts({ limit, offset, category_id, search });
     res.status(200).json({
       status: true,
       data: products,

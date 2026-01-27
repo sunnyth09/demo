@@ -101,7 +101,7 @@
                     </div>
                   </div>
                   <div>
-                    <h3 class="font-medium text-foreground group-hover:text-primary transition-colors cursor-pointer" @click="$router.push(`/admin/products/edit/${product.id}`)">
+                    <h3 class="font-medium text-foreground group-hover:text-primary transition-colors cursor-pointer" @click="navigateToEdit(product.id)">
                       {{ product.name }}
                     </h3>
                     <p class="text-xs text-muted-foreground mt-0.5 font-mono">
@@ -148,15 +148,15 @@
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                     </svg>
                   </button>
-                  <router-link 
-                    :to="`/admin/products/edit/${product.id}`"
+                  <button 
+                    @click="navigateToEdit(product.id)"
                     class="p-2 rounded-lg text-muted-foreground hover:bg-blue-50 hover:text-blue-600 transition-all" 
                     title="Sửa"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                     </svg>
-                  </router-link>
+                  </button>
                   <button 
                     @click="confirmDelete(product)"
                     class="p-2 rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-all" 
@@ -302,7 +302,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useRoute, useRouter } from 'vue-router'
 
+const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 
 const API_URL = 'http://localhost:3000/api'
@@ -359,6 +362,14 @@ const debouncedSearch = () => {
   }, 300)
 }
 
+// Navigate to edit
+const navigateToEdit = (id) => {
+  router.push({
+    path: `/admin/products/edit/${id}`,
+    query: { page: currentPage.value }
+  })
+}
+
 // Fetch products
 const fetchProducts = async () => {
   loading.value = true
@@ -366,6 +377,9 @@ const fetchProducts = async () => {
     let url = `${API_URL}/products?limit=${limit.value}&offset=${offset.value}`
     if (filterCategoryId.value) {
       url += `&category_id=${filterCategoryId.value}`
+    }
+    if (searchQuery.value.trim()) {
+      url += `&search=${encodeURIComponent(searchQuery.value.trim())}`
     }
     
     const res = await fetch(url)
@@ -406,17 +420,26 @@ const prevPage = () => {
   if (offset.value > 0) {
     offset.value -= limit.value
     fetchProducts()
+    updateUrlPage()
   }
 }
 
 const nextPage = () => {
   offset.value += limit.value
   fetchProducts()
+  updateUrlPage()
 }
 
 const goToPage = (page) => {
   offset.value = (page - 1) * limit.value
   fetchProducts()
+  updateUrlPage()
+}
+
+// Update URL with current page (optional but good for UX)
+const updateUrlPage = () => {
+  const page = Math.floor(offset.value / limit.value) + 1
+  router.replace({ query: { ...route.query, page } })
 }
 
 // Confirm delete
@@ -457,6 +480,14 @@ const deleteProduct = async () => {
 }
 
 onMounted(() => {
+  // Check for page in query
+  if (route.query.page) {
+    const page = parseInt(route.query.page)
+    if (!isNaN(page) && page > 1) {
+      offset.value = (page - 1) * limit.value
+    }
+  }
+  
   fetchCategories()
   fetchProducts()
 })

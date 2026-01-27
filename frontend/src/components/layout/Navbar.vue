@@ -28,8 +28,9 @@
             <div class="w-64 bg-muted/30 border-r border-border p-2">
               <div 
                 v-for="(cat, index) in categories" 
-                :key="index"
+                :key="cat.id"
                 @mouseenter="activeCategory = index"
+                @click="router.push(`/products?category_id=${cat.id}`)"
                 :class="['flex items-center justify-between px-4 py-3 rounded-lg cursor-pointer transition-colors', activeCategory === index ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted text-muted-foreground']"
               >
                 <span>{{ cat.name }}</span>
@@ -42,16 +43,29 @@
             <!-- Sub Categories Content -->
             <div class="flex-1 p-6 bg-card">
               <div v-if="categories[activeCategory]" class="grid grid-cols-3 gap-6">
-                <div v-for="(subGroup, idx) in categories[activeCategory].subGroups" :key="idx" class="space-y-3">
-                  <h4 class="font-bold text-foreground">{{ subGroup.title }}</h4>
+                <div v-for="subGroup in categories[activeCategory].subGroups" :key="subGroup.id" class="space-y-3">
+                  <h4 
+                    class="font-bold text-foreground cursor-pointer hover:text-primary transition-colors"
+                    @click="router.push(`/products?category_id=${subGroup.id}`)"
+                  >
+                    {{ subGroup.title }}
+                  </h4>
                   <ul class="space-y-2">
-                    <li v-for="item in subGroup.items" :key="item">
-                      <a href="#" class="text-sm text-muted-foreground hover:text-primary transition-colors block">
-                        {{ item }}
+                    <li v-for="item in subGroup.items" :key="item.id">
+                      <a 
+                        @click.prevent="router.push(`/products?category_id=${item.id}`)"
+                        href="#" 
+                        class="text-sm text-muted-foreground hover:text-primary transition-colors block"
+                      >
+                        {{ item.name }}
                       </a>
                     </li>
                   </ul>
-                  <a href="#" class="text-xs text-primary font-medium hover:underline flex items-center gap-1">
+                  <a 
+                    @click.prevent="router.push(`/products?category_id=${subGroup.id}`)"
+                    href="#" 
+                    class="text-xs text-primary font-medium hover:underline flex items-center gap-1"
+                  >
                     Xem tất cả <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
                   </a>
                 </div>
@@ -69,8 +83,14 @@
             placeholder="Tìm kiếm sách, tác giả, thể loại..." 
             class="w-full h-11 pl-4 pr-12 rounded-lg border-2 border-border bg-muted/20 focus:bg-background focus:border-primary focus:outline-none transition-all"
             v-model="searchQuery"
+            @focus="showSuggestions = true"
+            @blur="setTimeout(() => showSuggestions = false, 200)"
+            @keydown.enter="handleSearch"
           />
-          <button class="absolute right-0 top-0 h-11 w-12 flex items-center justify-center rounded-r-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+          <button 
+            @click="handleSearch"
+            class="absolute right-0 top-0 h-11 w-12 flex items-center justify-center rounded-r-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
             </svg>
@@ -78,21 +98,33 @@
         </div>
 
         <!-- Search Suggestions -->
-        <div v-if="searchQuery" class="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg p-4 z-50">
-          <p class="text-xs font-semibold text-muted-foreground uppercase mb-2">Gợi ý từ khóa</p>
-          <div class="flex flex-wrap gap-2 mb-4">
-            <span v-for="tag in ['Sách kinh tế', 'Tiểu thuyết', 'Manga']" :key="tag" class="px-3 py-1 bg-muted rounded-full text-sm hover:bg-muted/80 cursor-pointer">
+        <div v-if="searchQuery && showSuggestions && (suggestions.products.length > 0 || suggestions.keywords.length > 0)" class="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg p-4 z-50">
+          <p v-if="suggestions.keywords.length > 0" class="text-xs font-semibold text-muted-foreground uppercase mb-2">Danh mục liên quan</p>
+          <div v-if="suggestions.keywords.length > 0" class="flex flex-wrap gap-2 mb-4">
+            <span 
+              v-for="tag in suggestions.keywords" 
+              :key="tag" 
+              @click="router.push(`/products?search=${encodeURIComponent(tag)}`)"
+              class="px-3 py-1 bg-muted rounded-full text-sm hover:bg-muted/80 cursor-pointer"
+            >
               {{ tag }}
             </span>
           </div>
           
-          <p class="text-xs font-semibold text-muted-foreground uppercase mb-2">Sản phẩm gợi ý</p>
+          <p v-if="suggestions.products.length > 0" class="text-xs font-semibold text-muted-foreground uppercase mb-2">Sản phẩm gợi ý</p>
           <div class="space-y-2">
-            <div v-for="i in 3" :key="i" class="flex items-center gap-3 p-2 hover:bg-muted/30 rounded-lg cursor-pointer">
-              <div class="w-10 h-12 bg-muted rounded"></div>
+            <div 
+              v-for="prod in suggestions.products" 
+              :key="prod.id" 
+              @click="goToProduct(prod.id)"
+              class="flex items-center gap-3 p-2 hover:bg-muted/30 rounded-lg cursor-pointer"
+            >
+              <div class="w-10 h-12 bg-muted rounded overflow-hidden flex-shrink-0">
+                <img :src="prod.thumbnail" class="w-full h-full object-cover" />
+              </div>
               <div>
-                <p class="text-sm font-medium">Đắc Nhân Tâm</p>
-                <p class="text-xs text-primary font-bold">86.000 đ</p>
+                <p class="text-sm font-medium line-clamp-1">{{ prod.name }}</p>
+                <p class="text-xs text-primary font-bold">{{ formatCurrency(prod.price) }}</p>
               </div>
             </div>
           </div>
@@ -118,7 +150,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:animate-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
             </svg>
-            <span class="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold border-2 border-background">3</span>
+            <span v-if="items.length > 0" class="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold border-2 border-background">{{ items.length }}</span>
           </div>
           <span class="text-[10px] font-medium hidden lg:block">Giỏ hàng</span>
         </router-link>
@@ -176,16 +208,72 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cart'
+import { storeToRefs } from 'pinia'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const cartStore = useCartStore()
+const { items } = storeToRefs(cartStore)
 
 const searchQuery = ref('')
 const activeCategory = ref(0)
 const categories = ref([])
+
+// Search Logic
+const suggestions = ref({ keywords: [], products: [] })
+const showSuggestions = ref(false)
+let searchTimeout = null
+
+// Format Currency
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    maximumFractionDigits: 0
+  }).format(value)
+}
+
+// Watch search
+watch(searchQuery, (newVal) => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  if (!newVal || newVal.trim().length < 2) {
+    suggestions.value = { keywords: [], products: [] }
+    return
+  }
+
+  searchTimeout = setTimeout(async () => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/products?limit=5&search=${encodeURIComponent(newVal)}`)
+      const json = await res.json()
+      if (json.status) {
+        suggestions.value.products = json.data
+        // Extract categories as keywords
+        const cats = json.data
+          .map(p => p.category_name)
+          .filter((v, i, a) => v && a.indexOf(v) === i)
+          .slice(0, 5)
+        suggestions.value.keywords = cats
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }, 300)
+})
+
+const handleSearch = () => {
+  if (!searchQuery.value.trim()) return
+  showSuggestions.value = false
+  router.push(`/products?search=${encodeURIComponent(searchQuery.value.trim())}`)
+}
+
+const goToProduct = (id) => {
+  showSuggestions.value = false
+  router.push(`/products/${id}`)
+}
 
 // Xử lý đăng xuất
 const handleLogout = () => {
@@ -300,10 +388,15 @@ const fetchCategories = async () => {
       
       // Transform tree to UI format
       categories.value = tree.map(root => ({
+          id: root.id,
           name: root.name,
           subGroups: root.children.map(child => ({
+              id: child.id,
               title: child.name,
-              items: child.children.map(grandChild => grandChild.name)
+              items: child.children.map(grandChild => ({
+                  id: grandChild.id,
+                  name: grandChild.name
+              }))
           }))
       }));
     }

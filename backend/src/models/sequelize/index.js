@@ -2,6 +2,9 @@ import { sequelize } from '../../config/sequelize.js';
 import Category from './Category.js';
 import Product from './Product.js';
 import User from './User.js';
+import Address from './Address.js';
+import Order from './Order.js';
+import OrderItem from './OrderItem.js';
 
 // ========== ĐỊNH NGHĨA QUAN HỆ GIỮA CÁC MODELS ==========
 
@@ -15,6 +18,46 @@ Product.belongsTo(Category, {
 Category.hasMany(Product, { 
   foreignKey: 'category_id', 
   as: 'products' 
+});
+
+// User có nhiều Address
+User.hasMany(Address, {
+  foreignKey: 'user_id',
+  as: 'addresses'
+});
+
+// Address thuộc về User
+Address.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+// User có nhiều Order
+User.hasMany(Order, {
+  foreignKey: 'user_id',
+  as: 'orders'
+});
+
+Order.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+// Order có nhiều OrderItem
+Order.hasMany(OrderItem, {
+  foreignKey: 'order_id',
+  as: 'items'
+});
+
+OrderItem.belongsTo(Order, {
+  foreignKey: 'order_id',
+  as: 'order'
+});
+
+// OrderItem liên kết với Product (để tham chiếu ngược nếu cần)
+OrderItem.belongsTo(Product, {
+  foreignKey: 'product_id',
+  as: 'product'
 });
 
 // ========== HÀM ĐỒNG BỘ DATABASE ==========
@@ -45,4 +88,4 @@ export const syncDatabase = async (options = {}) => {
 };
 
 // Export tất cả models
-export { sequelize, Category, Product, User };
+export { sequelize, Category, Product, User, Address, Order, OrderItem };

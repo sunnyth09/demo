@@ -1,0 +1,41 @@
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../../config/sequelize.js';
+
+const OrderItem = sequelize.define('OrderItem', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  order_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  product_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  product_name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  quantity: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1
+  },
+  price: {
+    type: DataTypes.DECIMAL(15, 2),
+    allowNull: false,
+    comment: 'Giá tại thời điểm mua'
+  },
+  total_price: {
+    type: DataTypes.DECIMAL(15, 2),
+    allowNull: false
+  }
+}, {
+  tableName: 'order_items',
+  timestamps: false
+});
+
+export default OrderItem;

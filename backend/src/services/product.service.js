@@ -22,12 +22,20 @@ const generateSlug = (name) => {
 /**
  * Lấy danh sách sản phẩm với phân trang và lọc theo danh mục
  */
-export const getProducts = async ({ limit = 10, offset = 0, category_id = null }) => {
+export const getProducts = async ({ limit = 10, offset = 0, category_id = null, search = null }) => {
   const whereClause = {};
   
   if (category_id) {
     const childIds = await getAllChildIds(category_id);
     whereClause.category_id = { [Op.in]: [category_id, ...childIds] };
+  }
+  
+  if (search) {
+    whereClause[Op.or] = [
+      { name: { [Op.like]: `%${search}%` } },
+      { author: { [Op.like]: `%${search}%` } },
+      { publisher: { [Op.like]: `%${search}%` } }
+    ];
   }
   
   const products = await Product.findAll({
