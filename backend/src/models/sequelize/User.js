@@ -43,6 +43,11 @@ const User = sequelize.define('User', {
     defaultValue: 'user',
     comment: 'Vai trò: user hoặc admin'
   },
+  phone: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+    comment: 'Số điện thoại'
+  },
   created_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,

@@ -24,7 +24,8 @@ export const registerService = async (data) => {
     name: data.name,
     email: data.email,
     password: hash,
-    role: 'user'
+    role: 'user',
+    phone: data.phone || null
   });
 };
 
@@ -67,7 +68,9 @@ export const loginService = async (data) => {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: user.role
+    role: user.role,
+    phone: user.phone,
+    created_at: user.created_at
   };
 
   return { status: true, accessToken, refreshToken, user: userData };

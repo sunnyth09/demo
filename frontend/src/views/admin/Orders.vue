@@ -10,19 +10,19 @@
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div class="bg-card rounded-lg border p-4">
         <p class="text-sm text-muted-foreground">Chờ xử lý</p>
-        <p class="text-2xl font-bold mt-1">23</p>
+        <p class="text-2xl font-bold mt-1">{{ stats.pending }}</p>
       </div>
       <div class="bg-card rounded-lg border p-4">
         <p class="text-sm text-muted-foreground">Đang giao</p>
-        <p class="text-2xl font-bold mt-1">45</p>
+        <p class="text-2xl font-bold mt-1">{{ stats.shipping }}</p>
       </div>
       <div class="bg-card rounded-lg border p-4">
         <p class="text-sm text-muted-foreground">Hoàn thành</p>
-        <p class="text-2xl font-bold mt-1">12</p>
+        <p class="text-2xl font-bold mt-1">{{ stats.completed }}</p>
       </div>
       <div class="bg-card rounded-lg border p-4">
         <p class="text-sm text-muted-foreground">Doanh thu</p>
-        <p class="text-2xl font-bold mt-1">15.2M</p>
+        <p class="text-2xl font-bold mt-1">{{ formatCurrency(stats.revenue) }}</p>
       </div>
     </div>
 
@@ -35,26 +35,195 @@
             <th class="text-left p-4 font-medium text-sm">Tổng tiền</th>
             <th class="text-left p-4 font-medium text-sm">Trạng thái</th>
             <th class="text-left p-4 font-medium text-sm">Ngày đặt</th>
+            <th class="text-right p-4 font-medium text-sm">Thao tác</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="order in orders" :key="order.id" class="border-t border-border">
-            <td class="p-4 font-mono text-sm">#{{ order.id }}</td>
-            <td class="p-4 text-sm">{{ order.customer }}</td>
-            <td class="p-4 text-sm font-medium">{{ order.total }}</td>
-            <td class="p-4"><span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">{{ order.status }}</span></td>
-            <td class="p-4 text-sm text-muted-foreground">{{ order.date }}</td>
+            <td class="p-4 font-mono text-sm" :title="order.order_code">#{{ order.order_code ? order.order_code.slice(0, 8).toUpperCase() : order.id }}</td>
+            <td class="p-4 text-sm">{{ order.customer_name }}</td>
+            <td class="p-4 text-sm font-medium">{{ formatCurrency(order.total_amount) }}</td>
+            <td class="p-4">
+               <select 
+                 :value="order.status" 
+                 @change="e => updateStatus(order.id, e.target.value)"
+                 class="px-2 py-1 rounded border text-xs"
+               >
+                 <option value="pending">Chờ xử lý</option>
+                 <option value="processing">Đang đóng gói</option>
+                 <option value="shipped">Đang giao</option>
+                 <option value="completed">Hoàn thành</option>
+                 <option value="cancelled">Đã hủy</option>
+               </select>
+            </td>
+            <td class="p-4 text-sm text-muted-foreground">{{ formatDate(order.createdAt) }}</td>
+            <td class="p-4 text-right">
+              <button @click="openOrderModal(order)" class="text-sm text-primary hover:underline">Chi tiết</button>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
   </div>
+
+  <!-- Order Detail Modal -->
+  <div v-if="showOrderModal" class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showOrderModal = false"></div>
+    <div class="relative bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 m-4 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+           <h3 class="text-xl font-bold">Chi tiết đơn hàng #{{ selectedOrder?.order_code ? selectedOrder?.order_code.slice(0, 8).toUpperCase() : selectedOrder?.id }}</h3>
+           <p class="text-sm text-muted-foreground">{{ formatDate(selectedOrder?.createdAt) }}</p>
+        </div>
+        <button @click="showOrderModal = false" class="p-2 hover:bg-gray-100 rounded-full">
+           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+      
+      <div class="space-y-6">
+         <!-- Status -->
+         <div class="flex items-center gap-2">
+            <span class="text-sm font-medium">Trạng thái:</span>
+            <span :class="['px-2 py-1 rounded-full text-xs font-medium', getStatusClass(selectedOrder?.status)]">
+              {{ selectedOrder?.status === 'pending' ? 'Chờ xử lý' : selectedOrder?.status }}
+            </span>
+         </div>
+
+         <!-- Shipping Info -->
+         <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="font-bold text-sm mb-3">Thông tin giao hàng</h4>
+            <div class="space-y-1 text-sm">
+               <p><span class="font-medium">Người nhận:</span> {{ selectedOrder?.customer_name }}</p>
+               <p><span class="font-medium">Số điện thoại:</span> {{ selectedOrder?.customer_phone }}</p>
+               <p><span class="font-medium">Địa chỉ:</span> {{ selectedOrder?.shipping_address }}</p>
+               <p v-if="selectedOrder?.note"><span class="font-medium">Ghi chú:</span> {{ selectedOrder?.note }}</p>
+            </div>
+         </div>
+
+         <!-- Order Items -->
+         <div>
+            <h4 class="font-bold text-sm mb-3">Sản phẩm</h4>
+            <div class="border rounded-lg overflow-hidden">
+               <div v-for="item in selectedOrder?.items" :key="item.id" class="flex items-center gap-4 p-3 border-b last:border-0">
+                  <div class="w-16 h-16 bg-gray-200 rounded-md shrink-0 overflow-hidden border">
+                     <img v-if="item.product?.thumbnail" :src="item.product.thumbnail" :alt="item.product_name" class="w-full h-full object-cover" />
+                     <svg v-else class="w-full h-full text-gray-400 p-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> 
+                  </div>
+                  <div class="flex-1">
+                     <p class="font-medium line-clamp-2">{{ item.product_name }}</p>
+                     <p class="text-sm text-muted-foreground">x{{ item.quantity }}</p>
+                  </div>
+                  <div class="text-right">
+                     <p class="font-medium">{{ formatCurrency(item.price) }}</p>
+                     <p class="text-sm text-primary font-bold">{{ formatCurrency(item.total_price) }}</p>
+                  </div>
+               </div>
+            </div>
+         </div>
+
+         <!-- Summary -->
+         <div class="border-t pt-4 space-y-2">
+            <div class="flex justify-between text-sm">
+               <span class="text-muted-foreground">Phương thức thanh toán</span>
+               <span class="font-medium uppercase">{{ selectedOrder?.payment_method }}</span>
+            </div>
+            <div class="flex justify-between text-lg font-bold">
+               <span>Tổng cộng</span>
+               <span class="text-primary">{{ formatCurrency(selectedOrder?.total_amount) }}</span>
+            </div>
+         </div>
+      </div>
+      
+      <div class="mt-8 flex justify-end">
+         <button @click="showOrderModal = false" class="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">Đóng</button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-const orders = [
-  { id: '1234', customer: 'Nguyễn Văn A', total: '450,000đ', status: 'Hoàn thành', date: '22/01/2026' },
-  { id: '1233', customer: 'Trần Thị B', total: '189,000đ', status: 'Đang giao', date: '22/01/2026' },
-  { id: '1232', customer: 'Lê Văn C', total: '750,000đ', status: 'Chờ xử lý', date: '21/01/2026' },
-]
+import { ref, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+const orders = ref([])
+const stats = ref({ pending: 0, shipping: 0, completed: 0, revenue: 0 })
+const showOrderModal = ref(false)
+const selectedOrder = ref(null)
+
+const API_URL = 'http://localhost:3000/api'
+
+const fetchOrders = async () => {
+  try {
+    const res = await fetch(`${API_URL}/orders/admin`, {
+      headers: {
+        'Authorization': `Bearer ${authStore.accessToken}`
+      }
+    })
+    const json = await res.json()
+    if (json.status) {
+      orders.value = json.data
+    }
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const fetchStats = async () => {
+  try {
+    const res = await fetch(`${API_URL}/orders/admin/stats`, {
+      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+    })
+    const json = await res.json()
+    if (json.status) {
+      stats.value = json.data
+    }
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const openOrderModal = (order) => {
+  selectedOrder.value = order
+  showOrderModal.value = true
+}
+
+const getStatusClass = (status) => {
+  switch (status) {
+    case 'Hoàn thành': return 'bg-green-100 text-green-700'
+    case 'Đang giao': return 'bg-blue-100 text-blue-700'
+    default: return 'bg-gray-100 text-gray-700'
+  }
+}
+
+const updateStatus = async (orderId, newStatus) => {
+  try {
+    const res = await fetch(`${API_URL}/orders/admin/${orderId}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authStore.accessToken}`
+      },
+      body: JSON.stringify({ status: newStatus })
+    })
+    const json = await res.json()
+    if (json.status) {
+      fetchOrders() // Refresh list
+      fetchStats()  // Refresh stats
+      alert('Cập nhật trạng thái thành công')
+    } else {
+      alert(json.message)
+    }
+  } catch (e) {
+    alert('Có lỗi xảy ra')
+  }
+}
+
+const formatCurrency = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value)
+const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('vi-VN')
+
+onMounted(() => {
+  fetchOrders()
+  fetchStats()
+})
 </script>

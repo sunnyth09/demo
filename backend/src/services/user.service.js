@@ -9,7 +9,7 @@ import { Op } from "sequelize";
  */
 export const getProfile = async (userId) => {
   const user = await User.findByPk(userId, {
-    attributes: ['id', 'name', 'email', 'role', 'created_at']
+    attributes: ['id', 'name', 'email', 'role', 'phone', 'created_at']
   });
   
   if (!user) {
@@ -44,7 +44,8 @@ export const updateProfile = async (userId, data) => {
   
   await user.update({
     name: data.name || user.name,
-    email: data.email || user.email
+    email: data.email || user.email,
+    phone: data.phone !== undefined ? data.phone : user.phone
   });
   
   // Trả về user đã cập nhật (không có password)
@@ -53,6 +54,7 @@ export const updateProfile = async (userId, data) => {
     name: user.name,
     email: user.email,
     role: user.role,
+    phone: user.phone,
     created_at: user.created_at
   };
 };
@@ -90,7 +92,7 @@ export const getAllUsers = async (page = 1, limit = 10) => {
   const offset = (page - 1) * limit;
   
   const { count, rows } = await User.findAndCountAll({
-    attributes: ['id', 'name', 'email', 'role', 'created_at'],
+    attributes: ['id', 'name', 'email', 'role', 'phone', 'created_at'],
     order: [['id', 'DESC']],
     limit,
     offset
@@ -112,7 +114,7 @@ export const getAllUsers = async (page = 1, limit = 10) => {
  */
 export const getUserById = async (userId) => {
   const user = await User.findByPk(userId, {
-    attributes: ['id', 'name', 'email', 'role', 'created_at']
+    attributes: ['id', 'name', 'email', 'role', 'phone', 'created_at']
   });
   
   if (!user) {
@@ -149,7 +151,8 @@ export const updateUser = async (userId, data) => {
   await user.update({
     name: data.name || user.name,
     email: data.email || user.email,
-    role: data.role || user.role
+    role: data.role || user.role,
+    phone: data.phone !== undefined ? data.phone : user.phone
   });
   
   return {
@@ -157,6 +160,7 @@ export const updateUser = async (userId, data) => {
     name: user.name,
     email: user.email,
     role: user.role,
+    phone: user.phone,
     created_at: user.created_at
   };
 };
@@ -200,6 +204,7 @@ export const createUser = async (data) => {
     name: data.name,
     email: data.email,
     password: hashedPassword,
-    role: data.role || 'user'
+    role: data.role || 'user',
+    phone: data.phone || null
   });
 };

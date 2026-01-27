@@ -63,6 +63,12 @@ export const useCartStore = defineStore('cart', () => {
     saveToStorage()
   }
 
+  const removePurchasedItems = () => {
+    // Keep only unselected items
+    items.value = items.value.filter(item => item.selected === false)
+    saveToStorage()
+  }
+
   // Selection Actions
   const toggleSelection = (id) => {
     const item = items.value.find(i => i.id === id)
@@ -86,6 +92,7 @@ export const useCartStore = defineStore('cart', () => {
     updateQuantity,
     removeItem,
     clearCart,
+    removePurchasedItems,
     toggleSelection,
     toggleAll
   }

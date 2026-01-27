@@ -61,3 +61,71 @@ export const getMyOrders = async (req, res) => {
     });
   }
 };
+
+export const getAllOrders = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    
+    const result = await OrderService.getAllOrders(page, limit);
+    
+    res.status(200).json({
+      status: true,
+      data: result.orders,
+      pagination: result.pagination
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: error.message
+    });
+  }
+};
+
+export const getOrderById = async (req, res) => {
+  try {
+    const order = await OrderService.getOrderById(req.params.id);
+    res.status(200).json({
+      status: true,
+      data: order
+    });
+  } catch (error) {
+    res.status(404).json({
+      status: false,
+      message: error.message
+    });
+  }
+};
+
+export const updateStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const order = await OrderService.updateStatus(req.params.id, status);
+    
+    res.status(200).json({
+      status: true,
+      message: "Cập nhật trạng thái thành công",
+      data: order
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: false,
+      message: error.message
+    });
+  }
+};
+
+export const getOrderStats = async (req, res) => {
+  try {
+    const stats = await OrderService.getOrderStats();
+    res.status(200).json({
+      status: true,
+      data: stats
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: error.message
+    });
+  }
+};

@@ -9,7 +9,7 @@ const router = express.Router();
 
 const profileValidate = [
   body("name").notEmpty().withMessage("Tên không được rỗng"),
-  body("email").isEmail().withMessage("Email không hợp lệ")
+  body("email").optional().isEmail().withMessage("Email không hợp lệ")
 ];
 
 const passwordValidate = [

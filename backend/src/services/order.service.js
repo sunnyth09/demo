@@ -71,9 +71,108 @@ export const getMyOrders = async (userId) => {
       {
         model: OrderItem,
         as: 'items',
-        attributes: ['product_name', 'quantity', 'price', 'total_price']
+        include: [
+          {
+            model: Product,
+            as: 'product',
+            attributes: ['thumbnail', 'id', 'slug']
+          }
+        ]
       }
     ],
     order: [['createdAt', 'DESC']]
   });
+};
+
+/**
+ * Get all orders (Admin)
+ */
+export const getAllOrders = async (page = 1, limit = 10) => {
+  const offset = (page - 1) * limit;
+  
+  const { count, rows } = await Order.findAndCountAll({
+    include: [
+      {
+        model: OrderItem,
+        as: 'items',
+        include: [
+          {
+            model: Product,
+            as: 'product',
+            attributes: ['thumbnail']
+          }
+        ]
+      }
+    ],
+    order: [['createdAt', 'DESC']],
+    limit,
+    offset
+  });
+  
+  return {
+    orders: rows,
+    pagination: {
+      page,
+      limit,
+      total: count,
+      totalPages: Math.ceil(count / limit)
+    }
+  };
+};
+
+/**
+ * Get order by ID
+ */
+export const getOrderById = async (orderId) => {
+  const order = await Order.findByPk(orderId, {
+    include: [
+      {
+        model: OrderItem,
+        as: 'items',
+        include: [
+          {
+            model: Product,
+            as: 'product',
+            attributes: ['thumbnail', 'id', 'slug']
+          }
+        ]
+      }
+    ]
+  });
+  
+  if (!order) {
+    throw new Error(`Đơn hàng #${orderId} không tồn tại`);
+  }
+  
+  return order;
+};
+
+/**
+ * Update order status
+ */
+export const updateStatus = async (orderId, status) => {
+  const order = await Order.findByPk(orderId);
+  if (!order) {
+    throw new Error(`Đơn hàng #${orderId} không tồn tại`);
+  }
+  
+  await order.update({ status });
+  return order;
+};
+
+/**
+ * Get order statistics (Admin)
+ */
+export const getOrderStats = async () => {
+  const pending = await Order.count({ where: { status: 'pending' } });
+  const shipping = await Order.count({ where: { status: 'shipped' } });
+  const completed = await Order.count({ where: { status: 'completed' } });
+  const revenue = await Order.sum('total_amount', { where: { status: 'completed' } }) || 0;
+
+  return {
+    pending,
+    shipping,
+    completed,
+    revenue
+  };
 };

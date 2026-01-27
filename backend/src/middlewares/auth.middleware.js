@@ -46,7 +46,7 @@ export const checkToken = async (req, res, next) => {
 
     // Sử dụng Sequelize User model
     const user = await User.findByPk(decoded.id, {
-      attributes: ['id', 'name', 'email', 'role', 'created_at']
+      attributes: ['id', 'name', 'email', 'role', 'phone', 'created_at']
     });
 
     if (!user) {

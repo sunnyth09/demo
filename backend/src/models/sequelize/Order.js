@@ -7,6 +7,12 @@ const Order = sequelize.define('Order', {
     primaryKey: true,
     autoIncrement: true
   },
+  order_code: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    allowNull: true,
+    unique: true
+  },
   user_id: {
     type: DataTypes.INTEGER,
     allowNull: true, // Allow guest checkout (optional, but good for flexibility)

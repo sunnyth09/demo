@@ -442,14 +442,14 @@ const handleCheckout = async () => {
 
     if (json.status) {
       alert('Đặt hàng thành công!')
-      cartStore.clearCart()
+      cartStore.removePurchasedItems()
       router.push('/')
     } else {
       alert(json.message || 'Đặt hàng thất bại')
     }
   } catch (error) {
     console.error(error)
-    alert('Có lỗi xảy ra khi đặt hàng')
+    alert(`Có lỗi xảy ra khi đặt hàng: ${error.message}`)
   } finally {
     isOrdering.value = false
   }

@@ -36,6 +36,7 @@ const routes = [
       { path: 'cart', name: 'cart', component: () => import('@/views/Cart.vue'), meta: { title: 'Giỏ hàng' } },
       { path: 'checkout', name: 'checkout', component: () => import('@/views/Checkout.vue'), meta: { title: 'Thanh toán' } },
       { path: 'profile', name: 'profile', component: () => import('@/views/Profile.vue'), meta: { title: 'Tài khoản' } },
+      { path: 'orders', name: 'orders', component: () => import('@/views/Profile.vue'), meta: { title: 'Đơn hàng của tôi' } },
     ]
   },
 
