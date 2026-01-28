@@ -103,27 +103,39 @@
             <a v-if="activeTab === 'profile'" href="#" @click.prevent="activeTab = 'orders'" class="text-sm text-primary hover:underline">Xem tất cả</a>
           </div>
           <div v-if="recentOrders.length > 0" class="space-y-4">
-            <div v-for="order in recentOrders" :key="order.id" @click="openOrderModal(order)" class="border rounded-lg p-4 hover:shadow-sm transition-shadow cursor-pointer">
-              <div class="flex flex-wrap items-center justify-between gap-4 mb-3">
-                <div class="flex items-center gap-2">
-                  <span class="font-mono font-medium" :title="order.order_code">#{{ order.order_code ? order.order_code.slice(0, 8).toUpperCase() : order.id }}</span>
-                  <span class="text-muted-foreground text-sm">• {{ order.date }}</span>
+            <div v-for="order in recentOrders" :key="order.id" @click="openOrderModal(order)" class="border rounded-lg p-5 hover:shadow-md transition-all cursor-pointer bg-white group">
+              <div class="flex items-center gap-6">
+                <!-- Col 1: Basic Info -->
+                <div class="w-[200px] shrink-0">
+                   <div class="flex items-center gap-2 mb-1">
+                      <span class="font-mono font-bold text-lg text-gray-900 group-hover:text-primary transition-colors" :title="order.order_code">#{{ order.order_code ? order.order_code.slice(0, 8).toUpperCase() : order.id }}</span>
+                   </div>
+                   <p class="text-sm text-muted-foreground mb-1">{{ order.date }}</p>
+                   <p class="text-sm font-medium text-gray-500">{{ order.itemsCount }} sản phẩm</p>
                 </div>
-                <span :class="['px-2 py-1 rounded-full text-xs font-medium', getStatusClass(order.status)]">
-                  {{ order.status === 'pending' ? 'Chờ xử lý' : 
-                     order.status === 'completed' ? 'Hoàn thành' :
-                     order.status === 'cancelled' ? 'Đã hủy' : order.status }}
-                </span>
-              </div>
-              <div class="flex items-center justify-between">
-                <p class="text-sm text-muted-foreground">{{ order.itemsCount }} sản phẩm</p>
-                <div class="flex items-center gap-3">
-                  <p class="font-bold text-primary">{{ formatCurrency(order.total_amount) }}</p>
-                  <button 
+
+                <!-- Col 2: Status Message (Center) -->
+                <div class="flex-1 px-4 flex justify-center">
+                   <div class="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-full border border-gray-100 max-w-sm">
+                      <component :is="getStatusIcon(order.status)" :class="['w-5 h-5', getStatusColor(order.status)]" />
+                      <span class="text-sm font-medium text-gray-700 line-clamp-1 truncate" :title="getStatusMessage(order.status)">
+                        {{ getStatusMessage(order.status) }}
+                      </span>
+                   </div>
+                </div>
+
+                <!-- Col 3: Status & Price & Action -->
+                <div class="w-[180px] shrink-0 text-right flex flex-col items-end gap-2">
+                   <span :class="['px-3 py-1 rounded-full text-xs font-bold ring-1 ring-inset', getStatusClass(order.status)]">
+                     {{ getStatusLabel(order.status) }}
+                   </span>
+                   <p class="font-bold text-primary text-xl">{{ formatCurrency(order.total_amount) }}</p>
+                   
+                   <button 
                     v-if="order.status === 'cancelled'"
                     @click.stop="repurchase(order)"
-                    class="text-xs px-3 py-1 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
-                  >
+                    class="mt-1 text-xs px-3 py-1.5 bg-gray-900 text-white rounded hover:bg-gray-800 transition-colors"
+                   >
                     Mua lại
                   </button>
                 </div>
@@ -298,10 +310,51 @@
       
       <div class="space-y-6">
          <!-- Status -->
+         <!-- Order Tracking Timeline -->
+         <div v-if="selectedOrder?.status !== 'cancelled'" class="mb-8 px-2">
+            <div class="relative mt-4">
+              <!-- Progress Bar Background -->
+              <div class="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 rounded-full -z-10"></div>
+              
+              <!-- Active Progress Bar -->
+              <div 
+                class="absolute top-1/2 left-0 h-1 bg-primary -translate-y-1/2 rounded-full -z-10 transition-all duration-500 ease-out"
+                :style="{ width: trackingProgress + '%' }"
+              ></div>
+
+              <!-- Steps -->
+              <div class="flex justify-between w-full">
+                <div v-for="(step, index) in trackingSteps" :key="index" class="flex flex-col items-center gap-2">
+                   <div 
+                      class="w-10 h-10 rounded-full flex items-center justify-center border-2 bg-white transition-all duration-300 z-10"
+                      :class="getStepCircleClass(index)"
+                   >
+                      <component :is="step.icon" class="w-5 h-5" />
+                   </div>
+                   <div class="flex flex-col items-center">
+                      <span class="text-xs font-semibold whitespace-nowrap" :class="getStepTextClass(index)">{{ step.label }}</span>
+                      <span v-if="index <= currentStepIndex" class="text-[10px] text-muted-foreground">{{ step.time }}</span>
+                   </div>
+                </div>
+              </div>
+            </div>
+         </div>
+         
+         <div v-else class="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg flex items-center gap-3 text-red-700">
+            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+               <XCircle class="w-6 h-6" />
+            </div>
+            <div>
+               <h4 class="font-bold">Đơn hàng đã bị hủy</h4>
+               <p class="text-sm opacity-90">Đơn hàng này đã bị hủy và không thể tiếp tục xử lý.</p>
+            </div>
+         </div>
+
+         <!-- Status Text (Legacy) -->
          <div class="flex items-center gap-2">
-            <span class="text-sm font-medium">Trạng thái:</span>
+            <span class="text-sm font-medium">Trạng thái hiện tại:</span>
             <span :class="['px-2 py-1 rounded-full text-xs font-medium', getStatusClass(selectedOrder?.status)]">
-              {{ selectedOrder?.status === 'pending' ? 'Chờ xử lý' : selectedOrder?.status }}
+              {{ getStatusLabel(selectedOrder?.status) }}
             </span>
          </div>
 
@@ -369,6 +422,9 @@ import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
+import { 
+  Package, Truck, CheckCircle2, ClipboardList, XCircle 
+} from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
@@ -755,10 +811,97 @@ const formatDate = (dateStr) => {
 
 const getStatusClass = (status) => {
   switch (status) {
-    case 'Hoàn thành': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-    case 'Đang giao': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+    case 'completed': return 'bg-green-100 text-green-700'
+    case 'shipped': return 'bg-blue-100 text-blue-700' // backend dùng 'shipped' cho 'Đang giao' ? Cần check lại backend
+    case 'processing': return 'bg-yellow-100 text-yellow-800'
+    case 'pending': return 'bg-gray-100 text-gray-700'
+    case 'cancelled': return 'bg-red-100 text-red-700'
     default: return 'bg-gray-100 text-gray-700'
   }
+}
+
+const getStatusLabel = (status) => {
+  const map = {
+    'pending': 'Chờ xử lý',
+    'processing': 'Đã xác nhận',
+    'shipped': 'Đang giao hàng',
+    'completed': 'Giao hàng thành công',
+    'cancelled': 'Đã hủy'
+  }
+  return map[status] || status
+}
+
+// Timeline Logic
+const trackingSteps = [
+  { key: 'pending', label: 'Đặt hàng', icon: ClipboardList, time: '' },
+  { key: 'processing', label: 'Đã xác nhận', icon: Package, time: '' },
+  { key: 'shipped', label: 'Đang giao', icon: Truck, time: '' },
+  { key: 'completed', label: 'Hoàn thành', icon: CheckCircle2, time: '' }
+]
+
+const currentStepIndex = computed(() => {
+  if (!selectedOrder.value || !selectedOrder.value.status) return 0
+  
+  // Custom mapping status backend to step index
+  const status = selectedOrder.value.status
+  if (status === 'pending') return 0
+  if (status === 'processing') return 1
+  if (status === 'shipping' || status === 'shipped') return 2 // Handle both likely cases
+  if (status === 'completed') return 3
+  return 0
+})
+
+const trackingProgress = computed(() => {
+   return (currentStepIndex.value / (trackingSteps.length - 1)) * 100
+})
+
+const getStatusMessage = (status) => {
+  switch (status) {
+    case 'pending': return 'Đơn hàng đang chờ xác nhận';
+    case 'processing': return 'Đơn hàng đã được xác nhận và đang đóng gói';
+    case 'shipping': 
+    case 'shipped': return 'Shipper đang giao hàng đến bạn 🛵';
+    case 'completed': return 'Giao hàng thành công. Cảm ơn bạn!';
+    case 'cancelled': return 'Đơn hàng đã bị hủy';
+    default: return 'Trạng thái đơn hàng đang được cập nhật';
+  }
+}
+
+const getStatusIcon = (status) => {
+  switch (status) {
+    case 'pending': return ClipboardList;
+    case 'processing': return Package;
+    case 'shipping': 
+    case 'shipped': return Truck;
+    case 'completed': return CheckCircle2;
+    case 'cancelled': return XCircle;
+    default: return ClipboardList;
+  }
+}
+
+const getStatusColor = (status) => {
+  switch (status) {
+     case 'pending': return 'text-gray-500';
+     case 'processing': return 'text-yellow-600';
+     case 'shipping': 
+     case 'shipped': return 'text-blue-600';
+     case 'completed': return 'text-green-600';
+     case 'cancelled': return 'text-red-500';
+     default: return 'text-gray-500';
+  }
+}
+
+// === Helpers for Mini Tracking (Outside - Deprecated but kept for reference if needed, can remove) ===
+
+const getStepCircleClass = (index) => {
+  if (index < currentStepIndex.value) return 'border-primary bg-primary text-white' // Passed steps
+  if (index === currentStepIndex.value) return 'border-primary bg-white text-primary ring-4 ring-primary/20' // Current step
+  return 'border-gray-200 text-gray-400' // Future steps
+}
+
+const getStepTextClass = (index) => {
+  if (index <= currentStepIndex.value) return 'text-primary'
+  return 'text-muted-foreground'
 }
 
 const handleLogout = () => {
