@@ -478,6 +478,8 @@ const fetchCategories = async () => {
       expandedIds.value = categories.value
         .filter(c => c.parent_id === null)
         .map(c => c.id)
+    } else {
+      showToast(json.message || 'Lỗi tải danh mục', 'error')
     }
   } catch (error) {
     console.error('Error fetching categories:', error)

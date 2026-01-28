@@ -78,10 +78,11 @@ const route = useRoute()
 
 const menuItems = [
   { name: 'Dashboard', path: '/admin', icon: 'IconDashboard' },
+  { name: 'Đơn hàng', path: '/admin/orders', icon: 'IconOrders' },
   { name: 'Sản phẩm', path: '/admin/products', icon: 'IconProducts' },
   { name: 'Danh mục', path: '/admin/categories', icon: 'IconCategories' },
-  { name: 'Đơn hàng', path: '/admin/orders', icon: 'IconOrders' },
   { name: 'Người dùng', path: '/admin/users', icon: 'IconUsers' },
+  { name: 'Thống kê', path: '/admin/revenue', icon: 'IconRevenue' },
   { name: 'Cài đặt', path: '/admin/settings', icon: 'IconSettings' },
 ]
 
@@ -93,6 +94,9 @@ const currentPageTitle = computed(() => {
 // Simple icon components
 const IconDashboard = {
   template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>`
+}
+const IconRevenue = {
+  template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>`
 }
 const IconProducts = {
   template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`

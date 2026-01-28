@@ -66,8 +66,10 @@ export const getAllOrders = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+    const status = req.query.status || '';
     
-    const result = await OrderService.getAllOrders(page, limit);
+    const result = await OrderService.getAllOrders(page, limit, search, status);
     
     res.status(200).json({
       status: true,
@@ -100,6 +102,17 @@ export const getOrderById = async (req, res) => {
 export const updateStatus = async (req, res) => {
   try {
     const { status } = req.body;
+    
+    // Check current status first
+    const currentOrder = await OrderService.getOrderById(req.params.id);
+    if (!currentOrder) {
+      return res.status(404).json({ status: false, message: "Đơn hàng không tồn tại" });
+    }
+
+    if (currentOrder.status === 'completed') {
+      return res.status(400).json({ status: false, message: "Đơn hàng đã hoàn thành, không thể thay đổi trạng thái" });
+    }
+
     const order = await OrderService.updateStatus(req.params.id, status);
     
     res.status(200).json({
@@ -117,7 +130,8 @@ export const updateStatus = async (req, res) => {
 
 export const getOrderStats = async (req, res) => {
   try {
-    const stats = await OrderService.getOrderStats();
+    const days = parseInt(req.query.days) || 7;
+    const stats = await OrderService.getOrderStats(days);
     res.status(200).json({
       status: true,
       data: stats

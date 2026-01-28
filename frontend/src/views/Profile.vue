@@ -110,12 +110,23 @@
                   <span class="text-muted-foreground text-sm">• {{ order.date }}</span>
                 </div>
                 <span :class="['px-2 py-1 rounded-full text-xs font-medium', getStatusClass(order.status)]">
-                  {{ order.status === 'pending' ? 'Chờ xử lý' : order.status }}
+                  {{ order.status === 'pending' ? 'Chờ xử lý' : 
+                     order.status === 'completed' ? 'Hoàn thành' :
+                     order.status === 'cancelled' ? 'Đã hủy' : order.status }}
                 </span>
               </div>
               <div class="flex items-center justify-between">
                 <p class="text-sm text-muted-foreground">{{ order.itemsCount }} sản phẩm</p>
-                <p class="font-bold text-primary">{{ formatCurrency(order.total_amount) }}</p>
+                <div class="flex items-center gap-3">
+                  <p class="font-bold text-primary">{{ formatCurrency(order.total_amount) }}</p>
+                  <button 
+                    v-if="order.status === 'cancelled'"
+                    @click.stop="repurchase(order)"
+                    class="text-xs px-3 py-1 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
+                  >
+                    Mua lại
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -339,7 +350,14 @@
          </div>
       </div>
       
-      <div class="mt-8 flex justify-end">
+      <div class="mt-8 flex justify-end gap-3">
+         <button 
+            v-if="selectedOrder?.status === 'cancelled'"
+            @click="repurchase(selectedOrder)"
+            class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+         >
+            Mua lại đơn này
+         </button>
          <button @click="showOrderModal = false" class="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">Đóng</button>
       </div>
     </div>
@@ -350,10 +368,12 @@
 import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cart'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const cartStore = useCartStore()
 const API_URL = 'http://localhost:3000/api'
 
 const activeTab = ref(route.name === 'orders' ? 'orders' : 'profile')
@@ -744,5 +764,29 @@ const getStatusClass = (status) => {
 const handleLogout = () => {
   authStore.logout()
   router.push('/')
+}
+
+const repurchase = (order) => {
+  if (!order || !order.items) return
+  
+  // Add all items from order to cart
+  order.items.forEach(item => {
+    // Map order item to product structure expected by cart
+    const product = {
+      id: item.product_id,
+      name: item.product_name,
+      price: item.price,
+      // Assuming we might need to fetch full product details if something is missing, 
+      // but cart usually needs id, name, price, thumbnail. 
+      // OrderItem usually has these. If thumbnail is missing in OrderItem, it might be an issue, 
+      // but let's assume item.product has it as populated in fetch.
+      thumbnail: item.product?.thumbnail,
+      category_name: item.product?.category_name
+    }
+    cartStore.addToCart(product, item.quantity)
+  })
+  
+  // Redirect to cart 
+  router.push('/cart') // Adjust route if needed, usually '/cart' or just open sidebar
 }
 </script>

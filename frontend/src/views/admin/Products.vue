@@ -393,6 +393,8 @@ const fetchProducts = async () => {
       } else {
         totalProducts.value = offset.value + limit.value + 1
       }
+    } else {
+      showToast(json.message || 'Lỗi tải sản phẩm', 'error')
     }
   } catch (error) {
     console.error('Error fetching products:', error)

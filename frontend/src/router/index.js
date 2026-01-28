@@ -20,6 +20,7 @@ import AdminCategories from '@/views/admin/Categories.vue'
 import AdminOrders from '@/views/admin/Orders.vue'
 import AdminUsers from '@/views/admin/Users.vue'
 import AdminSettings from '@/views/admin/Settings.vue'
+import AdminRevenue from '@/views/admin/RevenueAnalytics.vue'
 
 const routes = [
   // User routes - with UserLayout (Navbar + Footer)
@@ -46,6 +47,7 @@ const routes = [
     component: AdminLayout,
     children: [
       { path: '', name: 'admin-dashboard', component: AdminDashboard, meta: { title: 'Dashboard' } },
+      { path: 'revenue', name: 'admin-revenue', component: AdminRevenue, meta: { title: 'Thống kê chi tiết' } },
       { path: 'products', name: 'admin-products', component: AdminProducts, meta: { title: 'Sản phẩm' } },
       { path: 'products/create', name: 'admin-products-create', component: AdminProductForm, meta: { title: 'Thêm sản phẩm' } },
       { path: 'products/edit/:id', name: 'admin-products-edit', component: AdminProductForm, meta: { title: 'Sửa sản phẩm' } },
@@ -62,7 +64,19 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    // If user uses browser back/forward, restore saved position
+    if (savedPosition) {
+      return savedPosition
+    }
+    // If navigating to a hash (anchor), scroll to that element
+    if (to.hash) {
+      return { el: to.hash, behavior: 'smooth' }
+    }
+    // Otherwise, scroll to top
+    return { top: 0, behavior: 'smooth' }
+  }
 })
 
 router.beforeEach((to, from, next) => {

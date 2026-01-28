@@ -7,10 +7,18 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+      <div class="bg-card rounded-lg border p-4">
+        <p class="text-sm text-muted-foreground">Tổng đơn hàng</p>
+        <p class="text-2xl font-bold mt-1">{{ stats.totalOrders }}</p>
+      </div>
       <div class="bg-card rounded-lg border p-4">
         <p class="text-sm text-muted-foreground">Chờ xử lý</p>
         <p class="text-2xl font-bold mt-1">{{ stats.pending }}</p>
+      </div>
+      <div class="bg-card rounded-lg border p-4">
+        <p class="text-sm text-muted-foreground">Đang đóng gói</p>
+        <p class="text-2xl font-bold mt-1">{{ stats.processing }}</p>
       </div>
       <div class="bg-card rounded-lg border p-4">
         <p class="text-sm text-muted-foreground">Đang giao</p>
@@ -22,12 +30,40 @@
       </div>
       <div class="bg-card rounded-lg border p-4">
         <p class="text-sm text-muted-foreground">Doanh thu</p>
-        <p class="text-2xl font-bold mt-1">{{ formatCurrency(stats.revenue) }}</p>
+        <p class="text-2xl font-bold mt-1">{{ formatCurrency(stats.totalRevenue) }}</p>
+      </div>
+    </div>
+
+    <div class="flex flex-col md:flex-row gap-4 justify-between items-center bg-card p-4 rounded-xl border">
+      <div class="w-full md:w-auto flex items-center gap-2">
+         <span class="text-sm font-medium">Trạng thái:</span>
+         <select v-model="filterStatus" @change="fetchOrders(1)" class="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+            <option value="">Tất cả trạng thái</option>
+            <option value="pending">Chờ xử lý</option>
+            <option value="processing">Đang đóng gói</option>
+            <option value="shipped">Đang giao</option>
+            <option value="completed">Hoàn thành</option>
+            <option value="cancelled">Đã hủy</option>
+         </select>
+      </div>
+      <div class="w-full md:w-72 relative">
+         <input 
+           v-model="searchQuery" 
+           @keyup.enter="fetchOrders(1)"
+           type="text" 
+           placeholder="Tìm tên KH, SĐT hoặc Mã đơn..." 
+           class="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+         />
+         <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+         <button v-if="searchQuery" @click="searchQuery = ''; fetchOrders(1)" class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-black">✕</button>
       </div>
     </div>
 
     <div class="bg-card rounded-xl border overflow-hidden">
-      <table class="w-full">
+      <div v-if="loading" class="p-8 text-center text-muted-foreground">
+        Đang tải dữ liệu...
+      </div>
+      <table v-else class="w-full">
         <thead class="bg-muted/50">
           <tr>
             <th class="text-left p-4 font-medium text-sm">Mã đơn</th>
@@ -39,7 +75,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="order in orders" :key="order.id" class="border-t border-border">
+          <tr v-for="order in orders" :key="order.id" class="border-t border-border hover:bg-muted/50 transition-colors">
             <td class="p-4 font-mono text-sm" :title="order.order_code">#{{ order.order_code ? order.order_code.slice(0, 8).toUpperCase() : order.id }}</td>
             <td class="p-4 text-sm">{{ order.customer_name }}</td>
             <td class="p-4 text-sm font-medium">{{ formatCurrency(order.total_amount) }}</td>
@@ -47,7 +83,8 @@
                <select 
                  :value="order.status" 
                  @change="e => updateStatus(order.id, e.target.value)"
-                 class="px-2 py-1 rounded border text-xs"
+                 class="px-2 py-1 rounded border text-xs disabled:opacity-50 disabled:bg-gray-100"
+                 :disabled="order.status === 'completed'"
                >
                  <option value="pending">Chờ xử lý</option>
                  <option value="processing">Đang đóng gói</option>
@@ -61,8 +98,30 @@
               <button @click="openOrderModal(order)" class="text-sm text-primary hover:underline">Chi tiết</button>
             </td>
           </tr>
+          <tr v-if="orders.length === 0" class="border-t border-border">
+             <td colspan="6" class="p-8 text-center text-muted-foreground">Không tìm thấy đơn hàng phù hợp</td>
+          </tr>
         </tbody>
       </table>
+      
+      <!-- Pagination -->
+      <div v-if="totalPages > 1" class="p-4 border-t flex items-center justify-center gap-2">
+        <button 
+          @click="changePage(currentPage - 1)" 
+          :disabled="currentPage === 1"
+          class="px-3 py-1 text-sm border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Trước
+        </button>
+        <span class="text-sm font-medium px-2">Trang {{ currentPage }} / {{ totalPages }}</span>
+        <button 
+          @click="changePage(currentPage + 1)" 
+          :disabled="currentPage === totalPages"
+          class="px-3 py-1 text-sm border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Sau
+        </button>
+      </div>
     </div>
   </div>
 
@@ -147,15 +206,24 @@ import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 const orders = ref([])
-const stats = ref({ pending: 0, shipping: 0, completed: 0, revenue: 0 })
+const stats = ref({ pending: 0, processing: 0, shipping: 0, completed: 0, totalRevenue: 0, totalOrders: 0 })
 const showOrderModal = ref(false)
 const selectedOrder = ref(null)
+const loading = ref(false)
+
+// Pagination and Filters
+const currentPage = ref(1)
+const totalPages = ref(1)
+const limit = 10
+const searchQuery = ref('')
+const filterStatus = ref('')
 
 const API_URL = 'http://localhost:3000/api'
 
-const fetchOrders = async () => {
+const fetchOrders = async (page = 1) => {
+  loading.value = true
   try {
-    const res = await fetch(`${API_URL}/orders/admin`, {
+    const res = await fetch(`${API_URL}/orders/admin?page=${page}&limit=${limit}&search=${searchQuery.value}&status=${filterStatus.value}`, {
       headers: {
         'Authorization': `Bearer ${authStore.accessToken}`
       }
@@ -163,9 +231,26 @@ const fetchOrders = async () => {
     const json = await res.json()
     if (json.status) {
       orders.value = json.data
+      
+      // Handle pagination logic if backend provides it
+      if (json.pagination) {
+        currentPage.value = json.pagination.page
+        totalPages.value = json.pagination.totalPages
+      }
+    } else {
+      alert(json.message || 'Lỗi tải danh sách đơn hàng')
     }
   } catch (e) {
     console.error(e)
+    alert('Lỗi kết nối khi tải đơn hàng')
+  } finally {
+    loading.value = false
+  }
+}
+
+const changePage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    fetchOrders(page)
   }
 }
 
@@ -176,7 +261,7 @@ const fetchStats = async () => {
     })
     const json = await res.json()
     if (json.status) {
-      stats.value = json.data
+      stats.value = json.data.counts
     }
   } catch (e) {
     console.error(e)
@@ -208,7 +293,7 @@ const updateStatus = async (orderId, newStatus) => {
     })
     const json = await res.json()
     if (json.status) {
-      fetchOrders() // Refresh list
+      fetchOrders(currentPage.value) // Refresh list at current page
       fetchStats()  // Refresh stats
       alert('Cập nhật trạng thái thành công')
     } else {
@@ -219,7 +304,7 @@ const updateStatus = async (orderId, newStatus) => {
   }
 }
 
-const formatCurrency = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value)
+const formatCurrency = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value || 0)
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('vi-VN')
 
 onMounted(() => {
