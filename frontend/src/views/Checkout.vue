@@ -219,7 +219,7 @@ const cartStore = useCartStore()
 const authStore = useAuthStore()
 const { items: cartItems, subtotal } = storeToRefs(cartStore)
 
-const API_URL = 'http://localhost:3000/api'
+const API_URL = import.meta.env.VITE_API_URL
 
 // Filter only selected items
 const checkoutItems = computed(() => cartItems.value.filter(item => item.selected !== false))

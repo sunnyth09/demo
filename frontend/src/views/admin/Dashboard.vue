@@ -287,7 +287,7 @@ import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
 const router = useRouter()
-const API_URL = 'http://localhost:3000/api'
+const API_URL = import.meta.env.VITE_API_URL
 
 const loading = ref(true)
 const chartDays = ref(7)

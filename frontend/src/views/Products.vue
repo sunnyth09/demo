@@ -1,21 +1,12 @@
 <template>
-  <div class="container mx-auto px-4 py-8 bg-gray-50 min-h-screen">
+  <div class="container mx-auto px-4 py-6 bg-background min-h-screen">
     <div class="flex flex-col md:flex-row gap-6">
       <!-- Sidebar (Categories Tree) -->
       <div class="w-full md:w-1/4 lg:w-1/5">
-        <div class="bg-white rounded-lg shadow-sm border overflow-hidden min-h-screen">
-          <div class="px-4 py-3 border-b-2 border-primary/50 bg-white">
-            <h2
-              class="font-bold text-primary uppercase flex items-center gap-2"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5 text-primary"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
+        <div class="bg-card rounded-xl shadow-sm border border-border overflow-hidden sticky top-24">
+          <div class="px-4 py-3 border-b border-border bg-muted/30">
+            <h2 class="font-semibold text-foreground text-sm flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M4 6h16M4 12h16M4 18h16" />
               </svg>
               Nhóm sản phẩm
@@ -27,10 +18,10 @@
               <button
                 @click="selectCategory(null)"
                 :class="[
-                  'w-full text-left px-3 py-2 rounded-md text-sm transition-colors font-medium border-l-4',
+                  'w-full text-left px-3 py-2 rounded-lg text-sm transition-all font-medium',
                   !selectedCategoryId
-                    ? 'text-primary bg-blue-50 border-primary'
-                    : 'text-gray-700 hover:text-primary hover:bg-gray-50 border-transparent',
+                    ? 'text-primary bg-primary/10 font-semibold'
+                    : 'text-muted-foreground hover:text-primary hover:bg-muted',
                 ]"
               >
                 Tất cả sản phẩm
@@ -41,10 +32,10 @@
                 <button 
                   @click="selectCategory(cat1.id)"
                   :class="[
-                    'w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors group',
+                    'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all group',
                     selectedCategoryId === cat1.id 
-                      ? 'bg-blue-50 text-primary font-bold' 
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-primary'
+                      ? 'bg-primary/10 text-primary font-semibold' 
+                      : 'text-foreground hover:bg-muted hover:text-primary'
                   ]"
                 >
                   <span class="flex-1 text-left">{{ cat1.name }}</span>
@@ -116,38 +107,22 @@
       <!-- Main Content -->
       <div class="flex-1">
         <!-- Sort Bar -->
-        <div
-          class="bg-white p-4 rounded-xl shadow-sm border mb-6 flex items-center justify-between"
-        >
+        <div class="bg-card p-3 rounded-xl shadow-sm border border-border mb-6 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <span class="text-sm font-medium text-gray-500 whitespace-nowrap"
-              >Sắp xếp theo:</span
-            >
-            <div class="relative min-w-[180px]">
+            <span class="text-sm font-medium text-muted-foreground whitespace-nowrap">Sắp xếp theo:</span>
+            <div class="relative min-w-[160px]">
               <select
                 v-model="sortOption"
-                class="w-full appearance-none bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer hover:bg-gray-100 transition-colors text-gray-700 font-medium"
+                class="w-full appearance-none bg-muted border border-border rounded-lg px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer hover:bg-muted/80 transition-colors text-foreground font-medium"
               >
                 <option value="default">Mặc định</option>
                 <option value="price_asc">Giá: Thấp đến cao</option>
                 <option value="price_desc">Giá: Cao đến thấp</option>
                 <option value="newest">Mới nhất</option>
               </select>
-              <div
-                class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500"
-              >
-                <svg
-                  class="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 9l-7 7-7-7"
-                  ></path>
+              <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-muted-foreground">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
               </div>
             </div>
@@ -163,22 +138,19 @@
 
         <div
           v-else-if="products.length > 0"
-          class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4"
+          class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
         >
           <div
             v-for="product in products"
             :key="product.id"
-            class="group bg-white rounded-lg border border-gray-100 hover:border-blue-500/30 hover:shadow-md transition-all duration-300 flex flex-col overflow-hidden relative"
+            class="group bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-lg transition-all duration-300 flex flex-col overflow-hidden relative hover:-translate-y-1"
           >
             <!-- Badge -->
             <div
               v-if="product.quantity === 0"
               class="absolute top-2 left-2 z-10"
             >
-              <span
-                class="bg-gray-900/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded"
-                >HẾT HÀNG</span
-              >
+              <span class="bg-foreground text-background text-[10px] font-bold px-2 py-0.5 rounded-md">HẾT HÀNG</span>
             </div>
             <div
               v-else-if="
@@ -186,9 +158,7 @@
               "
               class="absolute top-2 left-2 z-10"
             >
-              <span
-                class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded"
-              >
+              <span class="bg-destructive text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
                 -{{ calculateDiscount(product.price, product.original_price) }}%
               </span>
             </div>
@@ -206,57 +176,43 @@
             </div>
 
             <!-- Info -->
-            <div class="p-2 pt-0 flex flex-col">
+            <div class="p-3 pt-2 flex flex-col">
               <h3 
-                class="text-sm font-medium text-gray-800 line-clamp-2 mt-1 mb-0.5 group-hover:text-primary transition-colors cursor-pointer"
+                class="text-sm font-medium text-card-foreground line-clamp-2 mb-1 group-hover:text-primary transition-colors cursor-pointer leading-snug"
                 :title="product.name"
                 @click="goToDetail(product.id)"
               >
                 {{ product.name }}
               </h3>
               
-              <div>
-                <div class="flex flex-col">
-                  <span class="text-base font-bold text-primary leading-tight">{{ formatCurrency(product.price) }}</span>
-                  <div class="flex items-center gap-2 h-3" v-if="product.original_price">
-                    <span class="text-[10px] text-gray-400 line-through">
-                      {{ formatCurrency(product.original_price) }}
-                    </span>
-                  </div>
+              <div class="mt-auto">
+                <div class="flex items-baseline gap-2 flex-wrap">
+                  <span class="text-base font-bold text-primary">{{ formatCurrency(product.price) }}</span>
+                  <span v-if="product.original_price" class="text-xs text-muted-foreground line-through">
+                    {{ formatCurrency(product.original_price) }}
+                  </span>
                 </div>
                 
                 <!-- Rating -->
-                <div class="flex items-center gap-1 mt-0.5">
-                  <div class="flex text-yellow-400 text-[10px]">
+                <div class="flex items-center gap-1 mt-1.5">
+                  <div class="flex text-yellow-500 text-xs">
                     <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
                   </div>
-                  <span class="text-[10px] text-gray-400">(0)</span>
+                  <span class="text-xs text-muted-foreground">(0)</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div v-else class="text-center py-20 bg-white rounded-lg border">
-          <svg
-            class="mx-auto h-12 w-12 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <h3 class="mt-2 text-sm font-medium text-gray-900">
-            Không tìm thấy sản phẩm
-          </h3>
-          <p class="mt-1 text-sm text-gray-500">
-            Thử thay đổi bộ lọc hoặc tìm kiếm từ khóa khác.
-          </p>
+        <div v-else class="text-center py-20 bg-card rounded-xl border border-border">
+          <div class="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
+            <svg class="h-8 w-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-sm font-semibold text-foreground">Không tìm thấy sản phẩm</h3>
+          <p class="mt-1 text-sm text-muted-foreground">Thử thay đổi bộ lọc hoặc tìm kiếm từ khóa khác.</p>
         </div>
 
         <!-- Pagination -->
@@ -267,7 +223,7 @@
           <button
             @click="goToPage(currentPage - 1)"
             :disabled="currentPage === 1"
-            class="w-9 h-9 flex items-center justify-center rounded border bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-600"
+            class="w-9 h-9 flex items-center justify-center rounded-lg border border-border bg-card hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed text-muted-foreground"
           >
             <svg
               class="w-4 h-4"
@@ -289,10 +245,10 @@
             :key="page"
             @click="goToPage(page)"
             :class="[
-              'w-9 h-9 flex items-center justify-center rounded border font-medium transition-colors',
+              'w-9 h-9 flex items-center justify-center rounded-lg border font-medium transition-all',
               currentPage === page
-                ? 'bg-primary text-white border-primary'
-                : 'bg-white text-gray-600 hover:bg-gray-50',
+                ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                : 'bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground',
             ]"
           >
             {{ page }}
@@ -301,7 +257,7 @@
           <button
             @click="goToPage(currentPage + 1)"
             :disabled="currentPage === totalPages"
-            class="w-9 h-9 flex items-center justify-center rounded border bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-600"
+            class="w-9 h-9 flex items-center justify-center rounded-lg border border-border bg-card hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed text-muted-foreground"
           >
             <svg
               class="w-4 h-4"
@@ -327,7 +283,7 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
-const API_URL = "http://localhost:3000/api";
+const API_URL = import.meta.env.VITE_API_URL;
 const router = useRouter();
 const route = useRoute();
 

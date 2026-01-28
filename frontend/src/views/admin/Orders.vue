@@ -218,7 +218,7 @@ const limit = 10
 const searchQuery = ref('')
 const filterStatus = ref('')
 
-const API_URL = 'http://localhost:3000/api'
+const API_URL = import.meta.env.VITE_API_URL
 
 const fetchOrders = async (page = 1) => {
   loading.value = true

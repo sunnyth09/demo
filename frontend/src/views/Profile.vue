@@ -374,7 +374,7 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const cartStore = useCartStore()
-const API_URL = 'http://localhost:3000/api'
+const API_URL = import.meta.env.VITE_API_URL
 
 const activeTab = ref(route.name === 'orders' ? 'orders' : 'profile')
 const recentOrders = ref([])

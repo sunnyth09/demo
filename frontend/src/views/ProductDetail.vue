@@ -181,7 +181,7 @@ import { useCartStore } from '@/stores/cart'
 const route = useRoute()
 const router = useRouter()
 const cartStore = useCartStore()
-const API_URL = 'http://localhost:3000/api'
+const API_URL = import.meta.env.VITE_API_URL
 
 const product = ref(null)
 

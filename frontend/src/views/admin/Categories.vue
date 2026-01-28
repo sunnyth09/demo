@@ -318,7 +318,7 @@ import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 
-const API_URL = 'http://localhost:3000/api/categories'
+const API_URL = `${import.meta.env.VITE_API_URL}/categories`
 
 const categories = ref([])
 const loading = ref(true)

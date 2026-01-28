@@ -247,7 +247,7 @@ watch(searchQuery, (newVal) => {
 
   searchTimeout = setTimeout(async () => {
     try {
-      const res = await fetch(`http://localhost:3000/api/products?limit=5&search=${encodeURIComponent(newVal)}`)
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/products?limit=5&search=${encodeURIComponent(newVal)}`)
       const json = await res.json()
       if (json.status) {
         suggestions.value.products = json.data
@@ -281,77 +281,6 @@ const handleLogout = () => {
   router.push('/')
 }
 
-// Hàm chuyển đổi danh sách phẳng thành cây phân cấp
-const buildCategoryTree = (flatList) => {
-  const map = {}
-  const tree = []
-  
-  // Khởi tạo map
-  flatList.forEach(item => {
-    map[item.id] = { ...item, subGroups: [], items: [] } // subGroups cho level 2, items cho level 3 (tạm thời mapping)
-  })
-
-  // Xây dựng cây
-  flatList.forEach(item => {
-    if (item.parent_id) {
-      // Nếu có cha
-      if (map[item.parent_id]) {
-        // Nếu cha là root (level 1), thì item là level 2 -> gộp vào subGroups của cha
-        // Tuy nhiên, cấu trúc Navbar hiện tại là: Root -> Group (Title) -> Items (Link)
-        // Nên ta cần xử lý linh hoạt hơn.
-        
-        // GIẢI PHÁP ĐƠN GIẢN CHO UI HIỆN TẠI:
-        // Level 1: Categories Root (Sách Trong Nước...)
-        // Level 2: SubGroups (Văn Học, Kinh Tế...)
-        // Level 3: Items (Tiểu Thuyết...)
-        
-        const parent = map[item.parent_id];
-        
-        // Kiểm tra xem parent có parent không? (để biết parent là level 1 hay 2)
-        if (parent.parent_id) {
-             // Parent là Level 2 (VD: Văn Học), vậy Item là Level 3 (Tiểu Thuyết)
-             // Tìm ông nội (Level 1)
-             const grandpa = map[parent.parent_id];
-             if(grandpa) {
-                 // Tìm group Level 2 trong grandpa tương ứng với parent
-                 let group = grandpa.subGroups.find(g => g.id === parent.id);
-                 if(!group) {
-                     // Nếu chưa có group này trong danh sách subGroups của ông nội, thêm vào (thực ra logic dưới sẽ add)
-                     // Nhưng ở đây ta đang duyệt phẳng, thứ tự không đảm bảo.
-                     // Cách tốt hơn: Duyệt 2 pass.
-                 }
-             }
-        } else {
-            // Parent là Level 1 (VD: Sách Trong Nước), Item là Level 2 (Văn Học)
-            // Thêm item vào subGroups của Parent
-            // Cần format lại item thành cấu trúc { title: 'Văn Học', items: [] }
-            // Kiểm tra xem đã add chưa
-            if (!parent.subGroups.find(g => g.id === item.id)) {
-                parent.subGroups.push(map[item.id]); 
-                // map[item.id] sẽ chứa children của nó (level 3) trong 'subGroups' hoặc ta đổi tên field cho khớp
-            }
-        }
-      }
-    } else {
-      // Root (Level 1)
-      tree.push(map[item.id])
-    }
-  })
-  
-  // Pass 2: Map lại cấu trúc cho đúng UI template
-  // UI expected: categories[{ name: '...', subGroups: [{ title: '...', items: ['...'] }] }]
-  
-  return tree.map(root => ({
-      ...root,
-      subGroups: root.subGroups.map(sub => ({
-          title: sub.name,
-          items: map[sub.id].subGroups.map(child => child.name) // Ở Pass 1, children của Level 2 lại được push vào subGroups của nó do logic đệ quy đơn giản.
-          // Wait, logic trên kia hơi rối với 'subGroups'.
-          // Hãy làm lại logic cây chuẩn: children[]
-      }))
-  }));
-}
-
 // Logic build tree chuẩn
 const buildTreeStandard = (items) => {
     const rootItems = [];
@@ -378,13 +307,11 @@ const buildTreeStandard = (items) => {
 
 const fetchCategories = async () => {
   try {
-    const res = await fetch('http://localhost:3000/api/categories')
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/categories`)
     const json = await res.json()
-    console.log("Raw categories:", json.data);
     
     if (json.status) {
       const tree = buildTreeStandard(json.data);
-      console.log("Tree:", tree);
       
       // Transform tree to UI format
       categories.value = tree.map(root => ({
