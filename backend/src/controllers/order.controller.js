@@ -11,7 +11,8 @@ export const createOrder = async (req, res) => {
       note, 
       payment_method, 
       items, 
-      total_amount 
+      total_amount,
+      shipping_fee 
     } = req.body;
 
     if (!items || items.length === 0) {
@@ -26,7 +27,9 @@ export const createOrder = async (req, res) => {
       shipping_address,
       note,
       payment_method,
-      total_amount
+      total_amount,
+      shipping_fee: shipping_fee || 0,
+      discount_amount: req.body.discount_amount || 0
     };
 
     const order = await OrderService.createOrder(orderData, items);
@@ -109,7 +112,7 @@ export const updateStatus = async (req, res) => {
       return res.status(404).json({ status: false, message: "Đơn hàng không tồn tại" });
     }
 
-    if (currentOrder.status === 'completed') {
+    if (currentOrder.status === 'delivered') {
       return res.status(400).json({ status: false, message: "Đơn hàng đã hoàn thành, không thể thay đổi trạng thái" });
     }
 
@@ -138,6 +141,70 @@ export const getOrderStats = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
+      status: false,
+      message: error.message
+    });
+  }
+};
+
+// User: Get my order by ID
+export const getMyOrderById = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const order = await OrderService.getOrderById(req.params.id);
+    
+    // Check if order belongs to user
+    if (!order || order.user_id !== userId) {
+      return res.status(404).json({
+        status: false,
+        message: "Không tìm thấy đơn hàng"
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      data: order
+    });
+  } catch (error) {
+    res.status(404).json({
+      status: false,
+      message: error.message
+    });
+  }
+};
+
+// User: Cancel my order (only if pending or confirmed)
+export const cancelMyOrder = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const order = await OrderService.getOrderById(req.params.id);
+    
+    // Check if order belongs to user
+    if (!order || order.user_id !== userId) {
+      return res.status(404).json({
+        status: false,
+        message: "Không tìm thấy đơn hàng"
+      });
+    }
+
+    // Only allow cancel if pending or confirmed
+    const cancellableStatuses = ['pending', 'confirmed'];
+    if (!cancellableStatuses.includes(order.status)) {
+      return res.status(400).json({
+        status: false,
+        message: "Đơn hàng đã được xử lý, không thể hủy"
+      });
+    }
+
+    const updatedOrder = await OrderService.updateStatus(req.params.id, 'cancelled');
+    
+    res.status(200).json({
+      status: true,
+      message: "Đã hủy đơn hàng",
+      data: updatedOrder
+    });
+  } catch (error) {
+    res.status(400).json({
       status: false,
       message: error.message
     });

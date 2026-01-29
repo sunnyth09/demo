@@ -8,6 +8,8 @@ const router = express.Router();
 // Routes cho user
 router.post("/", optionalCheckToken, OrderController.createOrder);
 router.get("/my-orders", checkToken, OrderController.getMyOrders);
+router.get("/my-orders/:id", checkToken, OrderController.getMyOrderById);
+router.put("/my-orders/:id/cancel", checkToken, OrderController.cancelMyOrder);
 
 // Routes cho admin
 router.get("/admin", checkToken, checkAdmin, OrderController.getAllOrders);

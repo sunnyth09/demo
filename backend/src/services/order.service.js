@@ -7,15 +7,24 @@ import { Op } from "sequelize";
  * Get order statistics (Admin) - Dashboard V2
  */
 export const getOrderStats = async (days = 7) => {
-  // 1. Basic Counts
+  // 1. Basic Counts - All 9 statuses
   const pending = await Order.count({ where: { status: 'pending' } });
-  const processing = await Order.count({ where: { status: 'processing' } });
-  const shipping = await Order.count({ where: { status: 'shipped' } });
-  const completed = await Order.count({ where: { status: 'completed' } });
+  const confirmed = await Order.count({ where: { status: 'confirmed' } });
+  const packing = await Order.count({ where: { status: 'packing' } });
+  const picked_up = await Order.count({ where: { status: 'picked_up' } });
+  const in_transit = await Order.count({ where: { status: 'in_transit' } });
+  const arrived_hub = await Order.count({ where: { status: 'arrived_hub' } });
+  const out_for_delivery = await Order.count({ where: { status: 'out_for_delivery' } });
+  const delivered = await Order.count({ where: { status: 'delivered' } });
   const cancelled = await Order.count({ where: { status: 'cancelled' } });
   
+  // Legacy counts for backward compatibility
+  const processing = confirmed + packing;
+  const shipping = picked_up + in_transit + arrived_hub + out_for_delivery;
+  const completed = delivered;
+  
   const totalOrders = await Order.count();
-  const totalRevenue = await Order.sum('total_amount', { where: { status: 'completed' } }) || 0;
+  const totalRevenue = await Order.sum('total_amount', { where: { status: 'delivered' } }) || 0;
   
   const totalProducts = await Product.count();
   const totalUsers = await User.count({ where: { role: 'user' } });
@@ -70,7 +79,7 @@ export const getOrderStats = async (days = 7) => {
 
     const dailyRevenue = await Order.sum('total_amount', {
       where: {
-        status: 'completed',
+        status: 'delivered',
         createdAt: {
           [Op.between]: [startOfDay, endOfDay]
         }
@@ -87,10 +96,18 @@ export const getOrderStats = async (days = 7) => {
   return {
     counts: {
       pending,
+      confirmed,
+      packing,
+      picked_up,
+      in_transit,
+      arrived_hub,
+      out_for_delivery,
+      delivered,
+      cancelled,
+      // Legacy
       processing,
       shipping,
       completed,
-      cancelled,
       totalOrders,
       totalRevenue,
       totalProducts,
@@ -116,7 +133,9 @@ export const createOrder = async (orderData, items) => {
       payment_method: orderData.payment_method || 'cod',
       payment_status: 'pending',
       status: 'pending',
-      total_amount: orderData.total_amount
+      total_amount: orderData.total_amount,
+      shipping_fee: orderData.shipping_fee || 0,
+      discount_amount: orderData.discount_amount || 0
     }, { transaction });
 
     // 2. Create Order Items and Update Product Quantity
@@ -200,8 +219,12 @@ export const getAllOrders = async (page = 1, limit = 10, search = '', status = '
       { customer_name: { [Op.like]: `%${search}%` } },
       { customer_phone: { [Op.like]: `%${search}%` } }
     ];
+
+    // Handle order code search (strip # if present and lowercase)
+    const cleanSearch = search.replace('#', '').toLowerCase();
+    searchCondition.push({ order_code: { [Op.like]: `%${cleanSearch}%` } });
     
-    // If search looks like an ID (number), treat it as an ID search too or potential Order Code match if we had one
+    // If search looks like an ID (number), treat it as an ID search too
     if (!isNaN(search)) {
       searchCondition.push({ id: search });
     }
@@ -270,13 +293,32 @@ export const getOrderById = async (orderId) => {
 /**
  * Update order status
  */
-export const updateStatus = async (orderId, status) => {
+export const updateStatus = async (orderId, newStatus) => {
   const order = await Order.findByPk(orderId);
   if (!order) {
     throw new Error(`Đơn hàng #${orderId} không tồn tại`);
   }
+
+  // Map status -> timestamp field
+  const timestampField = {
+    'confirmed': 'confirmed_at',
+    'packing': 'packing_at',
+    'picked_up': 'picked_up_at',
+    'in_transit': 'in_transit_at',
+    'arrived_hub': 'arrived_hub_at',
+    'out_for_delivery': 'out_for_delivery_at',
+    'delivered': 'delivered_at',
+    'cancelled': 'cancelled_at'
+  };
+
+  const updateData = { status: newStatus };
   
-  await order.update({ status });
+  // Record timestamp for the new status
+  if (timestampField[newStatus]) {
+    updateData[timestampField[newStatus]] = new Date();
+  }
+
+  await order.update(updateData);
   return order;
 };
 

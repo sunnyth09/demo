@@ -53,9 +53,56 @@ const Order = sequelize.define('Order', {
     type: DataTypes.DECIMAL(15, 2),
     allowNull: false
   },
+  shipping_fee: {
+    type: DataTypes.DECIMAL(15, 2),
+    defaultValue: 0,
+    allowNull: true
+  },
+  discount_amount: {
+    type: DataTypes.DECIMAL(15, 2),
+    defaultValue: 0,
+    allowNull: true
+  },
+  coupon_code: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   status: {
-    type: DataTypes.STRING, // pending, processing, shipping, completed, cancelled
+    type: DataTypes.STRING, // pending, confirmed, packing, picked_up, in_transit, arrived_hub, out_for_delivery, delivered, cancelled
     defaultValue: 'pending'
+  },
+  // Timestamp fields for tracking
+  confirmed_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  packing_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  picked_up_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  in_transit_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  arrived_hub_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  out_for_delivery_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  delivered_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  cancelled_at: {
+    type: DataTypes.DATE,
+    allowNull: true
   }
 }, {
   tableName: 'orders',

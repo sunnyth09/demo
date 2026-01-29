@@ -196,7 +196,7 @@ const addToCart = () => {
 
 const buyNow = () => {
   if (product.value) {
-    cartStore.addToCart(product.value, quantity.value)
+    cartStore.buyNow(product.value, quantity.value)
     router.push('/checkout')
   }
 }

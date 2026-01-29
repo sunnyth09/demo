@@ -125,28 +125,33 @@
             Phương thức thanh toán
           </h2>
           <div class="space-y-4">
-            <label class="flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-colors" :class="form.paymentMethod === 'cod' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'">
+            <label class="flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-all hover:shadow-sm" :class="form.paymentMethod === 'cod' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:bg-muted/50'">
               <input type="radio" v-model="form.paymentMethod" value="cod" class="w-4 h-4 text-primary" />
-              <span class="text-2xl">💵</span>
+              <div class="w-10 h-10 rounded bg-green-100 flex items-center justify-center text-xl">💵</div>
               <div class="flex-1">
-                <p class="font-medium">Thanh toán khi nhận hàng (COD)</p>
-                <p class="text-sm text-muted-foreground">Thanh toán bằng tiền mặt khi nhận hàng</p>
+                <p class="font-medium text-gray-900">Thanh toán khi nhận hàng (COD)</p>
+                <p class="text-sm text-gray-500">Thanh toán bằng tiền mặt khi nhận hàng</p>
               </div>
             </label>
-            <label class="flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-colors" :class="form.paymentMethod === 'banking' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'">
+            
+            <label class="flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-all hover:shadow-sm" :class="form.paymentMethod === 'banking' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:bg-muted/50'">
               <input type="radio" v-model="form.paymentMethod" value="banking" class="w-4 h-4 text-primary" />
-              <span class="text-2xl">🏦</span>
+              <div class="w-10 h-10 rounded bg-blue-100 flex items-center justify-center text-xl">🏦</div>
               <div class="flex-1">
-                <p class="font-medium">Chuyển khoản ngân hàng</p>
-                <p class="text-sm text-muted-foreground">Chuyển khoản qua Internet Banking / QR Code</p>
+                <p class="font-medium text-gray-900">Chuyển khoản ngân hàng</p>
+                <p class="text-sm text-gray-500">Hỗ trợ QR Code / Tất cả ngân hàng</p>
               </div>
             </label>
-            <label class="flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-colors" :class="form.paymentMethod === 'momo' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'">
+            
+            <label class="flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-all hover:shadow-sm" :class="form.paymentMethod === 'momo' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:bg-muted/50'">
               <input type="radio" v-model="form.paymentMethod" value="momo" class="w-4 h-4 text-primary" />
-              <span class="text-2xl">👛</span>
+              <div class="w-10 h-10 rounded bg-pink-100 flex items-center justify-center text-xl">
+                 <!-- Momo Icon Placeholder (using text/emoji for now, ideally an image) -->
+                 👛
+              </div>
               <div class="flex-1">
-                <p class="font-medium">Ví MoMo</p>
-                <p class="text-sm text-muted-foreground">Thanh toán qua ví điện tử MoMo</p>
+                <p class="font-medium text-gray-900">Ví điện tử MoMo</p>
+                <p class="text-sm text-gray-500">Thanh toán nhanh qua ứng dụng MoMo</p>
               </div>
             </label>
           </div>
@@ -175,6 +180,130 @@
             </div>
           </div>
 
+          <!-- Coupon Selector Trigger -->
+          <div class="py-3 border-y border-dashed border-gray-300 my-4 flex items-center justify-between">
+             <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                 <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                 <line x1="7" y1="7" x2="7.01" y2="7"></line>
+               </svg>
+               Voucher của Shop
+             </div>
+             <div class="flex items-center gap-2">
+               <button 
+                 v-if="appliedCoupon"
+                 @click.stop="removeCoupon"
+                 class="p-1 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 transition-colors"
+                 title="Bỏ chọn Voucher"
+               >
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+               </button>
+               <button 
+                 @click="showVoucherModal = true" 
+                 class="text-sm font-medium text-blue-600 hover:text-blue-700"
+               >
+                 {{ appliedCoupon ? `Đã dùng: ${appliedCoupon}` : 'Chọn Voucher' }}
+               </button>
+             </div>
+          </div>
+
+          <!-- Coupon Modal -->
+          <div v-if="showVoucherModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+             <div class="bg-white rounded-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+                <!-- Header -->
+                <div class="p-4 border-b flex items-center justify-between bg-gray-50">
+                   <h3 class="font-bold text-lg">Chọn Voucher</h3>
+                   <button @click="showVoucherModal = false" class="text-gray-400 hover:text-gray-600">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                   </button>
+                </div>
+
+                <!-- Input Section -->
+                <div class="p-4 bg-gray-50 border-b">
+                   <div class="flex gap-2">
+                      <label class="flex-1 text-sm font-medium text-gray-700 flex items-center gap-2 bg-white border rounded-md px-3 h-10">
+                        <span class="text-gray-500 whitespace-nowrap">Mã Voucher</span>
+                        <input 
+                          v-model="couponInput" 
+                          type="text" 
+                          placeholder="Nhập mã voucher"
+                          class="flex-1 outline-none text-gray-900 bg-transparent"
+                          @keyup.enter="applyCoupon(couponInput)"
+                        />
+                      </label>
+                      <button 
+                         @click="applyCoupon(couponInput)"
+                         :disabled="!couponInput"
+                         class="px-4 h-10 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary/90 disabled:opacity-50"
+                      >
+                         ÁP DỤNG
+                      </button>
+                   </div>
+                </div>
+
+                <!-- Voucher List -->
+                <div class="flex-1 overflow-y-auto p-4 bg-gray-100 min-h-[300px]">
+                   <p class="text-xs text-gray-500 mb-3 font-medium">Mã giảm giá có sẵn</p>
+                   
+                  <div class="space-y-3">
+                      <div v-if="availableCoupons.length === 0" class="text-center py-8 text-gray-400 text-sm">
+                        Hiện chưa có mã giảm giá nào khả dụng
+                      </div>
+
+                      <div 
+                        v-for="coupon in availableCoupons" 
+                        :key="coupon.id"
+                        class="bg-white rounded-lg border flex overflow-hidden shadow-sm relative group hover:border-primary transition-colors"
+                      >
+                         <!-- Left Ticket Part -->
+                         <div 
+                           class="w-24 flex flex-col items-center justify-center text-white border-r border-dashed border-white relative p-2 text-center"
+                           :class="coupon.type === 'free_shipping' ? 'bg-green-500' : 'bg-primary'"
+                         >
+                            <span class="text-[10px] uppercase mb-1 font-semibold opacity-90">
+                              {{ coupon.type === 'free_shipping' ? 'Mã' : 'GIẢM' }}
+                            </span>
+                            <span class="font-bold text-xl leading-none">
+                              {{ coupon.type === 'percentage' ? `${Number(coupon.value)}%` : (coupon.type === 'free_shipping' ? 'FREE' : `${Number(coupon.value)/1000}K`) }}
+                            </span>
+                            <span v-if="coupon.type === 'free_shipping'" class="text-[10px] font-bold mt-1">SHIP</span>
+                            
+                            <!-- Circles for ticket effect -->
+                            <div class="absolute -top-2 -right-2 w-4 h-4 bg-gray-100 rounded-full"></div>
+                            <div class="absolute -bottom-2 -right-2 w-4 h-4 bg-gray-100 rounded-full"></div>
+                         </div>
+                         <!-- Content -->
+                         <div class="flex-1 p-3 flex flex-col justify-center">
+                            <h4 class="font-bold text-sm line-clamp-1">{{ coupon.description || coupon.code }}</h4>
+                            <p class="text-xs text-gray-500 mt-1">Mã: <strong class="text-gray-700">{{ coupon.code }}</strong></p>
+                            <p class="text-[10px] text-gray-400 mt-0.5" v-if="coupon.min_order_amount > 0">
+                              Đơn tối thiểu: {{ formatCurrency(coupon.min_order_amount) }}
+                            </p>
+                            
+                            <div class="flex items-center justify-between mt-2">
+                               <span class="text-[10px] text-gray-500 bg-gray-100 px-1 py-0.5 rounded">
+                                 HSD: {{ new Date(coupon.end_date).toLocaleDateString('vi-VN') }}
+                               </span>
+                               <button 
+                                 @click="applyCoupon(coupon.code)" 
+                                 class="text-sm font-medium text-blue-600 hover:underline disabled:opacity-50 disabled:no-underline"
+                                 :disabled="subtotal < coupon.min_order_amount"
+                               >
+                                 {{ subtotal < coupon.min_order_amount ? 'Chưa đạt' : 'Dùng ngay' }}
+                               </button>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="p-4 border-t bg-white flex justify-end">
+                   <button @click="showVoucherModal = false" class="px-6 py-2 border rounded-md hover:bg-gray-50 font-medium">Đóng</button>
+                </div>
+             </div>
+          </div>
+
           <div class="space-y-3 text-sm border-t border-border pt-4">
             <div class="flex justify-between">
               <span class="text-muted-foreground">Tạm tính</span>
@@ -186,7 +315,7 @@
             </div>
             <div class="flex justify-between">
               <span class="text-muted-foreground">Giảm giá</span>
-              <span class="text-green-600">-{{ formatCurrency(discount) }}</span>
+              <span class="text-green-600">-{{ formatCurrency(appliedDiscount) }}</span>
             </div>
             <div class="border-t border-border pt-3 flex justify-between font-semibold text-lg">
               <span>Tổng cộng</span>
@@ -311,7 +440,14 @@ watch(selectedWard, (newVal) => {
 const shippingFee = ref(0)
 const discount = ref(0)
 
-const total = computed(() => subtotal.value + shippingFee.value - discount.value)
+const appliedDiscount = computed(() => {
+  const maxDiscount = subtotal.value + shippingFee.value
+  return Math.min(discount.value, maxDiscount)
+})
+
+const total = computed(() => {
+  return Math.max(0, subtotal.value + shippingFee.value - appliedDiscount.value)
+})
 
 const formatCurrency = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value)
 
@@ -372,6 +508,105 @@ const selectAddress = (addr) => {
   }
 }
 
+
+// Watchers for shipping calculation
+const calculateFee = async () => {
+    if (!form.value.city) {
+        shippingFee.value = 0
+        return
+    }
+    
+    try {
+        const res = await fetch(`${API_URL}/shipping/calculate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                province: form.value.city,
+                district: form.value.district,
+                order_total: subtotal.value
+            })
+        })
+        const data = await res.json()
+        if (data.status) {
+            shippingFee.value = data.data.shipping_fee
+        }
+    } catch (e) {
+        console.error('Error calculating shipping:', e)
+    }
+}
+
+watch(() => [form.value.city, form.value.district, subtotal.value], () => {
+    calculateFee()
+}, { deep: true })
+
+// Existing watchers need to be preserved or merged? 
+// The existing watchers update form values. My new watcher listens to form values.
+// So it should chain correctly.
+
+const couponCode = ref('') // Legacy ref, keep for safety or refactor
+const couponInput = ref('')
+const showVoucherModal = ref(false)
+const appliedCoupon = ref('')
+const isCheckingCoupon = ref(false)
+
+const availableCoupons = ref([])
+
+const fetchAvailableCoupons = async () => {
+    try {
+        const res = await fetch(`${API_URL}/coupons?active=true`)
+        const data = await res.json()
+        if (data.status) {
+            availableCoupons.value = data.data
+        }
+    } catch(e) { console.error(e) }
+}
+
+const applyCoupon = async (code) => {
+    const codeToApply = code || couponInput.value
+    if (!codeToApply || !codeToApply.trim()) return
+    
+    isCheckingCoupon.value = true
+    
+    try {
+        const res = await fetch(`${API_URL}/coupons/apply`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                code: codeToApply,
+                order_total: subtotal.value,
+                shipping_fee: shippingFee.value
+            })
+        })
+        const data = await res.json()
+        
+        if (data.status) {
+            const result = data.data
+            discount.value = result.discountAmount
+            appliedCoupon.value = result.coupon.code
+            showVoucherModal.value = false
+            // alert('Áp dụng mã giảm giá thành công')
+        } else {
+            alert(data.message || 'Mã giảm giá không hợp lệ')
+            discount.value = 0
+            appliedCoupon.value = ''
+        }
+    } catch (e) {
+        console.error(e)
+        alert('Lỗi kết nối khi kiểm tra mã giảm giá')
+    } finally {
+        isCheckingCoupon.value = false
+    }
+}
+
+const removeCoupon = () => {
+    appliedCoupon.value = ''
+    discount.value = 0
+}
+
+watch(showVoucherModal, (val) => {
+    if (val) fetchAvailableCoupons()
+})
+
 const handleCheckout = async () => {
   if (checkoutItems.value.length === 0) {
     alert('Vui lòng chọn sản phẩm để thanh toán')
@@ -421,6 +656,8 @@ const handleCheckout = async () => {
       note: form.value.note,
       payment_method: form.value.paymentMethod,
       total_amount: total.value,
+      shipping_fee: shippingFee.value,
+      discount_amount: appliedDiscount.value, // Add discount to order (capped)
       items: checkoutItems.value.map(item => ({
         id: item.id,
         quantity: item.quantity

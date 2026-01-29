@@ -39,10 +39,14 @@
          <span class="text-sm font-medium">Trạng thái:</span>
          <select v-model="filterStatus" @change="fetchOrders(1)" class="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
             <option value="">Tất cả trạng thái</option>
-            <option value="pending">Chờ xử lý</option>
-            <option value="processing">Đang đóng gói</option>
-            <option value="shipped">Đang giao</option>
-            <option value="completed">Hoàn thành</option>
+            <option value="pending">Chờ xác nhận</option>
+            <option value="confirmed">Đã xác nhận</option>
+            <option value="packing">Đang đóng gói</option>
+            <option value="picked_up">Đã giao ĐVVC</option>
+            <option value="in_transit">Đang vận chuyển</option>
+            <option value="arrived_hub">Đã đến kho</option>
+            <option value="out_for_delivery">Đang giao hàng</option>
+            <option value="delivered">Giao thành công</option>
             <option value="cancelled">Đã hủy</option>
          </select>
       </div>
@@ -80,22 +84,13 @@
             <td class="p-4 text-sm">{{ order.customer_name }}</td>
             <td class="p-4 text-sm font-medium">{{ formatCurrency(order.total_amount) }}</td>
             <td class="p-4">
-               <select 
-                 :value="order.status" 
-                 @change="e => updateStatus(order.id, e.target.value)"
-                 class="px-2 py-1 rounded border text-xs disabled:opacity-50 disabled:bg-gray-100"
-                 :disabled="order.status === 'completed'"
-               >
-                 <option value="pending">Chờ xử lý</option>
-                 <option value="processing">Đang đóng gói</option>
-                 <option value="shipped">Đang giao</option>
-                 <option value="completed">Hoàn thành</option>
-                 <option value="cancelled">Đã hủy</option>
-               </select>
+               <span :class="['px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap', getStatusClass(order.status)]">
+                 {{ getStatusLabel(order.status) }}
+               </span>
             </td>
             <td class="p-4 text-sm text-muted-foreground">{{ formatDate(order.createdAt) }}</td>
             <td class="p-4 text-right">
-              <button @click="openOrderModal(order)" class="text-sm text-primary hover:underline">Chi tiết</button>
+              <router-link :to="`/admin/orders/${order.id}`" class="text-sm text-primary hover:underline">Chi tiết</router-link>
             </td>
           </tr>
           <tr v-if="orders.length === 0" class="border-t border-border">
@@ -274,11 +269,41 @@ const openOrderModal = (order) => {
 }
 
 const getStatusClass = (status) => {
-  switch (status) {
-    case 'Hoàn thành': return 'bg-green-100 text-green-700'
-    case 'Đang giao': return 'bg-blue-100 text-blue-700'
-    default: return 'bg-gray-100 text-gray-700'
+  const map = {
+    'pending': 'bg-gray-100 text-gray-700',
+    'confirmed': 'bg-blue-100 text-blue-700',
+    'packing': 'bg-yellow-100 text-yellow-700',
+    'picked_up': 'bg-orange-100 text-orange-700',
+    'in_transit': 'bg-indigo-100 text-indigo-700',
+    'arrived_hub': 'bg-purple-100 text-purple-700',
+    'out_for_delivery': 'bg-cyan-100 text-cyan-700',
+    'delivered': 'bg-green-100 text-green-700',
+    'cancelled': 'bg-red-100 text-red-700',
+    // Legacy status support
+    'processing': 'bg-yellow-100 text-yellow-700',
+    'shipped': 'bg-blue-100 text-blue-700',
+    'completed': 'bg-green-100 text-green-700'
   }
+  return map[status] || 'bg-gray-100 text-gray-700'
+}
+
+const getStatusLabel = (status) => {
+  const map = {
+    'pending': 'Chờ xác nhận',
+    'confirmed': 'Đã xác nhận',
+    'packing': 'Đang đóng gói',
+    'picked_up': 'Đã giao ĐVVC',
+    'in_transit': 'Đang vận chuyển',
+    'arrived_hub': 'Đã đến kho',
+    'out_for_delivery': 'Đang giao hàng',
+    'delivered': 'Giao thành công',
+    'cancelled': 'Đã hủy',
+    // Legacy status support
+    'processing': 'Đang xử lý',
+    'shipped': 'Đang giao hàng',
+    'completed': 'Hoàn thành'
+  }
+  return map[status] || status
 }
 
 const updateStatus = async (orderId, newStatus) => {

@@ -103,7 +103,7 @@
             <a v-if="activeTab === 'profile'" href="#" @click.prevent="activeTab = 'orders'" class="text-sm text-primary hover:underline">Xem tất cả</a>
           </div>
           <div v-if="recentOrders.length > 0" class="space-y-4">
-            <div v-for="order in recentOrders" :key="order.id" @click="openOrderModal(order)" class="border rounded-lg p-5 hover:shadow-md transition-all cursor-pointer bg-white group">
+            <router-link v-for="order in recentOrders" :key="order.id" :to="`/orders/${order.id}`" class="border rounded-lg p-5 hover:shadow-md transition-all cursor-pointer bg-white group block">
               <div class="flex items-center gap-6">
                 <!-- Col 1: Basic Info -->
                 <div class="w-[200px] shrink-0">
@@ -133,14 +133,14 @@
                    
                    <button 
                     v-if="order.status === 'cancelled'"
-                    @click.stop="repurchase(order)"
+                    @click.prevent="repurchase(order)"
                     class="mt-1 text-xs px-3 py-1.5 bg-gray-900 text-white rounded hover:bg-gray-800 transition-colors"
                    >
                     Mua lại
                   </button>
                 </div>
               </div>
-            </div>
+            </router-link>
           </div>
           <div v-else class="text-center py-12">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
@@ -326,7 +326,7 @@
               <div class="flex justify-between w-full">
                 <div v-for="(step, index) in trackingSteps" :key="index" class="flex flex-col items-center gap-2">
                    <div 
-                      class="w-10 h-10 rounded-full flex items-center justify-center border-2 bg-white transition-all duration-300 z-10"
+                      class="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 z-10"
                       :class="getStepCircleClass(index)"
                    >
                       <component :is="step.icon" class="w-5 h-5" />
@@ -810,45 +810,66 @@ const formatDate = (dateStr) => {
 }
 
 const getStatusClass = (status) => {
-  switch (status) {
-    case 'completed': return 'bg-green-100 text-green-700'
-    case 'shipped': return 'bg-blue-100 text-blue-700' // backend dùng 'shipped' cho 'Đang giao' ? Cần check lại backend
-    case 'processing': return 'bg-yellow-100 text-yellow-800'
-    case 'pending': return 'bg-gray-100 text-gray-700'
-    case 'cancelled': return 'bg-red-100 text-red-700'
-    default: return 'bg-gray-100 text-gray-700'
+  const map = {
+    'pending': 'bg-gray-100 text-gray-700',
+    'confirmed': 'bg-blue-100 text-blue-700',
+    'packing': 'bg-yellow-100 text-yellow-700',
+    'picked_up': 'bg-orange-100 text-orange-700',
+    'in_transit': 'bg-indigo-100 text-indigo-700',
+    'arrived_hub': 'bg-purple-100 text-purple-700',
+    'out_for_delivery': 'bg-cyan-100 text-cyan-700',
+    'delivered': 'bg-green-100 text-green-700',
+    'cancelled': 'bg-red-100 text-red-700',
+    // Legacy status support
+    'processing': 'bg-yellow-100 text-yellow-700',
+    'shipped': 'bg-blue-100 text-blue-700',
+    'completed': 'bg-green-100 text-green-700'
   }
+  return map[status] || 'bg-gray-100 text-gray-700'
 }
 
 const getStatusLabel = (status) => {
   const map = {
-    'pending': 'Chờ xử lý',
-    'processing': 'Đã xác nhận',
+    'pending': 'Chờ xác nhận',
+    'confirmed': 'Đã xác nhận',
+    'packing': 'Đang đóng gói',
+    'picked_up': 'Đã giao ĐVVC',
+    'in_transit': 'Đang vận chuyển',
+    'arrived_hub': 'Đã đến kho',
+    'out_for_delivery': 'Đang giao hàng',
+    'delivered': 'Giao thành công',
+    'cancelled': 'Đã hủy',
+    // Legacy status support
+    'processing': 'Đang xử lý',
     'shipped': 'Đang giao hàng',
-    'completed': 'Giao hàng thành công',
-    'cancelled': 'Đã hủy'
+    'completed': 'Hoàn thành'
   }
   return map[status] || status
 }
 
-// Timeline Logic
+// Timeline Logic (keeping for modal, but order detail page is preferred)
 const trackingSteps = [
   { key: 'pending', label: 'Đặt hàng', icon: ClipboardList, time: '' },
-  { key: 'processing', label: 'Đã xác nhận', icon: Package, time: '' },
-  { key: 'shipped', label: 'Đang giao', icon: Truck, time: '' },
-  { key: 'completed', label: 'Hoàn thành', icon: CheckCircle2, time: '' }
+  { key: 'confirmed', label: 'Xác nhận', icon: Package, time: '' },
+  { key: 'picked_up', label: 'Đã giao ĐVVC', icon: Truck, time: '' },
+  { key: 'delivered', label: 'Hoàn thành', icon: CheckCircle2, time: '' }
 ]
 
 const currentStepIndex = computed(() => {
   if (!selectedOrder.value || !selectedOrder.value.status) return 0
   
-  // Custom mapping status backend to step index
   const status = selectedOrder.value.status
-  if (status === 'pending') return 0
-  if (status === 'processing') return 1
-  if (status === 'shipping' || status === 'shipped') return 2 // Handle both likely cases
-  if (status === 'completed') return 3
-  return 0
+  const map = {
+    'pending': 0,
+    'confirmed': 1,
+    'packing': 1,
+    'picked_up': 2,
+    'in_transit': 2,
+    'arrived_hub': 2,
+    'out_for_delivery': 2,
+    'delivered': 3
+  }
+  return map[status] ?? 0
 })
 
 const trackingProgress = computed(() => {
@@ -856,39 +877,60 @@ const trackingProgress = computed(() => {
 })
 
 const getStatusMessage = (status) => {
-  switch (status) {
-    case 'pending': return 'Đơn hàng đang chờ xác nhận';
-    case 'processing': return 'Đơn hàng đã được xác nhận và đang đóng gói';
-    case 'shipping': 
-    case 'shipped': return 'Shipper đang giao hàng đến bạn 🛵';
-    case 'completed': return 'Giao hàng thành công. Cảm ơn bạn!';
-    case 'cancelled': return 'Đơn hàng đã bị hủy';
-    default: return 'Trạng thái đơn hàng đang được cập nhật';
+  const map = {
+    'pending': 'Đơn hàng đang chờ xác nhận',
+    'confirmed': 'Đơn hàng đã được xác nhận',
+    'packing': 'Shop đang đóng gói đơn hàng',
+    'picked_up': 'Đơn hàng đã giao cho đơn vị vận chuyển',
+    'in_transit': 'Đơn hàng đang vận chuyển',
+    'arrived_hub': 'Đơn hàng đã đến kho gần bạn',
+    'out_for_delivery': 'Shipper đang giao hàng đến bạn 🛵',
+    'delivered': 'Giao hàng thành công. Cảm ơn bạn!',
+    'cancelled': 'Đơn hàng đã bị hủy',
+    // Legacy
+    'processing': 'Đơn hàng đang được xử lý',
+    'shipped': 'Đơn hàng đang giao đến bạn 🛵',
+    'completed': 'Giao hàng thành công. Cảm ơn bạn!'
   }
+  return map[status] || 'Trạng thái đang được cập nhật'
 }
 
 const getStatusIcon = (status) => {
-  switch (status) {
-    case 'pending': return ClipboardList;
-    case 'processing': return Package;
-    case 'shipping': 
-    case 'shipped': return Truck;
-    case 'completed': return CheckCircle2;
-    case 'cancelled': return XCircle;
-    default: return ClipboardList;
+  const map = {
+    'pending': ClipboardList,
+    'confirmed': Package,
+    'packing': Package,
+    'picked_up': Truck,
+    'in_transit': Truck,
+    'arrived_hub': Package,
+    'out_for_delivery': Truck,
+    'delivered': CheckCircle2,
+    'cancelled': XCircle,
+    // Legacy
+    'processing': Package,
+    'shipped': Truck,
+    'completed': CheckCircle2
   }
+  return map[status] || ClipboardList
 }
 
 const getStatusColor = (status) => {
-  switch (status) {
-     case 'pending': return 'text-gray-500';
-     case 'processing': return 'text-yellow-600';
-     case 'shipping': 
-     case 'shipped': return 'text-blue-600';
-     case 'completed': return 'text-green-600';
-     case 'cancelled': return 'text-red-500';
-     default: return 'text-gray-500';
+  const map = {
+    'pending': 'text-gray-500',
+    'confirmed': 'text-blue-600',
+    'packing': 'text-yellow-600',
+    'picked_up': 'text-orange-600',
+    'in_transit': 'text-indigo-600',
+    'arrived_hub': 'text-purple-600',
+    'out_for_delivery': 'text-cyan-600',
+    'delivered': 'text-green-600',
+    'cancelled': 'text-red-500',
+    // Legacy
+    'processing': 'text-yellow-600',
+    'shipped': 'text-blue-600',
+    'completed': 'text-green-600'
   }
+  return map[status] || 'text-gray-500'
 }
 
 // === Helpers for Mini Tracking (Outside - Deprecated but kept for reference if needed, can remove) ===
@@ -896,7 +938,7 @@ const getStatusColor = (status) => {
 const getStepCircleClass = (index) => {
   if (index < currentStepIndex.value) return 'border-primary bg-primary text-white' // Passed steps
   if (index === currentStepIndex.value) return 'border-primary bg-white text-primary ring-4 ring-primary/20' // Current step
-  return 'border-gray-200 text-gray-400' // Future steps
+  return 'border-gray-200 bg-white text-gray-400' // Future steps
 }
 
 const getStepTextClass = (index) => {

@@ -47,20 +47,14 @@
         <div class="flex items-center gap-4">
           <h1 class="text-lg font-semibold">{{ currentPageTitle }}</h1>
         </div>
-        <div class="flex items-center gap-4">
-          <button class="relative p-2 rounded-md hover:bg-accent transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
-            </svg>
-            <span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive"></span>
-          </button>
-          <router-link to="/">
-            <button class="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              ← Về trang chủ
-            </button>
-          </router-link>
-        </div>
-      </header>
+          <div class="flex items-center gap-4">
+             <router-link to="/">
+               <button class="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                 ← Về trang chủ
+               </button>
+             </router-link>
+          </div>
+       </header>
 
       <!-- Page Content -->
       <div class="p-6">
@@ -82,6 +76,8 @@ const menuItems = [
   { name: 'Sản phẩm', path: '/admin/products', icon: 'IconProducts' },
   { name: 'Danh mục', path: '/admin/categories', icon: 'IconCategories' },
   { name: 'Người dùng', path: '/admin/users', icon: 'IconUsers' },
+  { name: 'Phí vận chuyển', path: '/admin/shipping', icon: 'IconShipping' },
+  { name: 'Mã giảm giá', path: '/admin/coupons', icon: 'IconCoupons' },
   { name: 'Thống kê', path: '/admin/revenue', icon: 'IconRevenue' },
   { name: 'Cài đặt', path: '/admin/settings', icon: 'IconSettings' },
 ]
@@ -110,7 +106,13 @@ const IconOrders = {
 const IconUsers = {
   template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>`
 }
+const IconCoupons = {
+  template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" /></svg>`
+}
 const IconSettings = {
   template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>`
+}
+const IconShipping = {
+  template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/><path d="M14 9h4l4 4v4c0 .6-.4 1-1 1h-2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>`
 }
 </script>

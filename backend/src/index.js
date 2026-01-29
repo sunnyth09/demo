@@ -12,7 +12,7 @@ const startServer = async () => {
     
     // Sync database (tự động cập nhật schema khi model thay đổi)
     // Lưu ý: Chỉ sync trong development. Production nên dùng migrations
-    await syncDatabase({ alter: true });
+    await syncDatabase({ alter: false });
     
     // Start Express server
     app.listen(PORT, () => {

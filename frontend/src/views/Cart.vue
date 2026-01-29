@@ -55,10 +55,21 @@
                   <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
                 </svg>
               </button>
-              <div class="flex items-center gap-1">
-                <button @click="updateQuantity(item.id, -1)" class="w-6 h-6 text-sm rounded border border-input hover:bg-accent transition-colors">-</button>
-                <span class="w-6 text-center text-sm font-medium">{{ item.quantity }}</span>
-                <button @click="updateQuantity(item.id, 1)" class="w-6 h-6 text-sm rounded border border-input hover:bg-accent transition-colors">+</button>
+              <div class="flex items-center border border-gray-300 rounded-lg">
+                <button 
+                  @click="updateQuantity(item.id, -1)" 
+                  class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                  :disabled="item.quantity <= 1"
+                >
+                  -
+                </button>
+                <span class="w-10 text-center text-sm font-medium border-x border-gray-300 py-1">{{ item.quantity }}</span>
+                <button 
+                  @click="updateQuantity(item.id, 1)" 
+                  class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  +
+                </button>
               </div>
             </div>
           </div>
@@ -74,25 +85,23 @@
             <span class="text-muted-foreground">Tạm tính</span>
             <span>{{ formatCurrency(subtotal) }}</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-muted-foreground">Phí vận chuyển</span>
-            <span>{{ shippingFee === 0 ? 'Miễn phí' : formatCurrency(shippingFee) }}</span>
-          </div>
-          <div class="flex justify-between">
+          <!--
+          <div v-if="discount > 0" class="flex justify-between">
              <span class="text-muted-foreground">Giảm giá</span>
              <span class="text-green-600">-{{ formatCurrency(discount) }}</span>
           </div>
+          -->
           <div class="border-t border-border pt-3 flex justify-between font-semibold text-lg">
              <span>Tổng cộng</span>
              <span class="text-primary">{{ formatCurrency(total) }}</span>
           </div>
+          <p class="text-xs text-muted-foreground italic text-right mt-1">
+            * Phí vận chuyển sẽ được tính tại trang thanh toán
+          </p>
         </div>
 
         <div class="mt-6 space-y-3">
-          <div class="flex gap-2">
-            <input type="text" v-model="couponCode" placeholder="Mã giảm giá" class="flex-1 h-10 px-4 rounded-md border border-input bg-background" />
-            <button class="h-10 px-4 rounded-md border border-input hover:bg-accent transition-colors">Áp dụng</button>
-          </div>
+          <!-- Coupon Removed -->
           <button 
             @click="goToCheckout"
             :disabled="subtotal === 0" 
@@ -121,7 +130,8 @@ const couponCode = ref('')
 const shippingFee = ref(0)
 const discount = ref(0) // Tạm thời để 0
 
-const total = computed(() => subtotal.value + shippingFee.value - discount.value)
+// Total in cart only includes subtotal - discount (shipping added at checkout)
+const total = computed(() => subtotal.value - discount.value)
 
 const isAllSelected = computed(() => {
 return cartItems.value.length > 0 && cartItems.value.every(item => item.selected !== false)

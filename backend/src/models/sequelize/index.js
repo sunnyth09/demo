@@ -5,6 +5,8 @@ import User from './User.js';
 import Address from './Address.js';
 import Order from './Order.js';
 import OrderItem from './OrderItem.js';
+import ShippingZone from './ShippingZone.js';
+import Coupon from './Coupon.js';
 
 // ========== ĐỊNH NGHĨA QUAN HỆ GIỮA CÁC MODELS ==========
 
@@ -75,7 +77,7 @@ export const syncDatabase = async (options = {}) => {
   try {
     // Mặc định dùng alter: true để cập nhật schema mà không mất dữ liệu
     const syncOptions = {
-      alter: true, // Tự động cập nhật schema khi có thay đổi
+      alter: false, // Tự động cập nhật schema khi có thay đổi
       ...options
     };
     
@@ -88,4 +90,5 @@ export const syncDatabase = async (options = {}) => {
 };
 
 // Export tất cả models
-export { sequelize, Category, Product, User, Address, Order, OrderItem };
+export { sequelize, Category, Product, User, Address, Order, OrderItem, ShippingZone, Coupon };
+
