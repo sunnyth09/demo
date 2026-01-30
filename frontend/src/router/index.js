@@ -21,6 +21,8 @@ import AdminOrders from '@/views/admin/Orders.vue'
 import AdminUsers from '@/views/admin/Users.vue'
 import AdminSettings from '@/views/admin/Settings.vue'
 import AdminRevenue from '@/views/admin/RevenueAnalytics.vue'
+import AdminArticles from '@/views/admin/Articles.vue'
+import AdminArticleForm from '@/views/admin/ArticleForm.vue'
 
 const routes = [
   // User routes - with UserLayout (Navbar + Footer)
@@ -39,6 +41,8 @@ const routes = [
       { path: 'profile', name: 'profile', component: () => import('@/views/Profile.vue'), meta: { title: 'Tài khoản' } },
       { path: 'orders', name: 'orders', component: () => import('@/views/Profile.vue'), meta: { title: 'Đơn hàng của tôi' } },
       { path: 'orders/:id', name: 'order-detail', component: () => import('@/views/OrderDetail.vue'), meta: { title: 'Chi tiết đơn hàng' } },
+      { path: 'articles', name: 'articles', component: () => import('@/views/Articles.vue'), meta: { title: 'Góc đọc sách' } },
+      { path: 'articles/:id', name: 'article-detail', component: () => import('@/views/ArticleDetail.vue'), meta: { title: 'Chi tiết bài viết' } },
     ]
   },
 
@@ -52,6 +56,9 @@ const routes = [
       { path: 'products', name: 'admin-products', component: AdminProducts, meta: { title: 'Sản phẩm' } },
       { path: 'products/create', name: 'admin-products-create', component: AdminProductForm, meta: { title: 'Thêm sản phẩm' } },
       { path: 'products/edit/:id', name: 'admin-products-edit', component: AdminProductForm, meta: { title: 'Sửa sản phẩm' } },
+      { path: 'articles', name: 'admin-articles', component: AdminArticles, meta: { title: 'Bài viết' } },
+      { path: 'articles/create', name: 'admin-articles-create', component: AdminArticleForm, meta: { title: 'Viết bài mới' } },
+      { path: 'articles/edit/:id', name: 'admin-articles-edit', component: AdminArticleForm, meta: { title: 'Sửa bài viết' } },
       { path: 'categories', name: 'admin-categories', component: AdminCategories, meta: { title: 'Danh mục' } },
       { path: 'orders', name: 'admin-orders', component: AdminOrders, meta: { title: 'Đơn hàng' } },
       { path: 'orders/:id', name: 'admin-order-detail', component: () => import('@/views/admin/OrderDetail.vue'), meta: { title: 'Chi tiết đơn hàng' } },

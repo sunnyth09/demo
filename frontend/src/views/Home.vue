@@ -435,14 +435,19 @@
             <h2 class="text-2xl md:text-3xl font-bold text-foreground">Góc đọc sách</h2>
             <p class="text-muted-foreground mt-1 text-sm md:text-base">Cập nhật tin tức, review và bí quyết đọc sách hiệu quả</p>
           </div>
-          <button class="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1 group">
+          <router-link to="/articles" class="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1 group">
             Xem thêm
             <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-          </button>
+          </router-link>
         </div>
 
         <div class="grid md:grid-cols-3 gap-6">
-          <div v-for="(blog, i) in blogPosts" :key="i" class="bg-card rounded-xl overflow-hidden border border-border hover:shadow-lg transition-all duration-300 group">
+          <div 
+            v-for="blog in blogPosts" 
+            :key="blog.id" 
+            @click="router.push(`/articles/${blog.id}`)"
+            class="bg-card rounded-xl overflow-hidden border border-border hover:shadow-lg transition-all duration-300 group cursor-pointer"
+          >
             <div class="aspect-[16/10] relative overflow-hidden">
               <img 
                 :src="blog.image" 
@@ -455,7 +460,7 @@
             </div>
             <div class="p-5">
               <p class="text-xs text-muted-foreground mb-2">{{ blog.date }}</p>
-              <h3 class="font-semibold text-card-foreground mb-2 leading-snug group-hover:text-primary transition-colors cursor-pointer line-clamp-2 text-sm md:text-base">
+              <h3 class="font-semibold text-card-foreground mb-2 leading-snug group-hover:text-primary transition-colors line-clamp-2 text-sm md:text-base">
                 {{ blog.title }}
               </h3>
               <p class="text-xs text-muted-foreground line-clamp-2 mb-4">
@@ -554,35 +559,7 @@ const loading = ref(true);
 const activeTab = ref('new_arrival');
 
 // Blog Posts Data
-const blogPosts = ref([
-  {
-    title: 'Top 10 cuốn sách thay đổi tư duy làm giàu năm 2026',
-    excerpt: 'Khám phá những tựa sách kinh tế bán chạy nhất tuần qua và bài học rút ra từ chúng...',
-    image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=600',
-    date: '27 T1, 2026',
-    category: 'Review Sách',
-    author: 'Minh Anh',
-    authorAvatar: 'https://i.pravatar.cc/100?img=47'
-  },
-  {
-    title: '5 thói quen đọc sách hiệu quả của người thành công',
-    excerpt: 'Tại sao những người thành đạt luôn dành thời gian đọc sách mỗi ngày?',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600',
-    date: '25 T1, 2026',
-    category: 'Kinh nghiệm',
-    author: 'Thu Hằng',
-    authorAvatar: 'https://i.pravatar.cc/100?img=32'
-  },
-  {
-    title: 'Sách thiếu nhi hay nhất cho bé từ 3-7 tuổi',
-    excerpt: 'Danh sách những cuốn sách giúp phát triển trí tuệ và cảm xúc cho trẻ nhỏ...',
-    image: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&q=80&w=600',
-    date: '22 T1, 2026',
-    category: 'Sách Thiếu Nhi',
-    author: 'Quốc Bảo',
-    authorAvatar: 'https://i.pravatar.cc/100?img=15'
-  }
-]);
+const blogPosts = ref([]);
 
 // Typewriter Effect
 const typewriterText = ref('');
@@ -667,16 +644,31 @@ const addToCart = (product) => {
 const fetchData = async () => {
   loading.value = true;
   try {
-    const [catRes, prodRes] = await Promise.all([
+    const [catRes, prodRes, articleRes] = await Promise.all([
       fetch(`${API_URL}/categories`),
-      fetch(`${API_URL}/products?limit=20&sort=newest`)
+      fetch(`${API_URL}/products?limit=20&sort=newest`),
+      fetch(`${API_URL}/articles?limit=3&status=published`)
     ]);
 
     const catJson = await catRes.json();
     const prodJson = await prodRes.json();
+    const articleJson = await articleRes.json();
 
     if (catJson.status) categories.value = catJson.data || [];
     if (prodJson.status) products.value = prodJson.data || [];
+    
+    if (articleJson.status) {
+      blogPosts.value = articleJson.data.map(article => ({
+        id: article.id,
+        title: article.title,
+        excerpt: article.excerpt || '',
+        image: article.thumbnail || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=600',
+        date: new Date(article.createdAt).toLocaleDateString('vi-VN'),
+        category: 'Tin tức', // Default category
+        author: 'Admin', // Default author
+        authorAvatar: 'https://ui-avatars.com/api/?name=Admin&background=random'
+      }));
+    }
 
   } catch (error) {
     console.error("Error fetching home data:", error);

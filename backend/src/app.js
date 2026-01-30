@@ -12,6 +12,7 @@ import orderRoute from "./routes/order.route.js";
 import revenueRoute from "./routes/revenue.route.js";
 import shippingRoute from "./routes/shipping.route.js";
 import couponRoute from "./routes/coupon.route.js";
+import articleRoute from "./routes/article.route.js";
 
 import { initBucket } from "./services/minio.service.js";
 
@@ -41,6 +42,7 @@ app.use("/api/orders", orderRoute);
 app.use("/api/revenue", revenueRoute);
 app.use("/api/shipping", shippingRoute);
 app.use("/api/coupons", couponRoute);
+app.use("/api/articles", articleRoute);
 
 app.use((req,res)=>{
   res.status(404).json({

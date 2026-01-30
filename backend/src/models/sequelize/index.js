@@ -7,6 +7,7 @@ import Order from './Order.js';
 import OrderItem from './OrderItem.js';
 import ShippingZone from './ShippingZone.js';
 import Coupon from './Coupon.js';
+import Article from './Article.js';
 
 // ========== ĐỊNH NGHĨA QUAN HỆ GIỮA CÁC MODELS ==========
 
@@ -90,5 +91,5 @@ export const syncDatabase = async (options = {}) => {
 };
 
 // Export tất cả models
-export { sequelize, Category, Product, User, Address, Order, OrderItem, ShippingZone, Coupon };
+export { sequelize, Category, Product, User, Address, Order, OrderItem, ShippingZone, Coupon, Article };
 
