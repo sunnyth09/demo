@@ -60,6 +60,38 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+
+
+  // Quên mật khẩu
+  async function forgotPassword(email) {
+    loading.value = true;
+    error.value = null;
+    try {
+      const result = await authApi.forgotPassword(email);
+      return result;
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Gửi yêu cầu thất bại';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  // Đặt lại mật khẩu
+  async function resetPassword(data) {
+    loading.value = true;
+    error.value = null;
+    try {
+      const result = await authApi.resetPassword(data);
+      return result;
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Đặt lại mật khẩu thất bại';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   // Đăng xuất
   function logout() {
     user.value = null;
@@ -96,6 +128,8 @@ export const useAuthStore = defineStore('auth', () => {
     isAdmin,
     register,
     login,
+    forgotPassword,
+    resetPassword,
     logout,
     verifyAuth
   };

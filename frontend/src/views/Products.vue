@@ -173,10 +173,21 @@
                 :alt="product.name"
                 class="w-full h-full object-cover rounded-[2px] transition-transform duration-500 group-hover:scale-110"
               />
+              <!-- Favorite Button -->
+              <button
+                @click.stop="toggleFavorite(product)"
+                class="absolute top-2 right-2 z-20 p-1.5 rounded-full bg-white/80 hover:bg-white text-gray-400 hover:text-red-500 transition-colors shadow-sm"
+                :class="{ 'text-red-500': isFavorited(product.id) }"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                </svg>
+              </button>
             </div>
 
             <!-- Info -->
             <div class="p-3 pt-2 flex flex-col">
+              <!-- ... rest of info ... -->
               <h3 
                 class="text-sm font-medium text-card-foreground line-clamp-2 mb-1 group-hover:text-primary transition-colors cursor-pointer leading-snug"
                 :title="product.name"
@@ -282,10 +293,18 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useFavoriteStore } from "../stores/favorite";
+import { storeToRefs } from "pinia";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const router = useRouter();
 const route = useRoute();
+const favoriteStore = useFavoriteStore();
+const { isFavorited } = favoriteStore;
+
+const toggleFavorite = (product) => {
+  favoriteStore.toggleFavorite(product);
+};
 
 const goToDetail = (id) => {
   router.push(`/products/${id}`);
@@ -518,5 +537,6 @@ onMounted(() => {
 
   fetchCategories();
   fetchProducts();
+  favoriteStore.fetchFavorites();
 });
 </script>

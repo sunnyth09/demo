@@ -152,7 +152,63 @@
         <!-- Wishlist -->
         <div v-if="activeTab === 'wishlist'" class="bg-card rounded-xl border p-6">
           <h2 class="text-xl font-bold mb-6">Sản phẩm yêu thích</h2>
-          <div class="text-center py-12">
+          
+          <div v-if="favorites.length > 0" class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div
+              v-for="fav in favorites"
+              :key="fav.id"
+              class="group bg-white rounded-xl border border-gray-200 p-4 hover:shadow-lg transition-all duration-300 relative"
+            >
+              <!-- Image Container -->
+              <div 
+                 class="relative aspect-[2/3] overflow-hidden rounded-lg bg-gray-100 cursor-pointer mb-3"
+                 @click="router.push(`/products/${fav.product.id}`)"
+              >
+                <img 
+                  :src="fav.product.thumbnail || 'https://via.placeholder.com/300x400?text=No+Image'" 
+                  :alt="fav.product.name"
+                  class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                 
+                 <!-- Remove Icon Top Right -->
+                 <button
+                    @click.stop="toggleFavorite(fav.product)"
+                    class="absolute top-2 right-2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm hover:bg-gray-50 transition-colors group/btn"
+                    title="Xóa khỏi danh sách"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-hover/btn:text-red-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                 </button>
+              </div>
+              
+              <!-- Content -->
+              <div class="flex flex-col">
+                  <!-- Title -->
+                  <h3 class="font-medium text-gray-900 line-clamp-2 mb-2 min-h-[3rem] cursor-pointer hover:text-primary transition-colors leading-snug"
+                      @click="router.push(`/products/${fav.product.id}`)"
+                      :title="fav.product.name"
+                  >
+                      {{ fav.product.name }}
+                  </h3>
+                  
+                  <!-- Price -->
+                  <div class="text-xl font-bold text-blue-600 mb-1">
+                      {{ formatCurrency(fav.product.price) }}
+                  </div>
+                  
+                  <!-- Rating (Static for now as per design) -->
+                  <div class="flex items-center gap-1">
+                      <div class="flex text-yellow-400 text-sm">
+                        <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                      </div>
+                      <span class="text-gray-400 text-sm">(0)</span>
+                  </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="text-center py-12">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
             <p class="text-muted-foreground">Chưa có sản phẩm yêu thích</p>
             <router-link to="/" class="inline-block mt-4 text-primary hover:underline">Khám phá sản phẩm</router-link>
@@ -422,6 +478,8 @@ import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
+import { useFavoriteStore } from '@/stores/favorite'
+import { storeToRefs } from 'pinia'
 import { 
   Package, Truck, CheckCircle2, ClipboardList, XCircle 
 } from 'lucide-vue-next'
@@ -430,6 +488,8 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const cartStore = useCartStore()
+const favoriteStore = useFavoriteStore()
+const { favorites } = storeToRefs(favoriteStore)
 const API_URL = import.meta.env.VITE_API_URL
 
 const activeTab = ref(route.name === 'orders' ? 'orders' : 'profile')
@@ -789,6 +849,7 @@ onMounted(() => {
     fetchAddresses()
     fetchProvinces()
     fetchMyOrders()
+    favoriteStore.fetchFavorites()
   }
 })
 
@@ -796,6 +857,12 @@ onMounted(() => {
 const userInitial = computed(() => {
   return authStore.user?.name?.charAt(0)?.toUpperCase() || 'U'
 })
+
+const toggleFavorite = async (product) => {
+    if (confirm('Bạn muốn xáo sản phẩm này khỏi danh sách yêu thích?')) {
+        await favoriteStore.toggleFavorite(product);
+    }
+};
 
 const formatCurrency = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value)
 

@@ -74,7 +74,7 @@
               <input v-model="rememberMe" type="checkbox" class="rounded border-input" />
               <span class="text-muted-foreground">Ghi nhớ đăng nhập</span>
             </label>
-            <a href="#" class="text-primary hover:underline">Quên mật khẩu?</a>
+            <router-link to="/forgot-password" class="text-primary hover:underline">Quên mật khẩu?</router-link>
           </div>
 
           <!-- Submit Button -->

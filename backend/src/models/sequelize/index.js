@@ -8,6 +8,7 @@ import OrderItem from './OrderItem.js';
 import ShippingZone from './ShippingZone.js';
 import Coupon from './Coupon.js';
 import Article from './Article.js';
+import Favorite from './Favorite.js';
 
 // ========== ĐỊNH NGHĨA QUAN HỆ GIỮA CÁC MODELS ==========
 
@@ -63,6 +64,27 @@ OrderItem.belongsTo(Product, {
   as: 'product'
 });
 
+// User favorites
+User.hasMany(Favorite, {
+  foreignKey: 'user_id',
+  as: 'favorites'
+});
+
+Favorite.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+Product.hasMany(Favorite, {
+  foreignKey: 'product_id',
+  as: 'favoritedBy'
+});
+
+Favorite.belongsTo(Product, {
+  foreignKey: 'product_id',
+  as: 'product'
+});
+
 // ========== HÀM ĐỒNG BỘ DATABASE ==========
 
 /**
@@ -91,5 +113,5 @@ export const syncDatabase = async (options = {}) => {
 };
 
 // Export tất cả models
-export { sequelize, Category, Product, User, Address, Order, OrderItem, ShippingZone, Coupon, Article };
+export { sequelize, Category, Product, User, Address, Order, OrderItem, ShippingZone, Coupon, Article, Favorite };
 

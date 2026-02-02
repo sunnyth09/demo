@@ -63,6 +63,13 @@
               </div>
               <div class="h-4 w-px bg-gray-300"></div>
               <span class="text-sm text-green-600 font-medium">Còn hàng</span>
+              <div class="h-4 w-px bg-gray-300"></div>
+              <button @click="toggleFavorite(product)" class="flex items-center gap-1 text-sm font-medium transition-colors" :class="isFavorited(product.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :fill="isFavorited(product.id) ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                {{ isFavorited(product.id) ? 'Đã thích' : 'Yêu thích' }}
+              </button>
             </div>
 
             <div class="bg-gray-50 rounded-lg p-4 mb-6">
@@ -177,10 +184,15 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
+import { useFavoriteStore } from '@/stores/favorite'
 
 const route = useRoute()
 const router = useRouter()
 const cartStore = useCartStore()
+const favoriteStore = useFavoriteStore()
+
+const isFavorited = (id) => favoriteStore.isFavorited(id)
+const toggleFavorite = (p) => favoriteStore.toggleFavorite(p)
 const API_URL = import.meta.env.VITE_API_URL
 
 const product = ref(null)

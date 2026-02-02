@@ -10,6 +10,7 @@ import About from '@/views/About.vue'
 import Products from '@/views/Products.vue'
 import Login from '@/views/Login.vue'
 import Register from '@/views/Register.vue'
+import ForgotPassword from '@/views/ForgotPassword.vue'
 import NotFound from '@/views/NotFound.vue'
 
 // Admin views
@@ -36,6 +37,7 @@ const routes = [
       { path: 'products/:id', name: 'product-detail', component: () => import('@/views/ProductDetail.vue'), meta: { title: 'Chi tiết sản phẩm' } },
       { path: 'login', name: 'login', component: Login, meta: { title: 'Đăng nhập' } },
       { path: 'register', name: 'register', component: Register, meta: { title: 'Đăng ký' } },
+      { path: 'forgot-password', name: 'forgot-password', component: ForgotPassword, meta: { title: 'Quên mật khẩu' } },
       { path: 'cart', name: 'cart', component: () => import('@/views/Cart.vue'), meta: { title: 'Giỏ hàng' } },
       { path: 'checkout', name: 'checkout', component: () => import('@/views/Checkout.vue'), meta: { title: 'Thanh toán' } },
       { path: 'profile', name: 'profile', component: () => import('@/views/Profile.vue'), meta: { title: 'Tài khoản' } },
@@ -43,6 +45,7 @@ const routes = [
       { path: 'orders/:id', name: 'order-detail', component: () => import('@/views/OrderDetail.vue'), meta: { title: 'Chi tiết đơn hàng' } },
       { path: 'articles', name: 'articles', component: () => import('@/views/Articles.vue'), meta: { title: 'Góc đọc sách' } },
       { path: 'articles/:id', name: 'article-detail', component: () => import('@/views/ArticleDetail.vue'), meta: { title: 'Chi tiết bài viết' } },
+      { path: 'favorites', name: 'favorites', component: () => import('@/views/Favorites.vue'), meta: { title: 'Sản phẩm yêu thích' } },
     ]
   },
 
@@ -91,7 +94,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  document.title = to.meta.title ? `${to.meta.title} | Bookstore` : 'Bookstore'
+  document.title = to.meta.title ? `${to.meta.title} | Ocean Books` : 'Ocean Books'
   next()
 })
 

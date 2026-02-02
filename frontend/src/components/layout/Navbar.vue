@@ -4,13 +4,8 @@
       <!-- Left Section: Logo & Category -->
       <div class="flex items-center gap-6">
         <!-- Logo -->
-        <router-link to="/" class="flex-shrink-0 flex items-center gap-2">
-          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
-            </svg>
-          </div>
-          <span class="text-2xl font-bold text-primary hidden md:block">Ocean Books</span>
+        <router-link to="/" class="flex-shrink-0 flex items-center">
+          <img src="@/assets/ocean.png" alt="Ocean Books" class="h-17 w-auto object-contain" />
         </router-link>
 
         <!-- Category Dropdown Button -->
@@ -133,6 +128,17 @@
 
       <!-- Right Section: Actions -->
       <div class="flex items-center gap-6 flex-shrink-0">
+        <!-- Favorites -->
+        <!-- <router-link to="/favorites" class="flex flex-col items-center gap-1 text-muted-foreground hover:text-red-500 transition-colors group">
+          <div class="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            <span v-if="favoritesCount > 0" class="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold border-2 border-background">{{ favoritesCount }}</span>
+          </div>
+          <span class="text-[10px] font-medium hidden lg:block">Yêu thích</span>
+        </router-link> -->
+
         <!-- Notification -->
         <button class="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors group">
           <div class="relative">
@@ -208,16 +214,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
+import { useFavoriteStore } from '@/stores/favorite'
 import { storeToRefs } from 'pinia'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const cartStore = useCartStore()
+const favoriteStore = useFavoriteStore()
+
 const { items } = storeToRefs(cartStore)
+const { favorites } = storeToRefs(favoriteStore)
+
+const favoritesCount = computed(() => favorites.value.length)
 
 const searchQuery = ref('')
 const activeCategory = ref(0)
@@ -334,5 +346,8 @@ const fetchCategories = async () => {
 
 onMounted(() => {
   fetchCategories()
+  if (authStore.isAuthenticated) {
+    favoriteStore.fetchFavorites();
+  }
 })
 </script>

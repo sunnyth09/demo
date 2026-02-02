@@ -48,6 +48,16 @@ const User = sequelize.define('User', {
     allowNull: true,
     comment: 'Số điện thoại'
   },
+  otp_code: {
+    type: DataTypes.STRING(6),
+    allowNull: true,
+    comment: 'Mã OTP quên mật khẩu'
+  },
+  otp_expires_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Thời gian hết hạn OTP'
+  },
   created_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,

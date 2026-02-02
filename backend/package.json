@@ -21,6 +21,7 @@
     "minio": "^8.0.6",
     "multer": "^2.0.2",
     "mysql2": "^3.16.0",
+    "nodemailer": "^7.0.13",
     "sequelize": "^6.37.0"
   },
   "devDependencies": {
