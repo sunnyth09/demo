@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useAuthStore } from "./auth";
+import { toast } from "vue-sonner";
 
 export const useFavoriteStore = defineStore("favorite", () => {
   const favorites = ref([]);
@@ -27,7 +28,7 @@ export const useFavoriteStore = defineStore("favorite", () => {
 
   const toggleFavorite = async (product) => {
     if (!authStore.accessToken) {
-        alert("Vui lòng đăng nhập để yêu thích sản phẩm!");
+        toast.warning("Vui lòng đăng nhập để yêu thích sản phẩm!");
         return;
     }
 

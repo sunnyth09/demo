@@ -119,6 +119,7 @@
 import { ref, reactive, onMounted, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useRoute } from 'vue-router';
+import { toast } from 'vue-sonner';
 
 const props = defineProps({
   productId: {
@@ -223,7 +224,7 @@ const submitReview = async () => {
       comment.value = '';
       hasReviewed.value = true; // Mark as reviewed
       emit('review-submitted');
-      alert('Cảm ơn bạn đã đánh giá!');
+      toast.success('Cảm ơn bạn đã đánh giá!');
     } else {
       error.value = data.message || 'Có lỗi xảy ra, vui lòng thử lại';
     }

@@ -203,6 +203,7 @@ import { useCartStore } from '@/stores/cart'
 import { useFavoriteStore } from '@/stores/favorite'
 import ReviewList from '@/components/Reviews/ReviewList.vue'
 import ReviewForm from '@/components/Reviews/ReviewForm.vue'
+import { toast } from 'vue-sonner'
 
 const route = useRoute()
 const router = useRouter()
@@ -228,7 +229,7 @@ const onReviewSubmitted = () => {
 const addToCart = () => {
   if (product.value) {
     cartStore.addToCart(product.value, quantity.value)
-    alert('Đã thêm vào giỏ hàng')
+    toast.success('Đã thêm vào giỏ hàng')
   }
 }
 

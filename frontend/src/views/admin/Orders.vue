@@ -198,6 +198,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { toast } from 'vue-sonner'
 
 const authStore = useAuthStore()
 const orders = ref([])
@@ -233,11 +234,11 @@ const fetchOrders = async (page = 1) => {
         totalPages.value = json.pagination.totalPages
       }
     } else {
-      alert(json.message || 'Lỗi tải danh sách đơn hàng')
+      toast.error(json.message || 'Lỗi tải danh sách đơn hàng')
     }
   } catch (e) {
     console.error(e)
-    alert('Lỗi kết nối khi tải đơn hàng')
+    toast.error('Lỗi kết nối khi tải đơn hàng')
   } finally {
     loading.value = false
   }
@@ -320,12 +321,12 @@ const updateStatus = async (orderId, newStatus) => {
     if (json.status) {
       fetchOrders(currentPage.value) // Refresh list at current page
       fetchStats()  // Refresh stats
-      alert('Cập nhật trạng thái thành công')
+      toast.success('Cập nhật trạng thái thành công')
     } else {
-      alert(json.message)
+      toast.error(json.message)
     }
   } catch (e) {
-    alert('Có lỗi xảy ra')
+    toast.error('Có lỗi xảy ra')
   }
 }
 

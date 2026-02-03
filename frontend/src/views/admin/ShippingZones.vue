@@ -250,6 +250,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { toast } from 'vue-sonner'
 
 const authStore = useAuthStore()
 const API_URL = import.meta.env.VITE_API_URL
@@ -353,13 +354,14 @@ const saveZone = async () => {
     const data = await res.json()
     if (data.status) {
       showModal.value = false
+      toast.success(isEditing.value ? 'Cập nhật thành công' : 'Thêm mới thành công')
       await fetchZones()
     } else {
-      alert(data.message || 'Có lỗi xảy ra')
+      toast.error(data.message || 'Có lỗi xảy ra')
     }
   } catch (error) {
     console.error('Error saving zone:', error)
-    alert('Lỗi khi lưu dữ liệu')
+    toast.error('Lỗi khi lưu dữ liệu')
   } finally {
     saving.value = false
   }
@@ -383,13 +385,14 @@ const deleteZone = async () => {
     if (data.status) {
       showDeleteModal.value = false
       zoneToDelete.value = null
+      toast.success('Xóa thành công')
       await fetchZones()
     } else {
-      alert(data.message || 'Có lỗi xảy ra')
+      toast.error(data.message || 'Có lỗi xảy ra')
     }
   } catch (error) {
     console.error('Error deleting zone:', error)
-    alert('Lỗi khi xóa dữ liệu')
+    toast.error('Lỗi khi xóa dữ liệu')
   }
 }
 

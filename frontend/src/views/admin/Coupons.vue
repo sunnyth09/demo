@@ -205,6 +205,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { toast } from 'vue-sonner'
 
 const authStore = useAuthStore()
 const API_URL = import.meta.env.VITE_API_URL
@@ -283,21 +284,21 @@ const openEditModal = (coupon) => {
 }
 
 const saveCoupon = async () => {
-  if (!form.value.code) return alert('Vui lòng nhập mã voucher')
+  if (!form.value.code) return toast.warning('Vui lòng nhập mã voucher')
   
   // Validation
-  if (form.value.value < 0) return alert('Giá trị giảm không được âm')
-  if (form.value.min_order_amount < 0) return alert('Đơn tối thiểu không được âm')
-  if (form.value.quantity < 1) return alert('Số lượng phát hành phải lớn hơn 0')
+  if (form.value.value < 0) return toast.warning('Giá trị giảm không được âm')
+  if (form.value.min_order_amount < 0) return toast.warning('Đơn tối thiểu không được âm')
+  if (form.value.quantity < 1) return toast.warning('Số lượng phát hành phải lớn hơn 0')
 
   if (form.value.type === 'percentage') {
-    if (form.value.value > 100) return alert('Giảm giá theo % không thể vượt quá 100%')
+    if (form.value.value > 100) return toast.warning('Giảm giá theo % không thể vượt quá 100%')
   }
 
   if (form.value.start_date && form.value.end_date) {
     const start = new Date(form.value.start_date)
     const end = new Date(form.value.end_date)
-    if (end <= start) return alert('Ngày kết thúc phải sau ngày bắt đầu')
+    if (end <= start) return toast.warning('Ngày kết thúc phải sau ngày bắt đầu')
   }
   
   saving.value = true
@@ -318,13 +319,14 @@ const saveCoupon = async () => {
     const data = await res.json()
     if (data.status) {
       showModal.value = false
+      toast.success(isEditing.value ? 'Cập nhật thành công' : 'Thêm mới thành công')
       await fetchCoupons()
     } else {
-      alert(data.message || 'Có lỗi xảy ra')
+      toast.error(data.message || 'Có lỗi xảy ra')
     }
   } catch (error) {
     console.error('Error saving coupon:', error)
-    alert('Lỗi kết nối')
+    toast.error('Lỗi kết nối')
   } finally {
     saving.value = false
   }
@@ -347,12 +349,13 @@ const deleteCoupon = async () => {
     const data = await res.json()
     if (data.status) {
       showDeleteModal.value = false
+      toast.success('Xóa thành công')
       await fetchCoupons()
     } else {
-      alert(data.message)
+      toast.error(data.message)
     }
   } catch (error) {
-    alert('Lỗi khi xóa')
+    toast.error('Lỗi khi xóa')
   }
 }
 

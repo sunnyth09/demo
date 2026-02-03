@@ -129,6 +129,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { toast } from 'vue-sonner';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -173,7 +174,7 @@ const handleResetPassword = async () => {
         otp: otp.value,
         newPassword: newPassword.value
     });
-    alert('Đổi mật khẩu thành công! Vui lòng đăng nhập lại.');
+    toast.success('Đổi mật khẩu thành công! Vui lòng đăng nhập lại.');
     router.push('/login');
   } catch (err) {
      if (err.response && err.response.data) {

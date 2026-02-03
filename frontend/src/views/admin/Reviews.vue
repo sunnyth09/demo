@@ -86,6 +86,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { toast } from 'vue-sonner';
 
 const API_URL = import.meta.env.VITE_API_URL;
 const reviews = ref([]);
@@ -165,8 +166,9 @@ const toggleVisibility = async (review) => {
     if (res.ok) {
       const data = await res.json();
       review.is_hidden = data.data.is_hidden;
+      toast.success('Cập nhật trạng thái thành công');
     } else {
-      alert('Lỗi khi cập nhật trạng thái');
+      toast.error('Lỗi khi cập nhật trạng thái');
       // Revert if failed (optional, complex with select binding)
     }
   } catch (error) {
@@ -185,10 +187,10 @@ const deleteReview = async (id) => {
     });
     
     if (res.ok) {
-      alert('Đã xóa đánh giá');
+      toast.success('Đã xóa đánh giá');
       await fetchReviews();
     } else {
-      alert('Lỗi khi xóa');
+      toast.error('Lỗi khi xóa');
     }
   } catch (error) {
     console.error(error);

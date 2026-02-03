@@ -258,6 +258,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { toast } from 'vue-sonner'
 
 const route = useRoute()
 const router = useRouter()
@@ -397,12 +398,12 @@ const updateOrderStatus = async () => {
     const json = await res.json()
     if (json.status) {
       await fetchOrder() // Refresh
-      alert('Cập nhật trạng thái thành công!')
+      toast.success('Cập nhật trạng thái thành công!')
     } else {
-      alert(json.message || 'Có lỗi xảy ra')
+      toast.error(json.message || 'Có lỗi xảy ra')
     }
   } catch (e) {
-    alert('Có lỗi xảy ra')
+    toast.error('Có lỗi xảy ra')
   } finally {
     updating.value = false
   }

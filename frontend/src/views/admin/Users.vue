@@ -170,6 +170,7 @@
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { toast } from 'vue-sonner'
 
 const authStore = useAuthStore()
 const users = ref([])
@@ -246,7 +247,7 @@ const closeModal = () => {
 
 const saveUser = async () => {
   if (!isEditing.value && userForm.password !== userForm.confirmPassword) {
-    alert('Mật khẩu nhập lại không khớp!')
+    toast.warning('Mật khẩu nhập lại không khớp!')
     return
   }
 
@@ -282,13 +283,13 @@ const saveUser = async () => {
     if (json.status) {
       fetchUsers()
       closeModal()
-      alert(isEditing.value ? 'Cập nhật thành công' : 'Thêm thành công')
+      toast.success(isEditing.value ? 'Cập nhật thành công' : 'Thêm thành công')
     } else {
-      alert(json.message || (json.errors && json.errors[0]?.msg) || 'Có lỗi xảy ra')
+      toast.error(json.message || (json.errors && json.errors[0]?.msg) || 'Có lỗi xảy ra')
     }
   } catch (error) {
       console.error(error)
-      alert("Lỗi kết nối")
+      toast.error("Lỗi kết nối")
   } finally {
     isLoadingAction.value = false
   }
@@ -307,12 +308,13 @@ const deleteUser = async (id) => {
     const json = await res.json()
     if (json.status) {
       fetchUsers()
+      toast.success('Xóa người dùng thành công')
     } else {
-      alert(json.message || 'Không thể xóa người dùng')
+      toast.error(json.message || 'Không thể xóa người dùng')
     }
   } catch (error) {
     console.error(error)
-    alert('Có lỗi xảy ra')
+    toast.error('Có lỗi xảy ra')
   }
 }
 

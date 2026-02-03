@@ -364,6 +364,7 @@ import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
+import { toast } from 'vue-sonner'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -606,15 +607,15 @@ const applyCoupon = async (code) => {
             discount.value = result.discountAmount
             appliedCoupon.value = result.coupon.code
             showVoucherModal.value = false
-            // alert('Áp dụng mã giảm giá thành công')
+            // toast.success('Áp dụng mã giảm giá thành công')
         } else {
-            alert(data.message || 'Mã giảm giá không hợp lệ')
+            toast.error(data.message || 'Mã giảm giá không hợp lệ')
             discount.value = 0
             appliedCoupon.value = ''
         }
     } catch (e) {
         console.error(e)
-        alert('Lỗi kết nối khi kiểm tra mã giảm giá')
+        toast.error('Lỗi kết nối khi kiểm tra mã giảm giá')
     } finally {
         isCheckingCoupon.value = false
     }
@@ -631,14 +632,14 @@ watch(showVoucherModal, (val) => {
 
 const handleCheckout = async () => {
   if (checkoutItems.value.length === 0) {
-    alert('Vui lòng chọn sản phẩm để thanh toán')
+    toast.warning('Vui lòng chọn sản phẩm để thanh toán')
     router.push('/cart')
     return
   }
 
   // Validate
   if (!form.value.name || !form.value.phone || !form.value.address || !form.value.city || !form.value.district) {
-    alert('Vui lòng điền đầy đủ thông tin giao hàng')
+    toast.warning('Vui lòng điền đầy đủ thông tin giao hàng')
     return
   }
 
@@ -719,19 +720,19 @@ const handleCheckout = async () => {
               window.location.href = paymentJson.data;
               return; // Dừng hàm tại đây
           } else {
-             alert('Lỗi tạo link thanh toán VNPay');
+             toast.error('Lỗi tạo link thanh toán VNPay');
           }
       }
 
-      alert('Đặt hàng thành công!')
+      toast.success('Đặt hàng thành công!')
       cartStore.removePurchasedItems()
       router.push('/')
     } else {
-      alert(json.message || 'Đặt hàng thất bại')
+      toast.error(json.message || 'Đặt hàng thất bại')
     }
   } catch (error) {
     console.error(error)
-    alert(`Có lỗi xảy ra khi đặt hàng: ${error.message}`)
+    toast.error(`Có lỗi xảy ra khi đặt hàng: ${error.message}`)
   } finally {
     isOrdering.value = false
   }

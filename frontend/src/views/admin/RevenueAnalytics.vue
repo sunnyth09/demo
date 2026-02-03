@@ -148,6 +148,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { toast } from 'vue-sonner'
 
 const authStore = useAuthStore()
 const API_URL = import.meta.env.VITE_API_URL
@@ -212,11 +213,11 @@ const fetchAnalytics = async () => {
         chartData.value = json.data.chartData
         console.log('Chart Data:', chartData.value)
      } else {
-        alert(json.message)
+        toast.error(json.message)
      }
   } catch (e) {
      console.error(e)
-     alert('Lỗi tải dữ liệu thống kê')
+     toast.error('Lỗi tải dữ liệu thống kê')
   } finally {
      loading.value = false
   }

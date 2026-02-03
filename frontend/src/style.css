@@ -117,3 +117,36 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Override Sonner Toast Close Button */
+[data-sonner-toast] {
+  padding-right: 40px !important; /* Make room for the close button */
+}
+
+[data-sonner-toast] [data-close-button] {
+  left: auto !important;
+  right: 12px !important;      /* Adjusted position */
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  opacity: 1 !important;      /* Full opacity */
+  width: 32px !important;     /* Larger touch target */
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: currentColor !important;
+  font-size: 1.25rem !important; /* Larger icon size equivalent */
+}
+
+/* Target the SVG specifically if needed to ensure size */
+[data-sonner-toast] [data-close-button] svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background: rgba(0,0,0,0.1) !important; /* Slightly darker background on hover */
+}

@@ -118,6 +118,7 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { toast } from 'vue-sonner';
 
 const authStore = useAuthStore();
 const emit = defineEmits(['edit-review', 'refresh']);
@@ -172,16 +173,16 @@ const deleteReview = async (id) => {
     });
     
     if (res.ok) {
-      alert('Đã xóa đánh giá');
+      toast.success('Đã xóa đánh giá');
       fetchReviews();
       emit('refresh');
     } else {
       const data = await res.json();
-      alert(data.message || 'Lỗi khi xóa đánh giá');
+      toast.error(data.message || 'Lỗi khi xóa đánh giá');
     }
   } catch (err) {
     console.error(err);
-    alert('Lỗi kết nối');
+    toast.error('Lỗi kết nối');
   }
 };
 
@@ -201,14 +202,14 @@ const reportReview = async (id) => {
     });
     
     if (res.ok) {
-      alert('Đã gửi báo cáo vi phạm');
+      toast.success('Đã gửi báo cáo vi phạm');
     } else {
       const data = await res.json();
-      alert(data.message || 'Lỗi khi gửi báo cáo');
+      toast.error(data.message || 'Lỗi khi gửi báo cáo');
     }
   } catch (err) {
     console.error(err);
-    alert('Lỗi kết nối');
+    toast.error('Lỗi kết nối');
   }
 };
 

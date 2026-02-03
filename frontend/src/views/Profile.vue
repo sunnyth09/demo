@@ -483,6 +483,7 @@ import { storeToRefs } from 'pinia'
 import { 
   Package, Truck, CheckCircle2, ClipboardList, XCircle 
 } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
 
 const router = useRouter()
 const route = useRoute()
@@ -578,7 +579,7 @@ const updateProfile = async () => {
        // Handle password change if requested
        if (profileForm.isChangePassword) {
          if (profileForm.newPassword !== profileForm.confirmPassword) {
-            alert('Mật khẩu mới không khớp')
+            toast.error('Mật khẩu mới không khớp')
             return
          }
          
@@ -595,20 +596,20 @@ const updateProfile = async () => {
          })
          const pwdJson = await pwdRes.json()
          if (!pwdJson.status) {
-            alert('Cập nhật thông tin thành công nhưng đổi mật khẩu thất bại: ' + (pwdJson.message || pwdJson.errors[0]?.msg))
+            toast.warning('Cập nhật thông tin thành công nhưng đổi mật khẩu thất bại: ' + (pwdJson.message || pwdJson.errors[0]?.msg))
             return
          }
        }
        
        showProfileModal.value = false
-       alert('Cập nhật thành công')
+       toast.success('Cập nhật thành công')
     } else {
        const msg = json.message || (json.errors && json.errors[0] && json.errors[0].msg) || 'Có lỗi xảy ra'
-       alert(msg)
+       toast.error(msg)
     }
   } catch (error) {
     console.error(error)
-    alert('Có lỗi xảy ra')
+    toast.error('Có lỗi xảy ra')
   }
 }
 
@@ -789,11 +790,11 @@ const openEditAddressModal = async (addr) => {
 const saveAddress = async () => {
   // Validate selection
   if (!addressForm.name || !addressForm.phone) {
-    alert('Vui lòng nhập họ tên và số điện thoại')
+    toast.warning('Vui lòng nhập họ tên và số điện thoại')
     return
   }
   if (!addressForm.city || !addressForm.district || !addressForm.ward) {
-     alert('Vui lòng chọn đầy đủ địa chỉ')
+     toast.warning('Vui lòng chọn đầy đủ địa chỉ')
      return
   }
 
@@ -818,10 +819,10 @@ const saveAddress = async () => {
       showAddressModal.value = false
       fetchAddresses()
     } else {
-      alert(json.message) // Simple alert for now
+      toast.error(json.message)
     }
   } catch (error) {
-    alert('Có lỗi xảy ra')
+    toast.error('Có lỗi xảy ra')
   }
 }
 

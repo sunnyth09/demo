@@ -94,13 +94,6 @@
         </div>
       </div>
 
-      <!-- Toast notification -->
-      <div 
-        v-if="showToast" 
-        class="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in"
-      >
-        {{ toastMessage }}
-      </div>
 
       <!-- Tracking Timeline - Horizontal -->
       <div class="bg-card rounded-xl border p-6 mb-6">
@@ -285,6 +278,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
+import { toast } from 'vue-sonner'
 
 const route = useRoute()
 const router = useRouter()
@@ -294,8 +288,6 @@ const API_URL = import.meta.env.VITE_API_URL
 
 const order = ref(null)
 const loading = ref(true)
-const showToast = ref(false)
-const toastMessage = ref('')
 
 // Check if order can be cancelled
 const canCancel = computed(() => {
@@ -374,18 +366,10 @@ const copyOrderCode = async () => {
   const code = order.value?.order_code || order.value?.id
   try {
     await navigator.clipboard.writeText(code)
-    showToastMessage('Đã sao chép mã đơn hàng!')
+    toast.success('Đã sao chép mã đơn hàng!')
   } catch {
-    showToastMessage('Không thể sao chép')
+    toast.error('Không thể sao chép')
   }
-}
-
-const showToastMessage = (message) => {
-  toastMessage.value = message
-  showToast.value = true
-  setTimeout(() => {
-    showToast.value = false
-  }, 2000)
 }
 
 // Main timeline steps (5 steps)
@@ -498,12 +482,12 @@ const cancelOrder = async () => {
     const json = await res.json()
     if (json.status) {
       await fetchOrder()
-      alert('Đã hủy đơn hàng')
+      toast.success('Đã hủy đơn hàng')
     } else {
-      alert(json.message || 'Có lỗi xảy ra')
+      toast.error(json.message || 'Có lỗi xảy ra')
     }
   } catch (e) {
-    alert('Có lỗi xảy ra')
+    toast.error('Có lỗi xảy ra')
   }
 }
 
