@@ -127,7 +127,11 @@
           <div class="space-y-4">
             <label class="flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-all hover:shadow-sm" :class="form.paymentMethod === 'cod' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:bg-muted/50'">
               <input type="radio" v-model="form.paymentMethod" value="cod" class="w-4 h-4 text-primary" />
-              <div class="w-10 h-10 rounded bg-green-100 flex items-center justify-center text-xl">💵</div>
+              <div v-if="false" class="w-10 h-10 rounded bg-green-100 flex items-center justify-center">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                   <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                 </svg>
+              </div>
               <div class="flex-1">
                 <p class="font-medium text-gray-900">Thanh toán khi nhận hàng (COD)</p>
                 <p class="text-sm text-gray-500">Thanh toán bằng tiền mặt khi nhận hàng</p>
@@ -136,7 +140,11 @@
             
             <label class="flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-all hover:shadow-sm" :class="form.paymentMethod === 'banking' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:bg-muted/50'">
               <input type="radio" v-model="form.paymentMethod" value="banking" class="w-4 h-4 text-primary" />
-              <div class="w-10 h-10 rounded bg-blue-100 flex items-center justify-center text-xl">🏦</div>
+              <div v-if="false" class="w-10 h-10 rounded bg-blue-100 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                </svg>
+              </div>
               <div class="flex-1">
                 <p class="font-medium text-gray-900">Chuyển khoản ngân hàng</p>
                 <p class="text-sm text-gray-500">Hỗ trợ QR Code / Tất cả ngân hàng</p>
@@ -145,13 +153,27 @@
             
             <label class="flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-all hover:shadow-sm" :class="form.paymentMethod === 'momo' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:bg-muted/50'">
               <input type="radio" v-model="form.paymentMethod" value="momo" class="w-4 h-4 text-primary" />
-              <div class="w-10 h-10 rounded bg-pink-100 flex items-center justify-center text-xl">
-                 <!-- Momo Icon Placeholder (using text/emoji for now, ideally an image) -->
-                 👛
+              <div v-if="false" class="w-10 h-10 rounded bg-pink-100 flex items-center justify-center">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                   <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                 </svg>
               </div>
               <div class="flex-1">
                 <p class="font-medium text-gray-900">Ví điện tử MoMo</p>
                 <p class="text-sm text-gray-500">Thanh toán nhanh qua ứng dụng MoMo</p>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-all hover:shadow-sm" :class="form.paymentMethod === 'vnpay' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:bg-muted/50'">
+              <input type="radio" v-model="form.paymentMethod" value="vnpay" class="w-4 h-4 text-primary" />
+              <div v-if="false" class="w-10 h-10 rounded bg-blue-50 flex items-center justify-center">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                   <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                 </svg>
+              </div> 
+              <div class="flex-1">
+                <p class="font-medium text-gray-900">VNPay QR / Thẻ ATM</p>
+                <p class="text-sm text-gray-500">Quét mã QR hoặc dùng thẻ nội địa/quốc tế</p>
               </div>
             </label>
           </div>
@@ -678,6 +700,29 @@ const handleCheckout = async () => {
     const json = await res.json()
 
     if (json.status) {
+      if (form.value.paymentMethod === 'vnpay') {
+          // Nếu là VNPay: Gọi tiếp API để lấy link thanh toán
+          const orderId = json.data.id || json.data.order_id; // Đảm bảo lấy đúng ID đơn hàng
+          
+          const paymentRes = await fetch(`${API_URL}/payment/create_payment_url`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  orderId: orderId,
+                  amount: total.value,
+                  language: 'vn'
+              })
+          });
+          const paymentJson = await paymentRes.json();
+          if (paymentJson.code === '00') {
+              // Redirect sang VNPay
+              window.location.href = paymentJson.data;
+              return; // Dừng hàm tại đây
+          } else {
+             alert('Lỗi tạo link thanh toán VNPay');
+          }
+      }
+
       alert('Đặt hàng thành công!')
       cartStore.removePurchasedItems()
       router.push('/')

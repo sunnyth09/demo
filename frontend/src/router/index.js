@@ -46,6 +46,7 @@ const routes = [
       { path: 'articles', name: 'articles', component: () => import('@/views/Articles.vue'), meta: { title: 'Góc đọc sách' } },
       { path: 'articles/:id', name: 'article-detail', component: () => import('@/views/ArticleDetail.vue'), meta: { title: 'Chi tiết bài viết' } },
       { path: 'favorites', name: 'favorites', component: () => import('@/views/Favorites.vue'), meta: { title: 'Sản phẩm yêu thích' } },
+      { path: 'payment/result', name: 'payment-result', component: () => import('@/views/PaymentResult.vue'), meta: { title: 'Kết quả thanh toán' } },
     ]
   },
 
@@ -68,6 +69,7 @@ const routes = [
       { path: 'users', name: 'admin-users', component: AdminUsers, meta: { title: 'Người dùng' } },
       { path: 'shipping', name: 'admin-shipping', component: () => import('@/views/admin/ShippingZones.vue'), meta: { title: 'Phí vận chuyển' } },
       { path: 'coupons', name: 'admin-coupons', component: () => import('@/views/admin/Coupons.vue'), meta: { title: 'Mã giảm giá' } },
+      { path: 'reviews', name: 'admin-reviews', component: () => import('@/views/admin/Reviews.vue'), meta: { title: 'Đánh giá & Bình luận' } },
       { path: 'settings', name: 'admin-settings', component: AdminSettings, meta: { title: 'Cài đặt' } },
     ]
   },

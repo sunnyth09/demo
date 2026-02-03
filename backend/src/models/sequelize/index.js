@@ -9,8 +9,57 @@ import ShippingZone from './ShippingZone.js';
 import Coupon from './Coupon.js';
 import Article from './Article.js';
 import Favorite from './Favorite.js';
+import Review from './Review.js';
+import ReviewReport from './ReviewReport.js';
 
 // ========== ĐỊNH NGHĨA QUAN HỆ GIỮA CÁC MODELS ==========
+
+// ... existing associations ...
+
+// Review associations
+User.hasMany(Review, {
+  foreignKey: 'user_id',
+  as: 'reviews'
+});
+
+Review.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+Product.hasMany(Review, {
+  foreignKey: 'product_id',
+  as: 'reviews'
+});
+
+Review.belongsTo(Product, {
+  foreignKey: 'product_id',
+  as: 'product'
+});
+
+// Review Report associations
+Review.hasMany(ReviewReport, {
+  foreignKey: 'review_id',
+  as: 'reports'
+});
+
+ReviewReport.belongsTo(Review, {
+  foreignKey: 'review_id',
+  as: 'review'
+});
+
+User.hasMany(ReviewReport, {
+  foreignKey: 'user_id',
+  as: 'reported_reviews'
+});
+
+ReviewReport.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'reporter'
+});
+
+// ========== HÀM ĐỒNG BỘ DATABASE ==========
+
 
 // Product thuộc về Category
 Product.belongsTo(Category, { 
@@ -85,6 +134,8 @@ Favorite.belongsTo(Product, {
   as: 'product'
 });
 
+
+
 // ========== HÀM ĐỒNG BỘ DATABASE ==========
 
 /**
@@ -100,7 +151,7 @@ export const syncDatabase = async (options = {}) => {
   try {
     // Mặc định dùng alter: true để cập nhật schema mà không mất dữ liệu
     const syncOptions = {
-      alter: false, // Tự động cập nhật schema khi có thay đổi
+      alter: true, // Tự động cập nhật schema khi có thay đổi
       ...options
     };
     
@@ -113,5 +164,5 @@ export const syncDatabase = async (options = {}) => {
 };
 
 // Export tất cả models
-export { sequelize, Category, Product, User, Address, Order, OrderItem, ShippingZone, Coupon, Article, Favorite };
+export { sequelize, Category, Product, User, Address, Order, OrderItem, ShippingZone, Coupon, Article, Favorite, Review, ReviewReport };
 

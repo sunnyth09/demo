@@ -14,6 +14,8 @@ import shippingRoute from "./routes/shipping.route.js";
 import couponRoute from "./routes/coupon.route.js";
 import articleRoute from "./routes/article.route.js";
 import favoriteRoute from "./routes/favorite.route.js";
+import reviewRoute from "./routes/review.route.js";
+import paymentRoute from "./routes/payment.route.js";
 
 import { initBucket } from "./services/minio.service.js";
 
@@ -45,6 +47,8 @@ app.use("/api/shipping", shippingRoute);
 app.use("/api/coupons", couponRoute);
 app.use("/api/articles", articleRoute);
 app.use("/api/favorites", favoriteRoute);
+app.use("/api/reviews", reviewRoute);
+app.use("/api/payment", paymentRoute);
 
 app.use((req,res)=>{
   res.status(404).json({

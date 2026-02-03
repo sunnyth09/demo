@@ -56,10 +56,7 @@
 
             <div class="flex items-center gap-4 mb-4">
               <div class="flex items-center gap-1">
-                <div class="flex text-yellow-400 text-sm">
-                  <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-                </div>
-                <span class="text-sm text-gray-500">(0 đánh giá)</span>
+                <span class="text-sm text-gray-500">({{ product.total_reviews || 0 }} đánh giá)</span>
               </div>
               <div class="h-4 w-px bg-gray-300"></div>
               <span class="text-sm text-green-600 font-medium">Còn hàng</span>
@@ -138,35 +135,54 @@
       <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
         <div class="border-b px-6">
            <div class="flex gap-8">
-             <button class="py-3 text-primary font-bold border-b-2 border-primary text-sm uppercase">Mô tả sản phẩm</button>
-             <button class="py-3 text-gray-500 font-medium hover:text-gray-800 transition-colors text-sm uppercase">Đánh giá (0)</button>
+             <button 
+                @click="currentTab = 'description'"
+                :class="['py-3 font-bold border-b-2 text-sm uppercase transition-colors', currentTab === 'description' ? 'text-primary border-primary' : 'text-gray-500 border-transparent hover:text-gray-800']"
+              >
+                Mô tả sản phẩm
+              </button>
+             <button 
+                @click="currentTab = 'reviews'"
+                :class="['py-3 font-bold border-b-2 text-sm uppercase transition-colors', currentTab === 'reviews' ? 'text-primary border-primary' : 'text-gray-500 border-transparent hover:text-gray-800']"
+              >
+                Đánh giá ({{ product.total_reviews || 0 }})
+              </button>
            </div>
         </div>
         <div class="p-6">
-           <div class="relative">
-             <div 
-               :class="['product-content max-w-none text-gray-700 text-sm overflow-hidden transition-all duration-500', isExpanded ? 'max-h-full' : 'max-h-[300px]']" 
-               v-html="product.description || 'Nội dung đang cập nhật...'"
-             ></div>
-             
-             <!-- Fade Effect -->
-             <div v-if="!isExpanded" class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+           <!-- Description Content -->
+           <div v-show="currentTab === 'description'">
+             <div class="relative">
+               <div 
+                 :class="['product-content max-w-none text-gray-700 text-sm overflow-hidden transition-all duration-500', isExpanded ? 'max-h-full' : 'max-h-[300px]']" 
+                 v-html="product.description || 'Nội dung đang cập nhật...'"
+               ></div>
+               
+               <!-- Fade Effect -->
+               <div v-if="!isExpanded" class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+             </div>
+
+             <!-- Toggle Button -->
+             <div class="text-center mt-4">
+               <button 
+                 @click="isExpanded = !isExpanded" 
+                 class="inline-flex items-center gap-1 text-primary hover:text-primary/80 font-medium transition-colors border border-primary/30 px-6 py-2 rounded-full hover:bg-primary/5 text-sm"
+               >
+                 {{ isExpanded ? 'Thu gọn' : 'Xem thêm' }}
+                 <svg v-if="!isExpanded" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                 </svg>
+                 <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                 </svg>
+               </button>
+             </div>
            </div>
 
-           <!-- Toggle Button -->
-           <div class="text-center mt-4">
-             <button 
-               @click="isExpanded = !isExpanded" 
-               class="inline-flex items-center gap-1 text-primary hover:text-primary/80 font-medium transition-colors border border-primary/30 px-6 py-2 rounded-full hover:bg-primary/5 text-sm"
-             >
-               {{ isExpanded ? 'Thu gọn' : 'Xem thêm' }}
-               <svg v-if="!isExpanded" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-               </svg>
-               <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-               </svg>
-             </button>
+           <!-- Reviews Content -->
+           <div v-show="currentTab === 'reviews'" class="space-y-8">
+             <ReviewForm :product-id="product.id" @review-submitted="onReviewSubmitted" />
+             <ReviewList ref="reviewListRef" :product-id="product.id" />
            </div>
         </div>
       </div>
@@ -181,10 +197,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
 import { useFavoriteStore } from '@/stores/favorite'
+import ReviewList from '@/components/Reviews/ReviewList.vue'
+import ReviewForm from '@/components/Reviews/ReviewForm.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -196,6 +214,14 @@ const toggleFavorite = (p) => favoriteStore.toggleFavorite(p)
 const API_URL = import.meta.env.VITE_API_URL
 
 const product = ref(null)
+const reviewListRef = ref(null)
+const currentTab = ref('description') // 'description' or 'reviews'
+
+const onReviewSubmitted = () => {
+  if (reviewListRef.value) {
+    reviewListRef.value.fetchReviews()
+  }
+}
 
 // ... existing refs ...
 

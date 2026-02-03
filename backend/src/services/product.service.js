@@ -1,4 +1,4 @@
-import { Product, Category } from "../models/sequelize/index.js";
+import { Product, Category, Review } from "../models/sequelize/index.js";
 import { uploadFile, deleteFile } from "./minio.service.js";
 import { Op } from "sequelize";
 import { getAllChildIds } from "./category.service.js";
@@ -121,6 +121,12 @@ export const getProductDetail = async (idOrSlug) => {
   // Thêm category_name
   result.category_name = result.category?.name || null;
   
+  // Count Reviews
+  const reviewCount = await Review.count({
+    where: { product_id: product.id }
+  });
+  result.total_reviews = reviewCount || 0;
+
   // Xóa field image raw, chỉ giữ images
   delete result.image;
   
