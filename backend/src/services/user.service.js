@@ -9,7 +9,7 @@ import { Op } from "sequelize";
  */
 export const getProfile = async (userId) => {
   const user = await User.findByPk(userId, {
-    attributes: ['id', 'name', 'email', 'role', 'phone', 'created_at']
+    attributes: ['id', 'name', 'email', 'role', 'phone', 'avatar', 'created_at']
   });
   
   if (!user) {
@@ -45,7 +45,8 @@ export const updateProfile = async (userId, data) => {
   await user.update({
     name: data.name || user.name,
     email: data.email || user.email,
-    phone: data.phone !== undefined ? data.phone : user.phone
+    phone: data.phone !== undefined ? data.phone : user.phone,
+    avatar: data.avatar || user.avatar
   });
   
   // Trả về user đã cập nhật (không có password)
@@ -55,6 +56,7 @@ export const updateProfile = async (userId, data) => {
     email: user.email,
     role: user.role,
     phone: user.phone,
+    avatar: user.avatar,
     created_at: user.created_at
   };
 };

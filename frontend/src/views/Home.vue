@@ -98,8 +98,8 @@
                 />
                 <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               </div>
-              <div class="absolute -top-3 -right-3 bg-yellow-400 text-yellow-900 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-bounce">
-                ⭐ Bestseller
+              <div class="absolute -top-3 -right-3 bg-yellow-400 text-yellow-900 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-bounce flex items-center gap-1">
+                <Star class="w-3 h-3 fill-current" /> Bestseller
               </div>
             </div>
             
@@ -161,8 +161,12 @@
             <div class="absolute bottom-[10%] right-[10%] w-40 h-40 bg-purple-500/15 rounded-full blur-2xl -z-10"></div>
             
             <!-- Floating stars -->
-            <div class="absolute top-[15%] right-[25%] text-yellow-400 text-xl animate-pulse">✨</div>
-            <div class="absolute bottom-[25%] left-[25%] text-yellow-400 text-lg animate-pulse animation-delay-2000">✨</div>
+            <div class="absolute top-[15%] right-[25%] text-yellow-400 animate-pulse">
+               <Sparkles class="w-6 h-6" />
+            </div>
+            <div class="absolute bottom-[25%] left-[25%] text-yellow-400 animate-pulse animation-delay-2000">
+               <Sparkles class="w-5 h-5" />
+            </div>
             
             <!-- Reading quote card -->
             <div class="absolute bottom-[2%] left-[35%] bg-white/90 backdrop-blur-md rounded-xl px-4 py-2 shadow-lg border border-border z-50 hidden lg:block">
@@ -267,7 +271,7 @@
           <div class="relative z-10 p-8 md:p-12 lg:p-16">
             <div class="max-w-xl">
               <div class="inline-flex items-center gap-2 bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
-                <span>⚡</span>
+                <Zap class="w-3.5 h-3.5 fill-current" />
                 <span>Giới hạn thời gian</span>
               </div>
               
@@ -328,16 +332,14 @@
         <!-- Tabs -->
         <div class="flex gap-2 mb-8 overflow-x-auto pb-2">
           <button 
-            v-for="(tab, idx) in ['new_arrival', 'on_sale', 'recommend']" 
-            :key="tab"
-            @click="activeTab = tab"
-            class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap"
-            :class="activeTab === tab ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-card text-muted-foreground hover:bg-muted border border-border'"
+            v-for="tab in tabs" 
+            :key="tab.id"
+            @click="activeTab = tab.id"
+            class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap flex items-center gap-2"
+            :class="activeTab === tab.id ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-card text-muted-foreground hover:bg-muted border border-border'"
           >
-            {{ 
-              tab === 'new_arrival' ? '✨ Mới phát hành' : 
-              tab === 'on_sale' ? '🏷️ Đang giảm giá' : '💡 Gợi ý cho bạn' 
-            }}
+            <component :is="tab.icon" class="w-4 h-4" />
+            {{ tab.label }}
           </button>
         </div>
 
@@ -498,8 +500,8 @@
               </button>
             </div>
             
-            <p class="mt-4 text-xs text-white/50">
-              🔒 Chúng tôi cam kết không spam
+            <p class="mt-4 text-xs text-white/50 flex items-center justify-center gap-1">
+              <Lock class="w-3 h-3" /> Chúng tôi cam kết không spam
             </p>
           </div>
         </div>
@@ -546,7 +548,7 @@ import { useRouter } from 'vue-router';
 import ProductCard from '@/components/ProductCard.vue';
 import { useCartStore } from '@/stores/cart';
 import { 
-  Truck, ShieldCheck, RefreshCw, BookOpen 
+  Truck, ShieldCheck, RefreshCw, BookOpen, Sparkles, Tag, Lightbulb, Zap, Lock, Star 
 } from 'lucide-vue-next';
 
 const router = useRouter();
@@ -557,6 +559,12 @@ const categories = ref([]);
 const products = ref([]);
 const loading = ref(true);
 const activeTab = ref('new_arrival');
+
+const tabs = [
+  { id: 'new_arrival', label: 'Mới phát hành', icon: Sparkles },
+  { id: 'on_sale', label: 'Đang giảm giá', icon: Tag },
+  { id: 'recommend', label: 'Gợi ý cho bạn', icon: Lightbulb }
+];
 
 // Blog Posts Data
 const blogPosts = ref([]);

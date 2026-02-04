@@ -33,17 +33,65 @@
 
       <!-- Navigation -->
       <nav class="p-4 space-y-2 overflow-y-auto max-h-[calc(100vh-8rem)]">
-        <router-link 
-          v-for="item in menuItems" 
-          :key="item.path"
-          :to="item.path"
-          @click="isSidebarOpen = false"
-          class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-          active-class="bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
-        >
-          <component :is="item.icon" class="h-5 w-5" />
-          {{ item.name }}
-        </router-link>
+        <template v-for="item in menuItems" :key="item.name">
+          <!-- Single Item -->
+          <router-link 
+            v-if="!item.children"
+            :to="item.path"
+            @click="isSidebarOpen = false"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            active-class="bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+          >
+            <component :is="item.icon" class="h-5 w-5" />
+            {{ item.name }}
+          </router-link>
+
+          <!-- Group Item -->
+          <div v-else class="space-y-1">
+            <button 
+              @click="toggleGroup(item.name)"
+              class="flex w-full items-center justify-between gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              :class="{ 'text-foreground font-semibold': isGroupActive(item) }"
+            >
+              <div class="flex items-center gap-3">
+                <component :is="item.icon" class="h-5 w-5" />
+                {{ item.name }}
+              </div>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                class="h-4 w-4 transition-transform duration-200"
+                :class="{ 'rotate-180': expandedGroups[item.name] }"
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                stroke-width="2" 
+                stroke-linecap="round" 
+                stroke-linejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            
+            <!-- Children -->
+            <div 
+              v-show="expandedGroups[item.name]"
+              class="pl-4 space-y-1"
+            >
+              <router-link 
+                v-for="child in item.children"
+                :key="child.path"
+                :to="child.path"
+                @click="isSidebarOpen = false"
+                class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                active-class="bg-primary/10 text-primary hover:bg-primary/20"
+              >
+                <!-- Dot icon for children -->
+                 <span class="w-1.5 h-1.5 rounded-full bg-current opacity-50"></span>
+                 {{ child.name }}
+              </router-link>
+            </div>
+          </div>
+        </template>
       </nav>
 
       <!-- User Info -->
@@ -95,64 +143,82 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const isSidebarOpen = ref(false)
+const expandedGroups = reactive({})
 
-const menuItems = [
-  { name: 'Dashboard', path: '/admin', icon: 'IconDashboard' },
-  { name: 'Đơn hàng', path: '/admin/orders', icon: 'IconOrders' },
-  { name: 'Sản phẩm', path: '/admin/products', icon: 'IconProducts' },
-  { name: 'Danh mục', path: '/admin/categories', icon: 'IconCategories' },
-  { name: 'Người dùng', path: '/admin/users', icon: 'IconUsers' },
-  { name: 'Phí vận chuyển', path: '/admin/shipping', icon: 'IconShipping' },
-  { name: 'Mã giảm giá', path: '/admin/coupons', icon: 'IconCoupons' },
-  { name: 'Bài viết', path: '/admin/articles', icon: 'IconArticles' },
-  { name: 'Đánh giá', path: '/admin/reviews', icon: 'IconReviews' },
-  { name: 'Thống kê', path: '/admin/revenue', icon: 'IconRevenue' },
-  { name: 'Cài đặt', path: '/admin/settings', icon: 'IconSettings' },
-]
-
-const currentPageTitle = computed(() => {
-  const item = menuItems.find(item => item.path === route.path || (route.path.startsWith(item.path) && item.path !== '/admin'))
-  return item?.name || 'Dashboard'
-})
-
-// Simple icon components
+// Icons defined locally
 const IconDashboard = {
   template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>`
-}
-const IconRevenue = {
-  template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>`
-}
-const IconProducts = {
-  template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`
-}
-const IconCategories = {
-  template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>`
 }
 const IconOrders = {
   template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`
 }
-const IconUsers = {
-  template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>`
-}
-const IconCoupons = {
-  template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" /></svg>`
-}
-const IconArticles = {
-  template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`
+const IconStore = {
+  template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l1.65-3.8a2 2 0 0 1 1.85-1.2h11a2 2 0 0 1 1.85 1.2L21 21"/><line x1="10" y1="10" x2="14" y2="10"/><rect x="3" y="3" width="18" height="8" rx="2"/><path d="M17 11v6"/></svg>`
 }
 const IconSettings = {
   template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>`
 }
-const IconReviews = {
-  template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`
+
+const menuItems = [
+  { name: 'Dashboard', path: '/admin', icon: IconDashboard },
+  { name: 'Đơn hàng', path: '/admin/orders', icon: IconOrders },
+  {
+    name: 'Quản lý cửa hàng',
+    icon: IconStore,
+    children: [
+      { name: 'Sản phẩm', path: '/admin/products' },
+      { name: 'Danh mục', path: '/admin/categories' },
+      { name: 'Người dùng', path: '/admin/users' },
+      { name: 'Phí vận chuyển', path: '/admin/shipping' },
+      { name: 'Mã giảm giá', path: '/admin/coupons' },
+      { name: 'Bài viết', path: '/admin/articles' },
+      { name: 'Đánh giá', path: '/admin/reviews' },
+      { name: 'Thống kê', path: '/admin/revenue' },
+    ]
+  },
+  { name: 'Cài đặt', path: '/admin/settings', icon: IconSettings },
+]
+
+const toggleGroup = (name) => {
+  expandedGroups[name] = !expandedGroups[name]
 }
 
-const IconShipping = {
-  template: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/><path d="M14 9h4l4 4v4c0 .6-.4 1-1 1h-2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>`
+const isGroupActive = (item) => {
+  if (!item.children) return route.path === item.path
+  return item.children.some(child => route.path.startsWith(child.path))
 }
+
+// Auto-expand group if a child is active
+watch(
+  () => route.path,
+  () => {
+    menuItems.forEach(item => {
+      if (item.children && isGroupActive(item)) {
+        expandedGroups[item.name] = true
+      }
+    })
+  },
+  { immediate: true }
+)
+
+const currentPageTitle = computed(() => {
+  // Check top-level items
+  const directItem = menuItems.find(item => item.path && (item.path === route.path || (route.path.startsWith(item.path) && item.path !== '/admin')))
+  if (directItem) return directItem.name
+
+  // Check children
+  for (const item of menuItems) {
+    if (item.children) {
+      const child = item.children.find(c => c.path === route.path || (route.path.startsWith(c.path)))
+      if (child) return child.name
+    }
+  }
+  
+  return 'Dashboard'
+})
 </script>

@@ -59,16 +59,13 @@
           <h4 class="font-semibold text-foreground mb-4">Liên hệ</h4>
           <ul class="space-y-3 text-sm text-muted-foreground">
             <li class="flex items-center gap-2">
-              <span>📧</span>
               <span>contact@oceanbooks.vn</span>
             </li>
             <li class="flex items-center gap-2">
-              <span>📞</span>
               <span>1900-OCEAN</span>
             </li>
             <li class="flex items-center gap-2">
-              <span>📍</span>
-              <span>123 Nguyễn Huệ, Q.1, TP.HCM</span>
+              <span>134 Nguyễn Thị Định, P.Buôn Ma Thuột, Tỉnh Đắk Lắk</span>
             </li>
           </ul>
         </div>

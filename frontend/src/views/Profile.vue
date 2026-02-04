@@ -4,10 +4,23 @@
       <!-- Sidebar -->
       <div class="md:col-span-1">
         <div class="bg-card rounded-xl border p-6 text-center mb-6">
-          <div class="w-24 h-24 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-4xl mx-auto mb-4 font-bold">
-            {{ userInitial }}
+          <div class="relative w-24 h-24 mx-auto mb-4 group cursor-pointer" @click="triggerAvatarUpload">
+             <input type="file" ref="fileInput" class="hidden" accept="image/*" @change="onFileSelected" />
+             <div class="w-24 h-24 rounded-full overflow-hidden border-2 border-muted bg-muted flex items-center justify-center">
+                <img 
+                  v-if="authStore.user?.avatar" 
+                  :src="authStore.user.avatar" 
+                  class="w-full h-full object-cover"
+                  alt="Avatar" 
+                />
+                <span v-else class="text-4xl font-bold text-muted-foreground">{{ userInitial }}</span>
+             </div>
+             <!-- Overlay edit icon -->
+             <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+             </div>
           </div>
-          <h2 class="font-bold text-lg">{{ authStore.user?.name || 'Người dùng' }}</h2>
+          <h2 class="font-bold text-lg cursor-pointer hover:text-primary transition-colors" @click="openProfileModal">{{ authStore.user?.name || 'Người dùng' }}</h2>
           <p class="text-sm text-muted-foreground">{{ authStore.user?.role === 'admin' ? 'Quản trị viên' : 'Thành viên' }}</p>
         </div>
 
@@ -106,10 +119,10 @@
             <router-link v-for="order in recentOrders" :key="order.id" :to="`/orders/${order.id}`" class="border rounded-lg p-4 md:p-5 hover:shadow-md transition-all cursor-pointer bg-white group block">
               <div class="flex flex-col md:flex-row md:items-center gap-3 md:gap-6">
                 <!-- Col 1: Basic Info -->
-                <div class="flex-1 md:w-[200px] md:shrink-0">
+                <div class="w-full md:w-[250px] md:shrink-0">
                    <div class="flex items-center gap-2 mb-1">
-                      <span class="font-mono font-bold text-base md:text-lg text-gray-900 group-hover:text-primary transition-colors" :title="order.order_code">#{{ order.order_code ? order.order_code.slice(0, 8).toUpperCase() : order.id }}</span>
-                      <span :class="['px-2 py-0.5 rounded-full text-xs font-bold ring-1 ring-inset md:hidden', getStatusClass(order.status)]">
+                      <span class="font-mono font-medium text-base md:text-lg text-gray-900 group-hover:text-primary transition-colors" :title="order.order_code">#{{ order.order_code ? order.order_code.slice(0, 8).toUpperCase() : order.id }}</span>
+                      <span :class="['px-2 py-0.5 rounded-full text-xs font-medium md:hidden', getStatusClass(order.status)]">
                         {{ getStatusLabel(order.status) }}
                       </span>
                    </div>
@@ -128,17 +141,18 @@
                 </div>
 
                 <!-- Col 3: Status & Price & Action -->
-                <div class="flex items-center justify-between md:w-[180px] md:shrink-0 md:flex-col md:items-end gap-2">
-                   <p class="font-bold text-primary text-lg md:text-xl">{{ formatCurrency(order.total_amount) }}</p>
-                   <span :class="['px-3 py-1 rounded-full text-xs font-bold ring-1 ring-inset hidden md:inline-block', getStatusClass(order.status)]">
+                <div class="flex items-center justify-between md:w-[250px] md:shrink-0 md:flex-col md:items-end gap-2">
+                   <p class="font-medium text-primary text-lg md:text-xl">{{ formatCurrency(order.total_amount) }}</p>
+                   <span :class="['px-3 py-1 rounded-full text-xs font-medium hidden md:inline-block', getStatusClass(order.status)]">
                      {{ getStatusLabel(order.status) }}
                    </span>
                    
                    <button 
                     v-if="order.status === 'cancelled'"
                     @click.prevent="repurchase(order)"
-                    class="mt-1 text-xs px-3 py-1.5 bg-gray-900 text-white rounded hover:bg-gray-800 transition-colors"
+                    class="mt-2 text-xs font-medium px-4 py-2 bg-primary text-primary-foreground rounded-full shadow-sm hover:shadow-md hover:bg-primary/90 transition-all flex items-center gap-1 group"
                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform group-hover:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
                     Mua lại
                   </button>
                 </div>
@@ -548,6 +562,55 @@ const profileForm = reactive({
   confirmPassword: ''
 })
 
+const fileInput = ref(null)
+
+const triggerAvatarUpload = () => {
+  fileInput.value.click()
+}
+
+const onFileSelected = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error('File quá lớn (tối đa 5MB)')
+    return
+  }
+  
+  // Upload immediately
+  try {
+    const formData = new FormData()
+    formData.append('avatar', file)
+
+    // Show loading? Maybe global loading or toast
+    const toastId = toast.loading('Đang cập nhật ảnh đại diện...')
+
+    const res = await fetch(`${API_URL}/user/profile`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${authStore.accessToken}`
+      },
+      body: formData
+    })
+    
+    const json = await res.json()
+    
+    if (json.status) {
+       authStore.user = json.data
+       localStorage.setItem('user', JSON.stringify(json.data))
+       toast.success('Cập nhật ảnh đại diện thành công', { id: toastId })
+    } else {
+       toast.error(json.message || 'Cập nhật thất bại', { id: toastId })
+    }
+  } catch (error) {
+    console.error(error)
+    toast.error('Có lỗi xảy ra')
+  } finally {
+    // Reset input
+    event.target.value = ''
+  }
+}
+
 const openProfileModal = () => {
   profileForm.name = authStore.user?.name || ''
   profileForm.phone = authStore.user?.phone || ''
@@ -560,16 +623,17 @@ const openProfileModal = () => {
 
 const updateProfile = async () => {
   try {
+    const formData = new FormData()
+    formData.append('name', profileForm.name)
+    if (profileForm.phone) formData.append('phone', profileForm.phone)
+    // No avatar here anymore
+
     const res = await fetch(`${API_URL}/user/profile`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${authStore.accessToken}`
       },
-      body: JSON.stringify({
-        name: profileForm.name,
-        phone: profileForm.phone
-      })
+      body: formData
     })
     
     const json = await res.json()

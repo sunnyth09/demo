@@ -48,6 +48,11 @@ const User = sequelize.define('User', {
     allowNull: true,
     comment: 'Số điện thoại'
   },
+  avatar: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    comment: 'URL ảnh đại diện'
+  },
   otp_code: {
     type: DataTypes.STRING(6),
     allowNull: true,

@@ -155,51 +155,52 @@
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
           </svg>
         </button>
-        <!-- Favorites -->
-        <!-- <router-link to="/favorites" class="flex flex-col items-center gap-1 text-muted-foreground hover:text-red-500 transition-colors group">
-          <div class="relative">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-            </svg>
-            <span v-if="favoritesCount > 0" class="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold border-2 border-background">{{ favoritesCount }}</span>
-          </div>
-          <span class="text-[10px] font-medium hidden lg:block">Yêu thích</span>
-        </router-link> -->
 
-        <!-- Notification (Hidden on mobile) -->
-        <button class="hidden md:flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors group">
-          <div class="relative">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+        <!-- Voucher Hunt (Hidden on mobile) -->
+        <button class="hidden md:flex flex-col items-center gap-1 text-red-600 hover:text-red-700 transition-colors group">
+          <div class="relative mt-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 animate-shake" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>
             </svg>
-            <span class="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-destructive border-2 border-background"></span>
+            <span class="absolute -top-1 -right-1 flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-destructive border-2 border-background"></span>
+            </span>
           </div>
-          <span class="text-[10px] font-medium hidden lg:block">Thông báo</span>
+          <span class="text-xs font-bold hidden lg:block">Săn Voucher</span>
         </button>
 
         <!-- Cart (Hidden on mobile) -->
         <router-link to="/cart" class="hidden md:flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors group">
-          <div class="relative">
+          <div class="relative mt-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:animate-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
             </svg>
             <span v-if="items.length > 0" class="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold border-2 border-background">{{ items.length }}</span>
           </div>
-          <span class="text-[10px] font-medium hidden lg:block">Giỏ hàng</span>
+          <span class="text-xs font-medium hidden lg:block">Giỏ hàng</span>
         </router-link>
 
         <!-- Account (Hidden on mobile) -->
         <div class="relative group/account hidden md:block">
-          <router-link :to="authStore.isAuthenticated ? '/profile' : '/login'" class="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors">
+          <router-link :to="authStore.isAuthenticated ? '/profile' : '/login'" class="flex flex-col items-center gap-0 text-muted-foreground hover:text-primary transition-colors">
             <!-- Avatar nếu đã đăng nhập -->
-            <div v-if="authStore.isAuthenticated" class="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
-              {{ authStore.user?.name?.charAt(0)?.toUpperCase() || 'U' }}
+            <div v-if="authStore.isAuthenticated" class="h-9 w-9 rounded-full overflow-hidden border border-border">
+              <img 
+                v-if="authStore.user?.avatar" 
+                :src="authStore.user.avatar" 
+                alt="Avatar" 
+                class="w-full h-full object-cover"
+              />
+              <div v-else class="w-full h-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                {{ authStore.user?.name?.charAt(0)?.toUpperCase() || 'U' }}
+              </div>
             </div>
             <!-- Icon nếu chưa đăng nhập -->
-            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
             </svg>
-            <span class="text-[10px] font-medium hidden lg:block">{{ authStore.isAuthenticated ? authStore.user?.name : 'Tài khoản' }}</span>
+            <span class="text-xs font-medium hidden lg:block">{{ authStore.isAuthenticated ? authStore.user?.name : 'Tài khoản' }}</span>
           </router-link>
           
           <!-- Auth Dropdown -->
@@ -630,5 +631,16 @@ onMounted(() => {
 .slide-enter-from,
 .slide-leave-to {
   transform: translateX(-100%);
+}
+
+@keyframes shake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(15deg); }
+  75% { transform: rotate(-15deg); }
+}
+
+.animate-shake {
+  animation: shake 2s ease-in-out infinite;
+  transform-origin: center top;
 }
 </style>

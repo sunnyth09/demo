@@ -20,7 +20,16 @@ export const getProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const user = await userService.updateProfile(req.user.id, req.body);
+    const data = req.body;
+    
+    // Nếu có file ảnh được upload
+    if (req.file) {
+      const { uploadFile } = await import("../services/minio.service.js");
+      const avatarUrl = await uploadFile(req.file);
+      data.avatar = avatarUrl;
+    }
+
+    const user = await userService.updateProfile(req.user.id, data);
     
     res.status(200).json({
       status: true,

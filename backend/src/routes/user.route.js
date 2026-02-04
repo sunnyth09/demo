@@ -2,6 +2,7 @@ import express from "express";
 import { body } from "express-validator";
 import * as userController from "../controllers/user.controller.js";
 import { checkToken, checkAdmin, handleValidate } from "../middlewares/auth.middleware.js";
+import upload from "../middlewares/upload.middleware.js";
 
 const router = express.Router();
 
@@ -52,6 +53,7 @@ router.get(
 router.put(
   "/profile",
   checkToken,
+  upload.single("avatar"),
   profileValidate,
   handleValidate,
   userController.updateProfile
