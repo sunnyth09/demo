@@ -103,19 +103,22 @@
             <a v-if="activeTab === 'profile'" href="#" @click.prevent="activeTab = 'orders'" class="text-sm text-primary hover:underline">Xem tất cả</a>
           </div>
           <div v-if="recentOrders.length > 0" class="space-y-4">
-            <router-link v-for="order in recentOrders" :key="order.id" :to="`/orders/${order.id}`" class="border rounded-lg p-5 hover:shadow-md transition-all cursor-pointer bg-white group block">
-              <div class="flex items-center gap-6">
+            <router-link v-for="order in recentOrders" :key="order.id" :to="`/orders/${order.id}`" class="border rounded-lg p-4 md:p-5 hover:shadow-md transition-all cursor-pointer bg-white group block">
+              <div class="flex flex-col md:flex-row md:items-center gap-3 md:gap-6">
                 <!-- Col 1: Basic Info -->
-                <div class="w-[200px] shrink-0">
+                <div class="flex-1 md:w-[200px] md:shrink-0">
                    <div class="flex items-center gap-2 mb-1">
-                      <span class="font-mono font-bold text-lg text-gray-900 group-hover:text-primary transition-colors" :title="order.order_code">#{{ order.order_code ? order.order_code.slice(0, 8).toUpperCase() : order.id }}</span>
+                      <span class="font-mono font-bold text-base md:text-lg text-gray-900 group-hover:text-primary transition-colors" :title="order.order_code">#{{ order.order_code ? order.order_code.slice(0, 8).toUpperCase() : order.id }}</span>
+                      <span :class="['px-2 py-0.5 rounded-full text-xs font-bold ring-1 ring-inset md:hidden', getStatusClass(order.status)]">
+                        {{ getStatusLabel(order.status) }}
+                      </span>
                    </div>
                    <p class="text-sm text-muted-foreground mb-1">{{ order.date }}</p>
                    <p class="text-sm font-medium text-gray-500">{{ order.itemsCount }} sản phẩm</p>
                 </div>
 
-                <!-- Col 2: Status Message (Center) -->
-                <div class="flex-1 px-4 flex justify-center">
+                <!-- Col 2: Status Message (Center) - Hidden on Mobile -->
+                <div class="hidden md:flex flex-1 px-4 justify-center">
                    <div class="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-full border border-gray-100 max-w-sm">
                       <component :is="getStatusIcon(order.status)" :class="['w-5 h-5', getStatusColor(order.status)]" />
                       <span class="text-sm font-medium text-gray-700 line-clamp-1 truncate" :title="getStatusMessage(order.status)">
@@ -125,11 +128,11 @@
                 </div>
 
                 <!-- Col 3: Status & Price & Action -->
-                <div class="w-[180px] shrink-0 text-right flex flex-col items-end gap-2">
-                   <span :class="['px-3 py-1 rounded-full text-xs font-bold ring-1 ring-inset', getStatusClass(order.status)]">
+                <div class="flex items-center justify-between md:w-[180px] md:shrink-0 md:flex-col md:items-end gap-2">
+                   <p class="font-bold text-primary text-lg md:text-xl">{{ formatCurrency(order.total_amount) }}</p>
+                   <span :class="['px-3 py-1 rounded-full text-xs font-bold ring-1 ring-inset hidden md:inline-block', getStatusClass(order.status)]">
                      {{ getStatusLabel(order.status) }}
                    </span>
-                   <p class="font-bold text-primary text-xl">{{ formatCurrency(order.total_amount) }}</p>
                    
                    <button 
                     v-if="order.status === 'cancelled'"

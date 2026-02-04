@@ -16,8 +16,8 @@
       </nav>
 
       <!-- Main Content -->
-      <div class="bg-white rounded-xl shadow-sm border p-6">
-        <div class="grid md:grid-cols-12 gap-8">
+      <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6">
+        <div class="grid md:grid-cols-12 gap-6 md:gap-8">
           <!-- Gallery / Image (5 columns) -->
           <div class="md:col-span-5 space-y-4">
             <!-- Main Image -->
@@ -50,7 +50,7 @@
 
           <!-- Product Info (7 columns) -->
           <div class="md:col-span-7 flex flex-col">
-            <h1 class="text-2xl font-bold text-gray-900 leading-tight mb-2">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900 leading-tight mb-2">
               {{ product.name }}
             </h1>
 
@@ -69,9 +69,9 @@
               </button>
             </div>
 
-            <div class="bg-gray-50 rounded-lg p-4 mb-6">
-               <div class="flex items-baseline gap-3">
-                 <span class="text-3xl font-bold text-primary">{{ formatCurrency(product.price) }}</span>
+            <div class="bg-gray-50 rounded-lg p-3 md:p-4 mb-4 md:mb-6">
+               <div class="flex items-baseline gap-2 md:gap-3">
+                 <span class="text-2xl md:text-3xl font-bold text-primary">{{ formatCurrency(product.price) }}</span>
                  <span v-if="product.original_price" class="text-lg text-gray-400 line-through">
                     {{ formatCurrency(product.original_price) }}
                  </span>
@@ -117,7 +117,7 @@
                 <span class="text-sm text-gray-500">{{ product.quantity }} sản phẩm có sẵn</span>
               </div>
 
-              <div class="grid grid-cols-2 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button @click="addToCart" class="h-11 flex items-center justify-center rounded-lg border-2 border-primary text-primary font-bold hover:bg-primary/5 transition-colors">
                   <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                   Thêm vào giỏ hàng
@@ -133,8 +133,8 @@
       
       <!-- Detailed Specs / Description Tabs -->
       <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div class="border-b px-6">
-           <div class="flex gap-8">
+        <div class="border-b px-4 md:px-6 overflow-x-auto">
+           <div class="flex gap-8 whitespace-nowrap min-w-max">
              <button 
                 @click="currentTab = 'description'"
                 :class="['py-3 font-bold border-b-2 text-sm uppercase transition-colors', currentTab === 'description' ? 'text-primary border-primary' : 'text-gray-500 border-transparent hover:text-gray-800']"

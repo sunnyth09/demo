@@ -1,7 +1,17 @@
 <template>
   <div class="flex min-h-screen bg-muted/30">
+    <!-- Mobile Sidebar Overlay -->
+    <div 
+      v-if="isSidebarOpen" 
+      class="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+      @click="isSidebarOpen = false"
+    ></div>
+
     <!-- Sidebar -->
-    <aside class="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-card transition-transform">
+    <aside 
+      class="fixed left-0 top-0 z-50 h-screen w-64 border-r border-border bg-card transition-transform duration-300 lg:translate-x-0"
+      :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+    >
       <!-- Logo -->
       <div class="flex h-16 items-center gap-2 border-b border-border px-6">
         <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -10,14 +20,24 @@
           </svg>
         </div>
         <span class="text-xl font-bold">Admin</span>
+        <!-- Close button on mobile -->
+        <button 
+          @click="isSidebarOpen = false" 
+          class="ml-auto lg:hidden text-muted-foreground hover:text-foreground"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       <!-- Navigation -->
-      <nav class="p-4 space-y-2">
+      <nav class="p-4 space-y-2 overflow-y-auto max-h-[calc(100vh-8rem)]">
         <router-link 
           v-for="item in menuItems" 
           :key="item.path"
           :to="item.path"
+          @click="isSidebarOpen = false"
           class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           active-class="bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
         >
@@ -27,7 +47,7 @@
       </nav>
 
       <!-- User Info -->
-      <div class="absolute bottom-0 left-0 right-0 border-t border-border p-4">
+      <div class="absolute bottom-0 left-0 right-0 border-t border-border p-4 bg-card">
         <div class="flex items-center gap-3">
           <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-lg">
             👤
@@ -41,23 +61,33 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="ml-64 flex-1">
+    <main class="flex-1 transition-all duration-300 w-full lg:ml-64">
       <!-- Header -->
-      <header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 backdrop-blur px-6">
+      <header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 backdrop-blur px-4 lg:px-6">
         <div class="flex items-center gap-4">
-          <h1 class="text-lg font-semibold">{{ currentPageTitle }}</h1>
+          <!-- Toggle Button -->
+          <button 
+            @click="isSidebarOpen = !isSidebarOpen"
+            class="p-2 -ml-2 rounded-lg hover:bg-muted text-foreground lg:hidden"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <h1 class="text-lg font-semibold truncate">{{ currentPageTitle }}</h1>
         </div>
-          <div class="flex items-center gap-4">
-             <router-link to="/">
-               <button class="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                 ← Về trang chủ
-               </button>
-             </router-link>
-          </div>
-       </header>
+        <div class="flex items-center gap-4">
+          <router-link to="/">
+            <button class="text-sm text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
+               <span class="hidden sm:inline">← Về trang chủ</span>
+               <span class="sm:hidden">← Về trang chủ</span>
+            </button>
+          </router-link>
+        </div>
+      </header>
 
       <!-- Page Content -->
-      <div class="p-6">
+      <div class="p-4 lg:p-6 overflow-x-hidden">
         <router-view />
       </div>
     </main>
@@ -65,10 +95,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+const isSidebarOpen = ref(false)
 
 const menuItems = [
   { name: 'Dashboard', path: '/admin', icon: 'IconDashboard' },

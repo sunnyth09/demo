@@ -63,7 +63,7 @@
       </div>
     </div>
 
-    <div class="bg-card rounded-xl border overflow-hidden">
+    <div class="bg-card rounded-xl border overflow-hidden overflow-x-auto">
       <div v-if="loading" class="p-8 text-center text-muted-foreground">
         Đang tải dữ liệu...
       </div>

@@ -31,45 +31,75 @@
           <div 
             v-for="item in cartItems" 
             :key="item.id"
-            class="bg-card rounded-xl border p-4 flex gap-4 items-center"
+            class="bg-card rounded-xl border p-3 flex gap-3 items-start"
           >
-            <!-- Checkbox -->
-            <input 
-               type="checkbox" 
-               :checked="item.selected !== false"
-               @change="toggleSelection(item.id)"
-               class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-             />
+            <!-- Checkbox (Centered vertically relative to image approx) -->
+            <div class="flex-shrink-0 pt-10 sm:pt-0 sm:self-center">
+               <input 
+                 type="checkbox" 
+                 :checked="item.selected !== false"
+                 @change="toggleSelection(item.id)"
+                 class="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+               />
+            </div>
             
-            <div class="w-24 h-24 rounded-lg bg-muted flex-shrink-0 overflow-hidden border">
+            <!-- Image (Portrait aspect) -->
+            <div class="w-24 h-32 sm:w-28 sm:h-36 rounded-md border bg-muted flex-shrink-0 overflow-hidden relative">
                <img :src="item.thumbnail || 'https://via.placeholder.com/100'" class="w-full h-full object-cover" />
             </div>
-            <div class="flex-1 min-w-0">
-              <h3 class="font-semibold truncate">{{ item.name }}</h3>
-              <p class="text-sm text-muted-foreground">{{ item.category }}</p>
-              <p class="text-lg font-bold text-primary mt-2">{{ formatCurrency(item.price) }}</p>
-            </div>
-            <div class="flex flex-col items-end justify-between self-stretch">
-              <button @click="removeItem(item.id)" class="p-2 text-muted-foreground hover:text-destructive transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                </svg>
-              </button>
-              <div class="flex items-center border border-gray-300 rounded-lg">
-                <button 
-                  @click="updateQuantity(item.id, -1)" 
-                  class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
-                  :disabled="item.quantity <= 1"
-                >
-                  -
-                </button>
-                <span class="w-10 text-center text-sm font-medium border-x border-gray-300 py-1">{{ item.quantity }}</span>
-                <button 
-                  @click="updateQuantity(item.id, 1)" 
-                  class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors"
-                >
-                  +
-                </button>
+
+            <!-- Content Column -->
+            <div class="flex-1 min-w-0 flex flex-col justify-between min-h-[128px] sm:min-h-[144px]">
+              <!-- Top Info -->
+              <div>
+                <div class="flex justify-between items-start gap-2">
+                   <h3 class="font-medium text-sm sm:text-base line-clamp-2 text-foreground leading-snug">{{ item.name }}</h3>
+                </div>
+                <!-- Category/Author if needed -->
+                <p class="text-xs text-muted-foreground mt-1">{{ item.category || 'Sách' }}</p>
+                
+                <!-- Price -->
+                <div class="flex flex-wrap items-baseline gap-2 mt-2">
+                   <p class="text-base sm:text-lg font-bold text-primary">{{ formatCurrency(item.price) }}</p>
+                   <p v-if="item.original_price" class="text-xs text-muted-foreground line-through decoration-gray-400">
+                     {{ formatCurrency(item.original_price) }}
+                   </p>
+                </div>
+              </div>
+
+              <!-- Bottom Actions (Qty & Delete) -->
+              <div class="flex items-center justify-between mt-3">
+                 <!-- Quantity Control -->
+                 <div class="flex items-center border border-gray-200 rounded-lg bg-background">
+                    <button 
+                      @click="updateQuantity(item.id, -1)" 
+                      class="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors disabled:opacity-50 rounded-l-lg"
+                      :disabled="item.quantity <= 1"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
+                    </button>
+                    <div class="w-10 h-8 flex items-center justify-center text-sm font-semibold border-x border-gray-200 bg-gray-50/50">
+                      {{ item.quantity }}
+                    </div>
+                    <button 
+                      @click="updateQuantity(item.id, 1)" 
+                      class="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors rounded-r-lg"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                    </button>
+                 </div>
+
+                 <!-- Delete Button -->
+                 <button 
+                  @click="removeItem(item.id)" 
+                  class="p-2 text-gray-400 hover:text-destructive hover:bg-destructive/10 rounded-full transition-all"
+                  title="Xóa sản phẩm"
+                 >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                 </button>
               </div>
             </div>
           </div>
