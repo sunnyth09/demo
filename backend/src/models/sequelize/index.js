@@ -11,6 +11,8 @@ import Article from './Article.js';
 import Favorite from './Favorite.js';
 import Review from './Review.js';
 import ReviewReport from './ReviewReport.js';
+import UserCoupon from './UserCoupon.js';
+import CouponUsage from './CouponUsage.js';
 
 // ========== ĐỊNH NGHĨA QUAN HỆ GIỮA CÁC MODELS ==========
 
@@ -134,7 +136,70 @@ Favorite.belongsTo(Product, {
   as: 'product'
 });
 
+// ========== COUPON ASSOCIATIONS ==========
 
+// Coupon thuộc về Category (optional)
+Coupon.belongsTo(Category, {
+  foreignKey: 'category_id',
+  as: 'category'
+});
+
+Category.hasMany(Coupon, {
+  foreignKey: 'category_id',
+  as: 'coupons'
+});
+
+// UserCoupon - Mã đã gán cho user
+User.hasMany(UserCoupon, {
+  foreignKey: 'user_id',
+  as: 'userCoupons'
+});
+
+UserCoupon.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+Coupon.hasMany(UserCoupon, {
+  foreignKey: 'coupon_id',
+  as: 'claimedBy'
+});
+
+UserCoupon.belongsTo(Coupon, {
+  foreignKey: 'coupon_id',
+  as: 'coupon'
+});
+
+// CouponUsage - Lịch sử sử dụng
+User.hasMany(CouponUsage, {
+  foreignKey: 'user_id',
+  as: 'couponUsages'
+});
+
+CouponUsage.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+Coupon.hasMany(CouponUsage, {
+  foreignKey: 'coupon_id',
+  as: 'usages'
+});
+
+CouponUsage.belongsTo(Coupon, {
+  foreignKey: 'coupon_id',
+  as: 'coupon'
+});
+
+Order.hasOne(CouponUsage, {
+  foreignKey: 'order_id',
+  as: 'couponUsage'
+});
+
+CouponUsage.belongsTo(Order, {
+  foreignKey: 'order_id',
+  as: 'order'
+});
 
 // ========== HÀM ĐỒNG BỘ DATABASE ==========
 
@@ -164,5 +229,5 @@ export const syncDatabase = async (options = {}) => {
 };
 
 // Export tất cả models
-export { sequelize, Category, Product, User, Address, Order, OrderItem, ShippingZone, Coupon, Article, Favorite, Review, ReviewReport };
+export { sequelize, Category, Product, User, Address, Order, OrderItem, ShippingZone, Coupon, Article, Favorite, Review, ReviewReport, UserCoupon, CouponUsage };
 

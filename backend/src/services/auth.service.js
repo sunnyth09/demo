@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User } from "../models/sequelize/index.js";
 import { sendEmail } from "./email.service.js";
+import { assignWelcomeCoupon } from "./coupon.service.js";
 
 /**
  * Đăng ký người dùng mới
@@ -21,13 +22,20 @@ export const registerService = async (data) => {
   const hash = await bcrypt.hash(data.password, salt);
 
   // Tạo user mới
-  await User.create({
+  const newUser = await User.create({
     name: data.name,
     email: data.email,
     password: hash,
     role: 'user',
     phone: data.phone || null
   });
+
+  // Tặng mã welcome cho user mới
+  try {
+    await assignWelcomeCoupon(newUser.id);
+  } catch (err) {
+    console.log('Welcome coupon not assigned:', err.message);
+  }
 };
 
 /**

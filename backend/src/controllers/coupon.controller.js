@@ -6,6 +6,67 @@ export const getCoupons = async (req, res) => {
     const coupons = await CouponService.getAllCoupons(active === 'true');
     res.json({ status: true, data: coupons });
   } catch (error) {
+    console.error('❌ Error getCoupons:', error);
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+export const getPublicCoupons = async (req, res) => {
+  try {
+    const userId = req.user?.id || null;
+    const coupons = await CouponService.getPublicCoupons(userId);
+    res.json({ status: true, data: coupons });
+  } catch (error) {
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+export const getMyCoupons = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const coupons = await CouponService.getMyCoupons(userId);
+    res.json({ status: true, data: coupons });
+  } catch (error) {
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+export const claimCoupon = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const couponId = req.params.id;
+    const result = await CouponService.claimCoupon(userId, couponId);
+    res.json({ status: true, ...result });
+  } catch (error) {
+    res.status(400).json({ status: false, message: error.message });
+  }
+};
+
+export const getNewCouponsCount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const count = await CouponService.getNewCouponsCount(userId);
+    res.json({ status: true, data: { count } });
+  } catch (error) {
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+export const markCouponsSeen = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    await CouponService.markCouponsSeen(userId);
+    res.json({ status: true, message: "Đã đánh dấu đã xem" });
+  } catch (error) {
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+export const getCouponStats = async (req, res) => {
+  try {
+    const stats = await CouponService.getCouponStats();
+    res.json({ status: true, data: stats });
+  } catch (error) {
     res.status(500).json({ status: false, message: error.message });
   }
 };
@@ -39,13 +100,13 @@ export const deleteCoupon = async (req, res) => {
 
 export const applyCoupon = async (req, res) => {
   try {
-    const { code, order_total, shipping_fee } = req.body;
+    const { code, order_total, shipping_fee, category_ids } = req.body;
+    const userId = req.user?.id || null;
     
     if (!code) throw new Error("Vui lòng nhập mã giảm giá");
 
-    const result = await CouponService.validateCoupon(code, order_total);
+    const result = await CouponService.validateCoupon(code, order_total, userId, category_ids || []);
 
-    // Final adjustment based on shipping fee if it's free shipping type
     if (result.type === 'free_shipping') {
       result.discountAmount = shipping_fee || 0;
     }

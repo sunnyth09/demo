@@ -47,6 +47,14 @@
             Sản phẩm yêu thích
           </button>
           <button 
+            @click="activeTab = 'myVouchers'" 
+            :class="['flex items-center gap-3 px-4 py-3 w-full text-left transition-colors border-l-2', activeTab === 'myVouchers' ? 'bg-primary/5 text-primary font-medium border-primary' : 'hover:bg-muted/50 border-transparent']"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V9Z"/><path d="M12 6v15"/><path d="M6 12h.01"/><path d="M18 12h.01"/></svg>
+            Mã của tôi
+            <span v-if="newVouchersCount > 0" class="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{{ newVouchersCount }}</span>
+          </button>
+          <button 
             @click="activeTab = 'address'" 
             :class="['flex items-center gap-3 px-4 py-3 w-full text-left transition-colors border-l-2', activeTab === 'address' ? 'bg-primary/5 text-primary font-medium border-primary' : 'hover:bg-muted/50 border-transparent']"
           >
@@ -229,6 +237,69 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
             <p class="text-muted-foreground">Chưa có sản phẩm yêu thích</p>
             <router-link to="/" class="inline-block mt-4 text-primary hover:underline">Khám phá sản phẩm</router-link>
+          </div>
+        </div>
+
+        <!-- My Vouchers Tab -->
+        <div v-if="activeTab === 'myVouchers'" class="bg-card rounded-xl border p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold">Mã của tôi</h2>
+            <router-link to="/vouchers" class="text-sm text-primary hover:underline">Săn thêm mã →</router-link>
+          </div>
+          
+          <div v-if="loadingVouchers" class="flex justify-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+          
+          <div v-else-if="myVouchers.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div 
+              v-for="coupon in myVouchers" 
+              :key="coupon.id"
+              :class="[
+                'flex rounded-xl overflow-hidden border',
+                coupon.is_used ? 'opacity-60 bg-gray-50' : 'bg-white hover:shadow-md'
+              ]"
+            >
+              <!-- Left Badge -->
+              <div 
+                :class="[
+                  'w-24 flex flex-col items-center justify-center p-3',
+                  coupon.is_used ? 'bg-gray-400' : coupon.type === 'free_shipping' ? 'bg-gradient-to-br from-green-500 to-emerald-600' : 'bg-gradient-to-br from-primary to-pink-600'
+                ]"
+              >
+                <span class="text-white text-[10px] font-medium uppercase">{{ coupon.is_used ? 'Đã dùng' : 'Giảm' }}</span>
+                <span class="text-white text-xl font-black">
+                  <template v-if="coupon.type === 'percentage'">{{ Number(coupon.value) }}%</template>
+                  <template v-else-if="coupon.type === 'fixed'">{{ formatShortCurrency(coupon.value) }}</template>
+                  <template v-else>✈️</template>
+                </span>
+              </div>
+
+              <!-- Content -->
+              <div class="flex-1 p-3">
+                <h4 class="font-semibold text-gray-900 line-clamp-1 text-sm">{{ coupon.description || coupon.code }}</h4>
+                <p class="font-mono text-xs text-gray-500 mt-0.5">{{ coupon.code }}</p>
+                <div class="flex flex-wrap items-center gap-2 mt-2">
+                  <span 
+                    :class="[
+                      'text-[10px] px-1.5 py-0.5 rounded',
+                      coupon.source === 'welcome' ? 'bg-blue-100 text-blue-600' :
+                      coupon.source === 'first_order' ? 'bg-green-100 text-green-600' :
+                      coupon.source === 'manual' ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-600'
+                    ]"
+                  >
+                    {{ getSourceLabel(coupon.source) }}
+                  </span>
+                  <span v-if="!coupon.is_used" class="text-[10px] text-gray-400">HSD: {{ formatDate(coupon.end_date) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="text-center py-12">
+            <div class="text-5xl mb-4">🎫</div>
+            <p class="text-muted-foreground">Bạn chưa có mã giảm giá nào</p>
+            <router-link to="/vouchers" class="inline-block mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Săn Voucher ngay</router-link>
           </div>
         </div>
 
@@ -514,6 +585,11 @@ const activeTab = ref(route.name === 'orders' ? 'orders' : 'profile')
 const recentOrders = ref([])
 const showOrderModal = ref(false)
 const selectedOrder = ref(null)
+
+// Voucher state
+const myVouchers = ref([])
+const newVouchersCount = ref(0)
+const loadingVouchers = ref(false)
 
 const navigateToTab = (tab) => {
   activeTab.value = tab
@@ -812,6 +888,62 @@ const fetchAddresses = async () => {
     console.error(error)
   }
 }
+
+// Voucher Functions
+const fetchMyVouchers = async () => {
+  loadingVouchers.value = true
+  try {
+    const res = await fetch(`${API_URL}/coupons/my`, {
+      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+    })
+    const json = await res.json()
+    if (json.status) {
+      myVouchers.value = json.data
+    }
+  } catch (error) {
+    console.error(error)
+  } finally {
+    loadingVouchers.value = false
+  }
+}
+
+const fetchNewVouchersCount = async () => {
+  try {
+    const res = await fetch(`${API_URL}/coupons/new-count`, {
+      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+    })
+    const json = await res.json()
+    if (json.status) {
+      newVouchersCount.value = json.data.count
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const getSourceLabel = (source) => {
+  const labels = {
+    'claim': 'Đã lưu',
+    'welcome': '🎁 Chào mừng',
+    'first_order': '🏷️ Đơn đầu',
+    'manual': '✨ Được tặng'
+  }
+  return labels[source] || source
+}
+
+const formatShortCurrency = (value) => {
+  const num = Number(value)
+  if (num >= 1000000) return `${(num / 1000000).toFixed(0)}TR`
+  if (num >= 1000) return `${(num / 1000).toFixed(0)}K`
+  return num.toString()
+}
+
+// Watch for tab changes to load vouchers
+watch(activeTab, (newTab) => {
+  if (newTab === 'myVouchers' && myVouchers.value.length === 0) {
+    fetchMyVouchers()
+  }
+})
 
 const openAddAddressModal = () => {
   isEditingAddress.value = false

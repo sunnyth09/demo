@@ -57,6 +57,26 @@ const Coupon = sequelize.define('Coupon', {
   is_active: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
+  },
+  is_public: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: 'Hiển thị trên trang Săn Voucher'
+  },
+  for_first_order_only: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: 'Chỉ áp dụng cho đơn hàng đầu tiên'
+  },
+  category_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: 'Giới hạn theo danh mục sản phẩm (null = tất cả)'
+  },
+  max_uses_per_user: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1,
+    comment: 'Số lần sử dụng tối đa mỗi user'
   }
 }, {
   tableName: 'coupons',

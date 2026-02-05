@@ -1,14 +1,23 @@
 import express from "express";
 import * as CouponController from "../controllers/coupon.controller.js";
-import { checkAdmin, checkToken } from "../middlewares/auth.middleware.js";
+import { checkAdmin, checkToken, optionalCheckToken } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-// Public route for checking coupon
-router.post('/apply', CouponController.applyCoupon);
-router.get('/', CouponController.getCoupons); // Allow public to list coupons (supports ?active=true)
+// ========== PUBLIC ROUTES ==========
+// Mã công khai (Săn Voucher) - optionalCheckToken để biết user đã claim chưa
+router.get('/public', optionalCheckToken, CouponController.getPublicCoupons);
+router.post('/apply', optionalCheckToken, CouponController.applyCoupon);
 
-// Admin routes
+// ========== USER ROUTES (cần đăng nhập) ==========
+router.get('/my', checkToken, CouponController.getMyCoupons);
+router.post('/claim/:id', checkToken, CouponController.claimCoupon);
+router.get('/new-count', checkToken, CouponController.getNewCouponsCount);
+router.post('/mark-seen', checkToken, CouponController.markCouponsSeen);
+
+// ========== ADMIN ROUTES ==========
+router.get('/', checkToken, checkAdmin, CouponController.getCoupons);
+router.get('/stats', checkToken, checkAdmin, CouponController.getCouponStats);
 router.post('/', checkToken, checkAdmin, CouponController.createCoupon);
 router.put('/:id', checkToken, checkAdmin, CouponController.updateCoupon);
 router.delete('/:id', checkToken, checkAdmin, CouponController.deleteCoupon);

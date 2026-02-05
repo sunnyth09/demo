@@ -157,18 +157,23 @@
         </button>
 
         <!-- Voucher Hunt (Hidden on mobile) -->
-        <button class="hidden md:flex flex-col items-center gap-1 text-red-600 hover:text-red-700 transition-colors group">
+        <router-link 
+          to="/vouchers" 
+          class="hidden md:flex flex-col items-center gap-1 text-red-600 hover:text-red-700 transition-colors group relative"
+        >
           <div class="relative mt-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 animate-shake" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>
             </svg>
-            <span class="absolute -top-1 -right-1 flex h-3 w-3">
+            <!-- Badge mã mới -->
+            <span v-if="newVouchersCount > 0" class="absolute -top-1 -right-2 h-5 w-5 rounded-full bg-destructive text-white text-xs flex items-center justify-center font-bold border-2 border-background animate-bounce">{{ newVouchersCount }}</span>
+            <span v-else class="absolute -top-1 -right-1 flex h-3 w-3">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
               <span class="relative inline-flex rounded-full h-3 w-3 bg-destructive border-2 border-background"></span>
             </span>
           </div>
           <span class="text-xs font-bold hidden lg:block">Săn Voucher</span>
-        </button>
+        </router-link>
 
         <!-- Cart (Hidden on mobile) -->
         <router-link to="/cart" class="hidden md:flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors group">
@@ -463,6 +468,7 @@ const categories = ref([])
 const showMobileSearch = ref(false)
 const showMobileMenu = ref(false)
 const expandedMobileCategories = ref(new Set())
+const newVouchersCount = ref(0)
 
 // Search Logic
 const suggestions = ref({ keywords: [], products: [] })
@@ -602,10 +608,26 @@ const fetchCategories = async () => {
   }
 }
 
+const fetchNewVouchersCount = async () => {
+  if (!authStore.isAuthenticated) return
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/coupons/new-count`, {
+      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+    })
+    const json = await res.json()
+    if (json.status) {
+      newVouchersCount.value = json.data.count
+    }
+  } catch (e) {
+    console.error(e)
+  }
+}
+
 onMounted(() => {
   fetchCategories()
   if (authStore.isAuthenticated) {
-    favoriteStore.fetchFavorites();
+    favoriteStore.fetchFavorites()
+    fetchNewVouchersCount()
   }
 })
 </script>

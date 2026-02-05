@@ -13,8 +13,24 @@
       </button>
     </div>
 
+    <!-- Tabs -->
+    <div class="flex gap-2 border-b">
+      <button 
+        @click="activeTab = 'list'" 
+        :class="['px-4 py-2 font-medium transition-colors', activeTab === 'list' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700']"
+      >
+        Danh sách mã
+      </button>
+      <button 
+        @click="activeTab = 'stats'" 
+        :class="['px-4 py-2 font-medium transition-colors', activeTab === 'stats' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700']"
+      >
+        Thống kê hiệu quả
+      </button>
+    </div>
+
     <!-- Table -->
-    <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+    <div v-show="activeTab === 'list'" class="bg-white rounded-xl shadow-sm border overflow-hidden">
       <div v-if="loading" class="p-8 text-center">
          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
       </div>
@@ -57,9 +73,23 @@
                </div>
             </td>
             <td class="px-6 py-4 text-xs text-gray-500">
-               <div>{{ formatDate(coupon.start_date) }}</div>
-               <div class="text-center font-bold">⬇</div>
-               <div>{{ formatDate(coupon.end_date) }}</div>
+               <div class="flex items-center gap-1">
+                 <svg class="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                 </svg>
+                 {{ formatDate(coupon.start_date) }}
+               </div>
+               <div class="flex justify-center my-0.5">
+                 <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                 </svg>
+               </div>
+               <div class="flex items-center gap-1">
+                 <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                 </svg>
+                 {{ formatDate(coupon.end_date) }}
+               </div>
             </td>
             <td class="px-6 py-4">
               <span 
@@ -173,6 +203,42 @@
              <input id="active" type="checkbox" v-model="form.is_active" class="w-4 h-4 text-primary rounded border-gray-300" />
              <label for="active" class="text-sm font-medium text-gray-700">Kích hoạt ngay</label>
           </div>
+
+          <!-- New Fields -->
+          <div class="border-t pt-4 mt-2">
+            <p class="text-xs text-gray-500 uppercase font-semibold mb-3">Tùy chọn nâng cao</p>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="flex items-center gap-2">
+                <input id="is_public" type="checkbox" v-model="form.is_public" class="w-4 h-4 text-red-500 rounded border-gray-300" />
+                <label for="is_public" class="text-sm flex items-center gap-2">
+                  <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg>
+                  Công khai trên Săn Voucher
+                </label>
+              </div>
+              
+              <div v-if="!isEditing" class="col-span-2 flex items-center gap-2 ml-6 text-indigo-600 bg-indigo-50 p-2 rounded-lg transition-all animate-fade-in">
+                <input id="notify" type="checkbox" v-model="form.notifyUsers" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" />
+                <label for="notify" class="text-sm font-bold cursor-pointer select-none flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                  Gửi email thông báo cho tất cả người dùng ngay lập tức
+                </label>
+              </div>
+              <div class="flex items-center gap-2">
+                <input id="first_order" type="checkbox" v-model="form.for_first_order_only" class="w-4 h-4 text-orange-500 rounded border-gray-300" />
+                <label for="first_order" class="text-sm flex items-center gap-2">
+                  <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                  Chỉ cho đơn đầu tiên
+                </label>
+              </div>
+            </div>
+            <div class="mt-3">
+              <label class="block text-sm font-medium mb-1">Áp dụng cho danh mục (tùy chọn)</label>
+              <select v-model="form.category_id" class="w-full px-3 py-2 border rounded-lg outline-none">
+                <option :value="null">-- Tất cả sản phẩm --</option>
+                <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <div class="p-6 border-t bg-gray-50 flex justify-end gap-3 sticky bottom-0">
@@ -199,6 +265,36 @@
         </div>
       </div>
     </div>
+
+    <!-- Stats Tab -->
+    <div v-show="activeTab === 'stats'" class="bg-white rounded-xl shadow-sm border overflow-hidden">
+      <div v-if="loadingStats" class="p-8 text-center">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+      </div>
+      <table v-else class="w-full text-sm text-left">
+        <thead class="bg-gray-50 text-gray-500 font-medium border-b">
+          <tr>
+            <th class="px-6 py-4">Mã Voucher</th>
+            <th class="px-6 py-4">Mô tả</th>
+            <th class="px-6 py-4">Lượt sử dụng</th>
+            <th class="px-6 py-4">Tổng tiền giảm</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y">
+          <tr v-for="stat in couponStats" :key="stat.coupon_id" class="hover:bg-gray-50">
+            <td class="px-6 py-4 font-mono font-bold text-primary">{{ stat.coupon?.code }}</td>
+            <td class="px-6 py-4 text-gray-600">{{ stat.coupon?.description }}</td>
+            <td class="px-6 py-4">
+              <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">{{ stat.usage_count }} lần</span>
+            </td>
+            <td class="px-6 py-4 text-green-600 font-semibold">{{ formatCurrency(stat.total_discount) }}</td>
+          </tr>
+          <tr v-if="couponStats.length === 0">
+            <td colspan="4" class="p-8 text-center text-gray-500">Chưa có dữ liệu sử dụng</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -217,6 +313,10 @@ const showDeleteModal = ref(false)
 const isEditing = ref(false)
 const saving = ref(false)
 const couponToDelete = ref(null)
+const activeTab = ref('list')
+const categories = ref([])
+const couponStats = ref([])
+const loadingStats = ref(false)
 
 const form = ref({
   code: '',
@@ -228,7 +328,10 @@ const form = ref({
   quantity: 100,
   start_date: new Date().toISOString().split('T')[0],
   end_date: '',
-  is_active: true
+  is_active: true,
+  is_public: false,
+  for_first_order_only: false,
+  category_id: null
 })
 
 const formatCurrency = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value || 0)
@@ -268,7 +371,11 @@ const openCreateModal = () => {
     quantity: 100,
     start_date: new Date().toISOString().split('T')[0],
     end_date: '',
-    is_active: true
+    is_active: true,
+    is_public: false,
+    for_first_order_only: false,
+    category_id: null,
+    notifyUsers: false
   }
   showModal.value = true
 }
@@ -278,7 +385,8 @@ const openEditModal = (coupon) => {
   form.value = { 
     ...coupon,
     start_date: coupon.start_date ? coupon.start_date.split('T')[0] : '',
-    end_date: coupon.end_date ? coupon.end_date.split('T')[0] : ''
+    end_date: coupon.end_date ? coupon.end_date.split('T')[0] : '',
+    notifyUsers: false 
   }
   showModal.value = true
 }
@@ -307,13 +415,23 @@ const saveCoupon = async () => {
       ? `${API_URL}/coupons/${form.value.id}`
       : `${API_URL}/coupons`
     
+    const payload = { ...form.value }
+    if (!payload.start_date) payload.start_date = null
+    if (!payload.end_date) payload.end_date = null
+    
+    // Convert numbers
+    payload.value = Number(payload.value)
+    payload.min_order_amount = Number(payload.min_order_amount)
+    if (payload.max_discount_amount) payload.max_discount_amount = Number(payload.max_discount_amount)
+    else payload.max_discount_amount = null
+    
     const res = await fetch(url, {
       method: isEditing.value ? 'PUT' : 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${authStore.accessToken}`
       },
-      body: JSON.stringify(form.value)
+      body: JSON.stringify(payload)
     })
     
     const data = await res.json()
@@ -359,8 +477,46 @@ const deleteCoupon = async () => {
   }
 }
 
+const fetchCategories = async () => {
+  try {
+    const res = await fetch(`${API_URL}/categories`)
+    const data = await res.json()
+    if (data.status) {
+      categories.value = data.data
+    }
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const fetchStats = async () => {
+  loadingStats.value = true
+  try {
+    const res = await fetch(`${API_URL}/coupons/stats`, {
+      headers: { Authorization: `Bearer ${authStore.accessToken}` }
+    })
+    const data = await res.json()
+    if (data.status) {
+      couponStats.value = data.data
+    }
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loadingStats.value = false
+  }
+}
+
+import { watch } from 'vue'
+
+watch(activeTab, (newTab) => {
+  if (newTab === 'stats' && couponStats.value.length === 0) {
+    fetchStats()
+  }
+})
+
 onMounted(() => {
   fetchCoupons()
+  fetchCategories()
 })
 </script>
 
