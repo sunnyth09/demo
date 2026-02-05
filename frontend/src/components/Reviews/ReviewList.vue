@@ -116,7 +116,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
+import { computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { toast } from 'vue-sonner';
 
@@ -127,24 +127,26 @@ const props = defineProps({
   productId: {
     type: [Number, String],
     required: true
+  },
+  reviews: {
+    type: Array,
+    default: () => []
   }
 });
 
 const API_URL = import.meta.env.VITE_API_URL;
-const reviews = ref([]);
-const loading = ref(true);
 
 // Computed Statistics
 const averageRating = computed(() => {
-  if (reviews.value.length === 0) return 0;
-  const total = reviews.value.reduce((sum, review) => sum + review.rating, 0);
-  return (total / reviews.value.length).toFixed(1).replace(/\.0$/, '');
+  if (props.reviews.length === 0) return 0;
+  const total = props.reviews.reduce((sum, review) => sum + review.rating, 0);
+  return (total / props.reviews.length).toFixed(1).replace(/\.0$/, '');
 });
 
 const getPercentage = (star) => {
-  if (reviews.value.length === 0) return 0;
-  const count = reviews.value.filter(r => r.rating === star).length;
-  return Math.round((count / reviews.value.length) * 100);
+  if (props.reviews.length === 0) return 0;
+  const count = props.reviews.filter(r => r.rating === star).length;
+  return Math.round((count / props.reviews.length) * 100);
 };
 
 const getInitials = (name) => {
@@ -174,8 +176,8 @@ const deleteReview = async (id) => {
     
     if (res.ok) {
       toast.success('Đã xóa đánh giá');
-      fetchReviews();
       emit('refresh');
+      // fetchReviews removed, relying on parent refresh
     } else {
       const data = await res.json();
       toast.error(data.message || 'Lỗi khi xóa đánh giá');
@@ -212,32 +214,4 @@ const reportReview = async (id) => {
     toast.error('Lỗi kết nối');
   }
 };
-
-const fetchReviews = async () => {
-  loading.value = true;
-  try {
-    const res = await fetch(`${API_URL}/reviews/product/${props.productId}`);
-    const json = await res.json();
-    
-    if (res.ok) {
-      reviews.value = json.data || [];
-    }
-  } catch (error) {
-    console.error('Error fetching reviews:', error);
-  } finally {
-    loading.value = false;
-  }
-};
-
-onMounted(() => {
-  fetchReviews();
-});
-
-watch(() => props.productId, () => {
-  fetchReviews();
-});
-
-defineExpose({
-  fetchReviews
-});
 </script>

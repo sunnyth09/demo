@@ -67,9 +67,9 @@
                {{ formatCurrency(coupon.min_order_amount) }}
             </td>
             <td class="px-6 py-4">
-               <div>{{ coupon.quantity - coupon.used_count }} / {{ coupon.quantity }}</div>
+               <div>{{ coupon.quantity }} / {{ coupon.quantity + (coupon.claimedCount || 0) }}</div>
                <div class="w-20 h-1.5 bg-gray-200 rounded-full mt-1 overflow-hidden">
-                  <div class="h-full bg-primary" :style="{ width: Math.min((coupon.used_count / coupon.quantity) * 100, 100) + '%' }"></div>
+                  <div class="h-full bg-primary" :style="{ width: Math.min(((coupon.claimedCount || 0) / (coupon.quantity + (coupon.claimedCount || 0))) * 100, 100) + '%' }"></div>
                </div>
             </td>
             <td class="px-6 py-4 text-xs text-gray-500">

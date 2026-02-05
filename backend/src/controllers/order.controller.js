@@ -29,7 +29,8 @@ export const createOrder = async (req, res) => {
       payment_method,
       total_amount,
       shipping_fee: shipping_fee || 0,
-      discount_amount: req.body.discount_amount || 0
+      discount_amount: req.body.discount_amount || 0,
+      coupon_code: req.body.coupon_code // Pass coupon code to service
     };
 
     const order = await OrderService.createOrder(orderData, items);

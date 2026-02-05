@@ -116,7 +116,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue';
+import { ref, reactive, watch, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useRoute } from 'vue-router';
 import { toast } from 'vue-sonner';
@@ -125,6 +125,10 @@ const props = defineProps({
   productId: {
     type: [Number, String],
     required: true
+  },
+  reviews: {
+    type: Array,
+    default: () => []
   }
 });
 
@@ -139,43 +143,21 @@ const hoverRating = ref(0);
 const comment = ref('');
 const loading = ref(false);
 const error = ref('');
-const hasReviewed = ref(false); // New state
+
+// Computed: Check if user already reviewed
+const hasReviewed = computed(() => {
+  if (!authStore.isAuthenticated || !authStore.user) return false;
+  return props.reviews.some(r => r.user_id === authStore.user.id);
+});
 
 const errors = reactive({
   rating: ''
 });
 
-// Check if user already reviewed
-const checkReviewed = async () => {
-  if (!authStore.isAuthenticated) return;
-  
-  try {
-    // This is a bit inefficient (getting all reviews), but works for now. 
-    // Ideally we should have an endpoint /api/reviews/me/product/:id
-    const res = await fetch(`${API_URL}/reviews/product/${props.productId}`);
-    const json = await res.json();
-    if (res.ok && json.data) {
-      const myReview = json.data.find(r => r.user_id === authStore.user.id);
-      if (myReview) {
-        hasReviewed.value = true;
-      } else {
-        hasReviewed.value = false;
-      }
-    }
-  } catch (e) {
-    console.error(e);
-  }
-};
-
-onMounted(() => {
-  checkReviewed();
-});
-
 watch(() => props.productId, () => {
   rating.value = 0;
   comment.value = '';
-  hasReviewed.value = false;
-  checkReviewed();
+  // hasReviewed is computed, no need to reset
 });
 
 const getRatingText = (star) => {
@@ -222,7 +204,7 @@ const submitReview = async () => {
       // Reset form
       rating.value = 0;
       comment.value = '';
-      hasReviewed.value = true; // Mark as reviewed
+      // hasReviewed will update automatically when parent fetches new reviews and updates prop
       emit('review-submitted');
       toast.success('Cảm ơn bạn đã đánh giá!');
     } else {

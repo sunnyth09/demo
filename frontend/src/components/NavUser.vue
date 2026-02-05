@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import {
   IconCreditCard,
   IconDotsVertical,
@@ -28,15 +28,12 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 
-interface User {
-  name: string
-  email: string
-  avatar: string
-}
-
-defineProps<{
-  user: User
-}>()
+defineProps({
+  user: {
+    type: Object,
+    required: true,
+  },
+})
 
 const { isMobile } = useSidebar()
 </script>

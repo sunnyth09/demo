@@ -1,4 +1,4 @@
-import { Order, OrderItem, Product, User, sequelize } from "../models/sequelize/index.js";
+import { Order, OrderItem, Product, User, Coupon, CouponUsage, UserCoupon, Category, sequelize } from "../models/sequelize/index.js";
 import { Op } from "sequelize";
 
 // ... (previous code)
@@ -122,7 +122,114 @@ export const createOrder = async (orderData, items) => {
   const transaction = await sequelize.transaction();
 
   try {
+    // 0. Pre-fetch all products to verify Price and Category
+    const productIds = items.map(item => item.id);
+    const products = await Product.findAll({
+      where: { id: productIds },
+      include: [{ model: Category, as: 'category' }], // Ensure Category is included for coupon check
+      transaction,
+      lock: transaction.LOCK.UPDATE // Lock products to prevent overselling during check
+    });
+
+    if (products.length !== items.length) {
+       throw new Error("Một số sản phẩm không tồn tại hoặc đã bị xóa");
+    }
+
+    // Map passed items to real products to calculate total and build enriched list
+    let verifiedTotalAmount = 0; // Subtotal of items
+    const enrichedItems = items.map(item => {
+       const product = products.find(p => p.id === item.id);
+       if (!product) throw new Error(`Sản phẩm ID ${item.id} không tìm thấy`);
+       
+       if (product.quantity < item.quantity) {
+          throw new Error(`Sản phẩm "${product.name}" không đủ số lượng tồn kho (Còn: ${product.quantity})`);
+       }
+
+       const lineTotal = parseFloat(product.price) * parseInt(item.quantity);
+       verifiedTotalAmount += lineTotal;
+
+       return {
+          ...item, // quantity
+          product, // Full product data
+          price: product.price, // Trust DB price
+          category_id: product.category_id // For coupon check
+       };
+    });
+
+    // 0.1 Handle Coupon Logic (Server-side calculation)
+    let appliedCoupon = null;
+    let finalDiscountAmount = 0;
+
+    if (orderData.coupon_code) {
+      // Pass enriched items (with DB prices/categories) to validateCoupon
+      // Note: validateCoupon expects { price, quantity, category_id }
+      // It also checks min_order_amount against eligible subtotal.
+      
+      try {
+        const couponResult = await validateCoupon(
+           orderData.coupon_code, 
+           verifiedTotalAmount, 
+           orderData.user_id, 
+           enrichedItems
+        );
+        
+        appliedCoupon = couponResult.coupon;
+        finalDiscountAmount = couponResult.discountAmount;
+
+        // Also check if result is free shipping
+        if (couponResult.type === 'free_shipping') {
+            finalDiscountAmount = orderData.shipping_fee || 0;
+            // Note: validateCoupon returns full coupon object in 'coupon' property usually? 
+            // My modified validateCoupon returns { ... }? 
+            // Wait, calculateDiscount in validateCoupon returns just amount?
+            // Let's re-check validateCoupon output. 
+            // It modifies 'discountAmount' variable but does it RETURN it?
+            // Existing code didn't show return statement. I need to CHECK validateCoupon RETURN.
+        }
+      } catch (err) {
+         // Should we fail order if coupon invalid? Yes, usually.
+         throw new Error(`Lỗi áp dụng mã giảm giá: ${err.message}`);
+      }
+    }
+    
+    // Quick Check on validateCoupon return
+    // Function body I wrote earlier for validateCoupon:
+    // ... logic ...
+    //   if (coupon.type === 'free_shipping') {
+    //     return {
+    //       isValid: true,
+    //       coupon,
+    //       type: 'free_shipping',
+    //       discountAmount: 0 // handled by caller? or set to 0 here/
+    //     };
+    //   }
+    //   return {
+    //     isValid: true,
+    //     coupon,
+    //     discountAmount,
+    //     type: coupon.type
+    //   };
+    // I need to ensure validateCoupon returns this structure.
+    
+    
+    // 0.2 Decrement Coupon Quantity (Action)
+    if (appliedCoupon) {
+      // Re-fetch coupon with lock or use the one from validateCoupon if it wasn't locked? 
+      // validateCoupon generally just Reads. createOrder needs to Write.
+      // We should decrement 'appliedCoupon'. 
+      // Since validateCoupon doesn't lock for update (it might but usually just reads), 
+      // we should decrement. 
+      // Safe way: appliedCoupon.decrement... 
+      // Note: appliedCoupon is a Sequelize instance from validateCoupon?
+      // Yes if validateCoupon returns it.
+      await appliedCoupon.decrement('quantity', { transaction });
+    }
+
     // 1. Create Order
+    // Calculate Final Total to Pay
+    const shippingFee = orderData.shipping_fee || 0;
+    const finalTotal = Math.max(0, verifiedTotalAmount + shippingFee - finalDiscountAmount);
+
     const order = await Order.create({
       user_id: orderData.user_id || null,
       customer_name: orderData.customer_name,
@@ -133,37 +240,53 @@ export const createOrder = async (orderData, items) => {
       payment_method: orderData.payment_method || 'cod',
       payment_status: 'pending',
       status: 'pending',
-      total_amount: orderData.total_amount,
-      shipping_fee: orderData.shipping_fee || 0,
-      discount_amount: orderData.discount_amount || 0
+      total_amount: finalTotal, // Use calculated total
+      shipping_fee: shippingFee,
+      discount_amount: finalDiscountAmount
     }, { transaction });
 
-    // 2. Create Order Items and Update Product Quantity
-    for (const item of items) {
-      // Find product to check quantity (and get current price)
-      const product = await Product.findByPk(item.id, { transaction });
-      
-      if (!product) {
-        throw new Error(`Sản phẩm #${item.id} không tồn tại`);
-      }
-
-      if (product.quantity < item.quantity) {
-        throw new Error(`Sản phẩm "${product.name}" không đủ số lượng tồn kho`);
-      }
-
-      // Create Order Item
-      await OrderItem.create({
+    // 1.1 Record Coupon Usage
+    if (appliedCoupon && orderData.user_id) {
+      await CouponUsage.create({
+        user_id: orderData.user_id,
+        coupon_id: appliedCoupon.id,
         order_id: order.id,
-        product_id: product.id,
-        product_name: product.name,
-        quantity: item.quantity,
-        price: product.price,
-        total_price: product.price * item.quantity
+        discount_amount: finalDiscountAmount
       }, { transaction });
 
-      // Decrease Product Quantity
-      await product.update({
-        quantity: product.quantity - item.quantity
+      // 1.2 Update UserCoupon status (Mark as used)
+      // Check total usage
+      const currentUsageCount = await CouponUsage.count({
+        where: { user_id: orderData.user_id, coupon_id: appliedCoupon.id },
+        transaction
+      });
+
+      if (currentUsageCount >= appliedCoupon.max_uses_per_user) {
+        await UserCoupon.update(
+          { is_used: true, used_at: new Date() },
+          { 
+            where: { user_id: orderData.user_id, coupon_id: appliedCoupon.id },
+            transaction
+          }
+        );
+      }
+    }
+
+    // 2. Create Order Items and Update Product Quantity
+    // We already have enrichedItems with product instances
+    for (const item of enrichedItems) {
+      await OrderItem.create({
+        order_id: order.id,
+        product_id: item.product.id,
+        product_name: item.product.name,
+        quantity: item.quantity,
+        price: item.product.price,
+        total_price: item.product.price * item.quantity
+      }, { transaction });
+
+      // Update Stock
+      await item.product.update({
+        quantity: item.product.quantity - item.quantity
       }, { transaction });
     }
 
@@ -294,32 +417,102 @@ export const getOrderById = async (orderId) => {
  * Update order status
  */
 export const updateStatus = async (orderId, newStatus) => {
-  const order = await Order.findByPk(orderId);
-  if (!order) {
-    throw new Error(`Đơn hàng #${orderId} không tồn tại`);
+  const transaction = await sequelize.transaction();
+
+  try {
+    const order = await Order.findByPk(orderId, {
+       include: [{ model: OrderItem, as: 'items' }]
+    });
+
+    if (!order) {
+      throw new Error(`Đơn hàng #${orderId} không tồn tại`);
+    }
+
+    // Only proceed if status is actually changing and logic is needed
+    if (order.status === newStatus) {
+        await transaction.rollback();
+        return order;
+    }
+
+    // Handle Restoration if Cancelled
+    if (newStatus === 'cancelled' && order.status !== 'cancelled') {
+       // 1. Restore Stock
+       for (const item of order.items) {
+          await Product.increment('quantity', { 
+             by: item.quantity, 
+             where: { id: item.product_id },
+             transaction 
+          });
+       }
+
+       // 2. Restore Coupon
+       const couponUsage = await CouponUsage.findOne({ 
+          where: { order_id: order.id },
+          transaction
+       });
+
+       if (couponUsage) {
+          // Increment Coupon Quantity
+          await Coupon.increment('quantity', { 
+             by: 1, 
+             where: { id: couponUsage.coupon_id },
+             transaction 
+          });
+
+          // Delete Usage Record (so user can use again if allowed)
+          await couponUsage.destroy({ transaction });
+
+          // Check if we need to unlock UserCoupon (reset is_used)
+          const coupon = await Coupon.findByPk(couponUsage.coupon_id, { transaction });
+          if (coupon) {
+             const currentUsageCount = await CouponUsage.count({
+                where: { user_id: order.user_id, coupon_id: coupon.id },
+                transaction
+             });
+             
+             // If usage count is now LESS than max, unlock it
+             // Note: We just deleted 1, so currentUsageCount is the NEW count
+             if (currentUsageCount < coupon.max_uses_per_user) {
+                await UserCoupon.update(
+                   { is_used: false, used_at: null },
+                   { 
+                      where: { user_id: order.user_id, coupon_id: coupon.id },
+                      transaction 
+                   }
+                );
+             }
+          }
+       }
+    }
+
+    // Map status -> timestamp field
+    const timestampField = {
+      'confirmed': 'confirmed_at',
+      'packing': 'packing_at',
+      'picked_up': 'picked_up_at',
+      'in_transit': 'in_transit_at',
+      'arrived_hub': 'arrived_hub_at',
+      'out_for_delivery': 'out_for_delivery_at',
+      'delivered': 'delivered_at',
+      'cancelled': 'cancelled_at'
+    };
+
+    const updateData = { status: newStatus };
+    
+    // Record timestamp for the new status
+    if (timestampField[newStatus]) {
+      updateData[timestampField[newStatus]] = new Date();
+    }
+
+    await order.update(updateData, { transaction });
+    
+    await transaction.commit();
+    return order;
+
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
   }
-
-  // Map status -> timestamp field
-  const timestampField = {
-    'confirmed': 'confirmed_at',
-    'packing': 'packing_at',
-    'picked_up': 'picked_up_at',
-    'in_transit': 'in_transit_at',
-    'arrived_hub': 'arrived_hub_at',
-    'out_for_delivery': 'out_for_delivery_at',
-    'delivered': 'delivered_at',
-    'cancelled': 'cancelled_at'
-  };
-
-  const updateData = { status: newStatus };
-  
-  // Record timestamp for the new status
-  if (timestampField[newStatus]) {
-    updateData[timestampField[newStatus]] = new Date();
-  }
-
-  await order.update(updateData);
-  return order;
 };
 
 

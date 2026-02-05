@@ -575,8 +575,15 @@ const isCheckingCoupon = ref(false)
 const availableCoupons = ref([])
 
 const fetchAvailableCoupons = async () => {
+    if (!authStore.isAuthenticated) {
+        availableCoupons.value = []
+        return
+    }
+
     try {
-        const res = await fetch(`${API_URL}/coupons?active=true`)
+        const res = await fetch(`${API_URL}/coupons/my`, {
+            headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+        })
         const data = await res.json()
         if (data.status) {
             availableCoupons.value = data.data
@@ -597,7 +604,13 @@ const applyCoupon = async (code) => {
             body: JSON.stringify({
                 code: codeToApply,
                 order_total: subtotal.value,
-                shipping_fee: shippingFee.value
+                shipping_fee: shippingFee.value,
+                items: checkoutItems.value.map(item => ({
+                    id: item.id,
+                    price: item.price,
+                    quantity: item.quantity,
+                    category_id: item.category_id || item.product?.category_id
+                }))
             })
         })
         const data = await res.json()

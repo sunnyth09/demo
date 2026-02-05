@@ -1,5 +1,4 @@
-<script setup lang="ts">
-import type { Component } from "vue"
+<script setup>
 import { IconCirclePlusFilled, IconMail } from "@tabler/icons-vue"
 
 import { Button } from '@/components/ui/button'
@@ -11,15 +10,12 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 
-interface NavItem {
-  title: string
-  url: string
-  icon?: Component
-}
-
-defineProps<{
-  items: NavItem[]
-}>()
+defineProps({
+  items: {
+    type: Array,
+    required: true,
+  },
+})
 </script>
 
 <template>

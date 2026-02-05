@@ -38,8 +38,18 @@
             />
           </div>
 
+          <div class="col-span-1">
+            <label class="block text-sm font-medium mb-2">Mã sản phẩm (SKU) <span class="text-xs text-muted-foreground ml-1">(Duy nhất)</span></label>
+            <input 
+              v-model="form.sku" 
+              type="text" 
+              class="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent font-mono text-sm"
+              placeholder="vd: SP-001"
+            />
+          </div>
+
           <!-- Slug -->
-          <div class="col-span-2">
+          <div class="col-span-1">
             <label class="block text-sm font-medium mb-2">
               Slug (URL thân thiện)
               <span class="text-xs text-muted-foreground ml-1">- tự động tạo từ tên</span>
@@ -378,6 +388,7 @@ const existingImages = ref([]) // Ảnh cũ từ server
 
 const form = ref({
   name: '',
+  sku: '',
   slug: '',
   price: 0,
   quantity: 0,
@@ -444,6 +455,7 @@ const fetchProductDetail = async () => {
       const p = json.data
       form.value = {
         name: p.name,
+        sku: p.sku || '',
         slug: p.slug || '',
         price: p.price,
         quantity: p.quantity || 0,
@@ -543,6 +555,10 @@ const saveProduct = async () => {
     
     if (form.value.slug) {
       formData.append('slug', form.value.slug)
+    }
+
+    if (form.value.sku) {
+      formData.append('sku', form.value.sku)
     }
     
     if (form.value.category_id) {

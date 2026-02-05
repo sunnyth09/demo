@@ -105,7 +105,7 @@
                       {{ product.name }}
                     </h3>
                     <p class="text-xs text-muted-foreground mt-0.5 font-mono">
-                      SKU: {{ product.slug || '---' }}
+                      SKU: {{ product.sku || '---' }}
                     </p>
                   </div>
                 </div>

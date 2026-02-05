@@ -4,13 +4,7 @@
       <!-- Header -->
       <div class="text-center mb-10">
         <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-3 flex items-center justify-center gap-3">
-          <svg class="w-8 h-8 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/>
-          </svg>
           Săn Voucher
-          <svg class="w-8 h-8 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/>
-          </svg>
         </h1>
         <p class="text-gray-600">Lưu mã giảm giá và sử dụng khi thanh toán</p>
       </div>
@@ -125,7 +119,7 @@
       </div>
 
       <!-- My Coupons Section -->
-      <div v-if="authStore.isLoggedIn && myCoupons.length > 0" class="mt-16">
+      <div v-if="authStore.isAuthenticated && myCoupons.length > 0" class="mt-16">
         <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
           <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
@@ -279,7 +273,7 @@ const fetchPublicCoupons = async () => {
 }
 
 const fetchMyCoupons = async () => {
-  if (!authStore.isLoggedIn) return
+  if (!authStore.isAuthenticated) return
   
   try {
     const res = await fetch(`${API_URL}/coupons/my`, {
@@ -295,14 +289,21 @@ const fetchMyCoupons = async () => {
 }
 
 const handleClaim = async (coupon) => {
-  if (!authStore.isLoggedIn) {
+  if (!authStore.isAuthenticated) {
     showLoginModal.value = true
     return
   }
-  
-  claiming.value = coupon.id
-  
+
   try {
+    claiming.value = coupon.id
+    
+    // Check Flash Sale logic first
+    const { isUpcoming } = getCountdown(coupon.end_date, coupon.start_date)
+    if (isUpcoming && !authStore.isAdmin) {
+       toast.error('Chương trình chưa bắt đầu!')
+       return
+    }
+
     const res = await fetch(`${API_URL}/coupons/claim/${coupon.id}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${authStore.accessToken}` }
@@ -310,14 +311,14 @@ const handleClaim = async (coupon) => {
     const data = await res.json()
     
     if (data.status) {
-      toast.success('🎉 ' + data.message)
-      coupon.isClaimed = true
-      await fetchMyCoupons()
+      toast.success('Lưu mã thành công!')
+      // Refresh list
+      await Promise.all([fetchPublicCoupons(), fetchMyCoupons()])
     } else {
-      toast.error(data.message)
+      toast.error(data.message || 'Không thể lưu mã')
     }
   } catch (error) {
-    toast.error('Có lỗi xảy ra')
+    toast.error('Lỗi kết nối')
   } finally {
     claiming.value = null
   }

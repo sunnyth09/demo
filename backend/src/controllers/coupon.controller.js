@@ -100,12 +100,13 @@ export const deleteCoupon = async (req, res) => {
 
 export const applyCoupon = async (req, res) => {
   try {
-    const { code, order_total, shipping_fee, category_ids } = req.body;
+    const { code, order_total, shipping_fee, items } = req.body;
     const userId = req.user?.id || null;
     
     if (!code) throw new Error("Vui lòng nhập mã giảm giá");
 
-    const result = await CouponService.validateCoupon(code, order_total, userId, category_ids || []);
+    // Pass items to validateCoupon for category check logic
+    const result = await CouponService.validateCoupon(code, order_total, userId, items || []);
 
     if (result.type === 'free_shipping') {
       result.discountAmount = shipping_fee || 0;

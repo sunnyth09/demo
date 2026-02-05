@@ -1,6 +1,4 @@
-<script setup lang="ts">
-import type { Component } from "vue"
-
+<script setup>
 import {
   IconDots,
   IconFolder,
@@ -25,15 +23,12 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 
-interface Document {
-  name: string
-  url: string
-  icon?: Component
-}
-
-defineProps<{
-  items: Document[]
-}>()
+defineProps({
+  items: {
+    type: Array,
+    required: true,
+  },
+})
 
 const { isMobile } = useSidebar()
 </script>

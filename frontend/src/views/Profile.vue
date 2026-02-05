@@ -353,6 +353,10 @@
             <label class="block text-sm font-medium mb-1">Số điện thoại</label>
             <input v-model="profileForm.phone" type="text" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
           </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Email</label>
+            <input v-model="profileForm.email" type="email" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          </div>
           
           <div class="pt-4 border-t">
              <div class="flex items-center gap-2 mb-4">
@@ -632,6 +636,7 @@ const showProfileModal = ref(false)
 const profileForm = reactive({
   name: '',
   phone: '', 
+  email: '',
   isChangePassword: false,
   oldPassword: '',
   newPassword: '',
@@ -689,6 +694,7 @@ const onFileSelected = async (event) => {
 
 const openProfileModal = () => {
   profileForm.name = authStore.user?.name || ''
+  profileForm.email = authStore.user?.email || ''
   profileForm.phone = authStore.user?.phone || ''
   profileForm.isChangePassword = false
   profileForm.oldPassword = ''
@@ -701,6 +707,7 @@ const updateProfile = async () => {
   try {
     const formData = new FormData()
     formData.append('name', profileForm.name)
+    if (profileForm.email) formData.append('email', profileForm.email)
     if (profileForm.phone) formData.append('phone', profileForm.phone)
     // No avatar here anymore
 

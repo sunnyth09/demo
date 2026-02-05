@@ -35,6 +35,12 @@ const Product = sequelize.define('Product', {
     unique: true,
     comment: 'Slug URL thân thiện SEO (vd: sach-dac-nhan-tam)'
   },
+  sku: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    unique: true,
+    comment: 'Mã sản phẩm (SKU)'
+  },
   price: {
     type: DataTypes.DECIMAL(15, 2),
     allowNull: false,

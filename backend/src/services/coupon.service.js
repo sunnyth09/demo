@@ -1,4 +1,4 @@
-import { Coupon, UserCoupon, CouponUsage, User, Category, Order } from "../models/sequelize/index.js";
+import { Coupon, UserCoupon, CouponUsage, User, Category, Order, sequelize } from "../models/sequelize/index.js";
 import { Op, fn, col } from "sequelize";
 import { sendCouponEmail } from "./email.service.js";
 
@@ -45,6 +45,18 @@ export const getAllCoupons = async (isActiveOnly = false) => {
   
   return await Coupon.findAll({
     where,
+    attributes: {
+      include: [
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM user_coupons AS uc
+            WHERE uc.coupon_id = Coupon.id
+          )`),
+          'claimedCount'
+        ]
+      ]
+    },
     order: [['createdAt', 'DESC']]
   });
 };
@@ -101,7 +113,7 @@ export const claimCoupon = async (userId, couponId) => {
   }
   // ... rest of validation ...
   
-  // Implementation of claim logic
+  // Check existing claim
   const existing = await UserCoupon.findOne({
     where: { user_id: userId, coupon_id: couponId }
   });
@@ -110,11 +122,23 @@ export const claimCoupon = async (userId, couponId) => {
     throw new Error("Bạn đã lưu mã này rồi");
   }
 
-  await UserCoupon.create({
-    user_id: userId,
-    coupon_id: couponId,
-    source: 'claim',
-    claimed_at: new Date()
+  // Transaction to ensure atomicity
+  await sequelize.transaction(async (t) => {
+    // Re-fetch with lock
+    const couponToUpdate = await Coupon.findByPk(couponId, { transaction: t, lock: t.LOCK.UPDATE });
+    
+    if (couponToUpdate.quantity <= 0) {
+      throw new Error("Mã giảm giá đã hết lượt sử dụng");
+    }
+
+    await UserCoupon.create({
+      user_id: userId,
+      coupon_id: couponId,
+      source: 'claim',
+      claimed_at: new Date()
+    }, { transaction: t });
+
+    await couponToUpdate.decrement('quantity', { transaction: t });
   });
 
   return { message: "Lưu mã giảm giá thành công" };
@@ -253,7 +277,7 @@ export const markCouponsSeen = async (userId) => {
 /**
  * Validate and apply coupon (updated with user check)
  */
-export const validateCoupon = async (code, orderAmount, userId = null, cartCategoryIds = []) => {
+export const validateCoupon = async (code, orderAmount, userId = null, itemsOrCategories = []) => {
   const coupon = await Coupon.findOne({ 
     where: { code },
     include: [{ model: Category, as: 'category', attributes: ['id', 'name'] }]
@@ -280,18 +304,46 @@ export const validateCoupon = async (code, orderAmount, userId = null, cartCateg
     throw new Error("Mã giảm giá đã hết lượt sử dụng");
   }
 
-  if (coupon.min_order_amount > orderAmount) {
-    throw new Error(`Đơn hàng phải từ ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(coupon.min_order_amount)} mới được áp dụng`);
-  }
-
+  // Determine Eligible Amount
+  let eligibleAmount = parseFloat(orderAmount);
+  
   // Check category restriction
-  if (coupon.category_id && cartCategoryIds.length > 0) {
-    if (!cartCategoryIds.includes(coupon.category_id)) {
-      throw new Error(`Mã này chỉ áp dụng cho danh mục "${coupon.category?.name || 'cụ thể'}"`);
+  if (coupon.category_id) {
+    // Check if input is Items Array (Object with category_id) or just IDs
+    const isItemsArray = Array.isArray(itemsOrCategories) && itemsOrCategories.length > 0 && typeof itemsOrCategories[0] === 'object';
+    
+    if (isItemsArray) {
+       // Filter eligible items
+       const eligibleItems = itemsOrCategories.filter(item => {
+          // Handle both direct category_id or product.category_id structure
+          const catId = item.category_id || item.product?.category_id;
+          return parseInt(catId) === coupon.category_id;
+       });
+
+       if (eligibleItems.length === 0) {
+          throw new Error(`Mã này chỉ áp dụng cho danh mục "${coupon.category?.name || 'cụ thể'}"`);
+       }
+
+       // Recalculate eligible amount
+       eligibleAmount = eligibleItems.reduce((sum, item) => sum + (parseFloat(item.price) * parseInt(item.quantity)), 0);
+
+    } else {
+       // Legacy Fallback (Array of IDs) - Cannot calculate precise amount, just validate existence
+       const hasCategory = itemsOrCategories.some(id => parseInt(id) === coupon.category_id);
+       if (!hasCategory && itemsOrCategories.length > 0) {
+          throw new Error(`Mã này chỉ áp dụng cho danh mục "${coupon.category?.name || 'cụ thể'}"`);
+       }
+       // If legacy, we assume orderAmount is eligible (Risk, but backward compatible)
     }
   }
 
-  // Check user usage limit
+  // Check Min Order on Eligible Amount (Stricter and safer)
+  if (coupon.min_order_amount > eligibleAmount) {
+     const currency = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+     throw new Error(`Đơn hàng (sản phẩm hợp lệ) phải từ ${currency.format(coupon.min_order_amount)} mới được áp dụng`);
+  }
+
+  // Check user usage limit ... (Keep existing logic)
   if (userId) {
     const usageCount = await CouponUsage.count({
       where: { user_id: userId, coupon_id: coupon.id }
@@ -300,7 +352,6 @@ export const validateCoupon = async (code, orderAmount, userId = null, cartCateg
       throw new Error("Bạn đã sử dụng hết lượt cho mã này");
     }
 
-    // Check first order only
     if (coupon.for_first_order_only) {
       const orderCount = await Order.count({ where: { user_id: userId } });
       if (orderCount > 0) {
@@ -311,10 +362,13 @@ export const validateCoupon = async (code, orderAmount, userId = null, cartCateg
 
   let discountAmount = 0;
 
+  // Calculate discount based on Eligible Amount
   if (coupon.type === 'fixed') {
     discountAmount = parseFloat(coupon.value);
+    // Optional: cap fixed amount at eligibleAmount?
+    if (discountAmount > eligibleAmount) discountAmount = eligibleAmount;
   } else if (coupon.type === 'percentage') {
-    discountAmount = (parseFloat(orderAmount) * parseFloat(coupon.value)) / 100;
+    discountAmount = (eligibleAmount * parseFloat(coupon.value)) / 100;
     
     if (coupon.max_discount_amount && parseFloat(coupon.max_discount_amount) > 0) {
        discountAmount = Math.min(discountAmount, parseFloat(coupon.max_discount_amount));

@@ -94,7 +94,7 @@
                </div>
                <div class="flex border-b border-gray-100 pb-2 last:border-0 last:pb-0">
                   <span class="w-28 text-gray-500">Mã sản phẩm:</span>
-                  <span class="font-medium text-gray-900 flex-1">#{{ product.id }}</span>
+                  <span class="font-medium text-gray-900 flex-1">{{ product.sku || product.id }}</span>
                </div>
                <div class="flex border-b border-gray-100 pb-2 last:border-0 last:pb-0">
                   <span class="w-28 text-gray-500">Danh mục:</span>
@@ -181,8 +181,16 @@
 
            <!-- Reviews Content -->
            <div v-show="currentTab === 'reviews'" class="space-y-8">
-             <ReviewForm :product-id="product.id" @review-submitted="onReviewSubmitted" />
-             <ReviewList ref="reviewListRef" :product-id="product.id" />
+             <ReviewForm 
+                :product-id="product.id" 
+                :reviews="reviews"
+                @review-submitted="onReviewSubmitted" 
+             />
+             <ReviewList 
+                :product-id="product.id" 
+                :reviews="reviews"
+                @refresh="onReviewListRefresh" 
+             />
            </div>
         </div>
       </div>
@@ -215,13 +223,32 @@ const toggleFavorite = (p) => favoriteStore.toggleFavorite(p)
 const API_URL = import.meta.env.VITE_API_URL
 
 const product = ref(null)
-const reviewListRef = ref(null)
+const reviews = ref([]) // Centralized reviews state
 const currentTab = ref('description') // 'description' or 'reviews'
 
-const onReviewSubmitted = () => {
-  if (reviewListRef.value) {
-    reviewListRef.value.fetchReviews()
+const fetchReviews = async () => {
+  try {
+    const id = route.params.id || product.value?.id
+    if (!id) return
+    
+    // Using the same endpoint as ReviewList used: /reviews/product/:id
+    const res = await fetch(`${API_URL}/reviews/product/${id}`)
+    const json = await res.json()
+    
+    if (res.ok) {
+      reviews.value = json.data || []
+    }
+  } catch (error) {
+    console.error('Error fetching reviews:', error)
   }
+}
+
+const onReviewSubmitted = () => {
+  fetchReviews()
+}
+
+const onReviewListRefresh = () => {
+  fetchReviews()
 }
 
 // ... existing refs ...
@@ -298,10 +325,12 @@ const fetchProductDetail = async () => {
 // Watch params change to reload
 watch(() => route.params.id, () => {
   fetchProductDetail()
+  fetchReviews()
 })
 
 onMounted(() => {
   fetchProductDetail()
+  fetchReviews()
 })
 </script>
 

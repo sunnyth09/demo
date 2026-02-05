@@ -24,12 +24,12 @@ const generateSlug = (name) => {
  */
 export const getProducts = async ({ limit = 10, offset = 0, category_id = null, search = null }) => {
   const whereClause = {};
-  
+
   if (category_id) {
     const childIds = await getAllChildIds(category_id);
     whereClause.category_id = { [Op.in]: [category_id, ...childIds] };
   }
-  
+
   if (search) {
     whereClause[Op.or] = [
       { name: { [Op.like]: `%${search}%` } },
@@ -37,9 +37,9 @@ export const getProducts = async ({ limit = 10, offset = 0, category_id = null, 
       { publisher: { [Op.like]: `%${search}%` } }
     ];
   }
-  
+
   const products = await Product.findAll({
-    attributes: ['id', 'name', 'slug', 'price', 'quantity', 'thumbnail', 'status'],
+    attributes: ['id', 'name', 'slug', 'sku', 'price', 'quantity', 'thumbnail', 'status'],
     include: [
       {
         model: Category,
@@ -52,12 +52,13 @@ export const getProducts = async ({ limit = 10, offset = 0, category_id = null, 
     limit,
     offset
   });
-  
+
   // Transform để có category_name thay vì object
   return products.map(p => ({
     id: p.id,
     name: p.name,
     slug: p.slug,
+    sku: p.sku,
     price: p.price,
     quantity: p.quantity,
     thumbnail: p.thumbnail,
@@ -84,11 +85,11 @@ export const countProducts = async (category_id = null) => {
 export const getProductDetail = async (idOrSlug) => {
   // Kiểm tra xem là ID hay slug
   const isId = !isNaN(idOrSlug);
-  
-  const whereClause = isId 
+
+  const whereClause = isId
     ? { id: parseInt(idOrSlug) }
     : { slug: idOrSlug };
-    
+
   const product = await Product.findOne({
     where: whereClause,
     include: [
@@ -99,14 +100,14 @@ export const getProductDetail = async (idOrSlug) => {
       }
     ]
   });
-  
+
   if (!product) {
     throw new Error("Sản phẩm không tồn tại");
   }
-  
+
   // Convert to plain object
   const result = product.toJSON();
-  
+
   // Parse images từ JSON string
   if (result.image) {
     try {
@@ -117,10 +118,10 @@ export const getProductDetail = async (idOrSlug) => {
   } else {
     result.images = [];
   }
-  
+
   // Thêm category_name
   result.category_name = result.category?.name || null;
-  
+
   // Count Reviews
   const reviewCount = await Review.count({
     where: { product_id: product.id }
@@ -129,7 +130,7 @@ export const getProductDetail = async (idOrSlug) => {
 
   // Xóa field image raw, chỉ giữ images
   delete result.image;
-  
+
   return result;
 };
 
@@ -143,7 +144,7 @@ export const create = async (data, files) => {
 
   // Tạo slug từ tên hoặc dùng slug được cung cấp
   let slug = data.slug ? data.slug : generateSlug(data.name);
-  
+
   // Kiểm tra slug đã tồn tại chưa
   const existingSlug = await Product.findOne({ where: { slug } });
   if (existingSlug) {
@@ -166,6 +167,7 @@ export const create = async (data, files) => {
   const product = await Product.create({
     name: data.name,
     slug: slug,
+    sku: data.sku || null,
     price: data.price,
     quantity: data.quantity || 0,
     description: data.description || null,
@@ -188,7 +190,7 @@ export const create = async (data, files) => {
 export const update = async (id, data, files) => {
   // Lấy sản phẩm hiện tại
   const existingProduct = await getProductDetail(id);
-  
+
   if (!data.name || !data.price) {
     throw new Error("Tên và giá sản phẩm là bắt buộc");
   }
@@ -197,13 +199,23 @@ export const update = async (id, data, files) => {
   let slug = existingProduct.slug;
   if (data.slug && data.slug !== existingProduct.slug) {
     // Kiểm tra slug mới có trùng không
-    const existingSlug = await Product.findOne({ 
-      where: { slug: data.slug } 
+    const existingSlug = await Product.findOne({
+      where: { slug: data.slug }
     });
     if (existingSlug && existingSlug.id !== parseInt(id)) {
       throw new Error("Slug đã tồn tại");
     }
     slug = data.slug;
+  }
+
+  // Xử lý SKU (check unique)
+  if (data.sku && data.sku !== existingProduct.sku) {
+    const existingSku = await Product.findOne({
+      where: { sku: data.sku }
+    });
+    if (existingSku && existingSku.id !== parseInt(id)) {
+      throw new Error("SKU đã tồn tại");
+    }
   }
 
   let thumbnailUrl = existingProduct.thumbnail;
@@ -234,6 +246,7 @@ export const update = async (id, data, files) => {
   await product.update({
     name: data.name,
     slug: slug,
+    sku: data.sku !== undefined ? data.sku : product.sku,
     price: data.price,
     quantity: data.quantity !== undefined ? data.quantity : product.quantity,
     description: data.description !== undefined ? data.description : product.description,
@@ -256,21 +269,21 @@ export const update = async (id, data, files) => {
 export const remove = async (id) => {
   // Lấy sản phẩm để xóa ảnh
   const product = await getProductDetail(id);
-  
+
   // Xóa thumbnail
   if (product.thumbnail) {
     await deleteFile(product.thumbnail);
   }
-  
+
   // Xóa images
   if (product.images && product.images.length > 0) {
     await Promise.all(product.images.map(url => deleteFile(url)));
   }
-  
+
   // Xóa sản phẩm
   await Product.destroy({
     where: { id }
   });
-  
+
   return true;
 };
