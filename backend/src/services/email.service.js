@@ -28,7 +28,7 @@ export const sendEmail = async (to, subject, htmlContent) => {
     return info;
   } catch (error) {
     console.error('Error sending email:', error);
-    throw error; // Re-throw so controller can handle it (or logging it might be enough)
+    throw error;
   }
 };
 
@@ -86,7 +86,7 @@ export const sendCouponEmail = async (to, coupon, title = "Bạn nhận được
             "${coupon.description || 'Áp dụng cho đơn hàng đủ điều kiện'}"
           </p>
 
-          <a href="http://localhost:5173/vouchers" class="cta-button">Sử dụng ngay</a>
+          <a href="http://localhost:3001/vouchers" class="cta-button">Sử dụng ngay</a>
         </div>
         
         <div class="footer">

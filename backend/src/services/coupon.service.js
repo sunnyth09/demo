@@ -20,7 +20,7 @@ export const createCoupon = async (data) => {
       console.log(`Sending coupon email to ${users.length} users...`);
       users.forEach(user => {
         if (user.email) {
-          sendCouponEmail(user.email, coupon, `🔥 Săn ngay mã giảm giá mới: ${coupon.code}`).catch(err => 
+          sendCouponEmail(user.email, coupon, `Săn ngay mã giảm giá mới: ${coupon.code}`).catch(err => 
             console.error(`Failed to send email to ${user.email}:`, err.message)
           );
         }
@@ -169,7 +169,7 @@ export const assignWelcomeCoupon = async (userId) => {
     const user = await User.findByPk(userId);
     if (user && user.email) {
       // Chạy async không cần await để không block response
-      sendCouponEmail(user.email, welcomeCoupon, "🎁 Quà tặng thành viên mới từ Ocean Books").catch(err => 
+      sendCouponEmail(user.email, welcomeCoupon, "Quà tặng thành viên mới từ Ocean Books").catch(err => 
         console.error('Failed to send welcome coupon email:', err)
       );
     }
@@ -210,7 +210,7 @@ export const assignFirstOrderCoupon = async (userId) => {
       // Gửi email thông báo
       const user = await User.findByPk(userId);
       if (user && user.email) {
-        sendCouponEmail(user.email, firstOrderCoupon, "🎉 Cảm ơn bạn đã mua hàng lần đầu!").catch(err => 
+        sendCouponEmail(user.email, firstOrderCoupon, "Cảm ơn bạn đã mua hàng lần đầu!").catch(err => 
           console.error('Failed to send first order coupon email:', err)
         );
       }
@@ -468,7 +468,7 @@ export const updateCoupon = async (id, data) => {
       console.log(`Sending coupon email (update) to ${users.length} users...`);
       users.forEach(user => {
         if (user.email) {
-          sendCouponEmail(user.email, coupon, `🔥 Cập nhật: Ưu đãi ${coupon.code} đã quay trở lại!`).catch(err => 
+          sendCouponEmail(user.email, coupon, `Cập nhật: Ưu đãi ${coupon.code} đã quay trở lại!`).catch(err => 
             console.error(`Failed to send email to ${user.email}:`, err.message)
           );
         }
