@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import session from "express-session";
 import passport from "passport";
 import "./config/passport.js";
 
@@ -28,7 +29,20 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Session middleware for Passport OAuth
+app.use(session({
+  secret: process.env.JWT_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false, // Set to true in production with HTTPS
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
 app.use(passport.initialize());
+app.use(passport.session());
 
 app.get("/", (req, res) => {
   res.status(200).json({
