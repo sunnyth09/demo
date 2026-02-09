@@ -100,3 +100,104 @@ export const sendCouponEmail = async (to, coupon, title = "Bạn nhận được
 
   return await sendEmail(to, title, htmlContent);
 };
+
+export const sendOrderConfirmationEmail = async (to, order) => {
+  const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  const orderIdDisplay = String(order.order_code || order.id).slice(0, 8).toUpperCase();
+  
+  const itemsHtml = order.items.map(item => `
+    <tr style="border-bottom: 1px solid #efefef;">
+      <td style="padding: 10px; text-align: left;">
+        <div style="font-weight: 500;">${item.product_name || 'Sản phẩm'}</div>
+        <div style="font-size: 12px; color: #888;">x${item.quantity}</div>
+      </td>
+      <td style="padding: 10px; text-align: right;">${formatCurrency(item.price)}</td>
+    </tr>
+  `).join('');
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        .container { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
+        .header { background-color: #4F46E5; padding: 30px 20px; text-align: center; color: white; }
+        .logo { font-size: 24px; font-weight: bold; margin: 0; }
+        .content { padding: 30px 20px; color: #374151; }
+        .h2 { font-size: 20px; font-weight: bold; color: #111827; margin-top: 0; }
+        .info-box { background-color: #f9fafb; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; }
+        .table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+        .total-row { font-weight: bold; font-size: 16px; border-top: 2px solid #e5e7eb; }
+        .footer { background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb; }
+        .btn { display: inline-block; background-color: #4F46E5; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-weight: 500; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div class="logo">Ocean Books</div>
+          <p style="margin: 5px 0 0; opacity: 0.9;">Xác nhận đơn hàng thành công</p>
+        </div>
+        
+        <div class="content">
+          <p>Xin chào <strong>${order.customer_name}</strong>,</p>
+          <p>Cảm ơn bạn đã đặt hàng tại Ocean Books. Đơn hàng của bạn đã được tiếp nhận và đang trong quá trình xử lý.</p>
+          
+          <div class="info-box">
+            <strong>Mã đơn hàng:</strong> #${orderIdDisplay}<br>
+            <strong>Ngày đặt:</strong> ${new Date(order.createdAt || new Date()).toLocaleDateString('vi-VN')}<br>
+            <strong>Phương thức thanh toán:</strong> ${order.payment_method === 'cod' ? 'Thanh toán khi nhận hàng (COD)' : order.payment_method.toUpperCase()}<br>
+            <strong>Địa chỉ giao hàng:</strong> ${order.shipping_address}
+          </div>
+
+          <h3 style="font-size: 16px; margin-bottom: 10px;">Chi tiết đơn hàng</h3>
+          <table class="table">
+            <thead>
+              <tr style="background-color: #f3f4f6; text-align: left;">
+                <th style="padding: 10px;">Sản phẩm</th>
+                <th style="padding: 10px; text-align: right;">Giá</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+              <tr>
+                <td style="padding: 10px; text-align: right;">Tạm tính:</td>
+                <td style="padding: 10px; text-align: right;">${formatCurrency(order.total_amount - (order.shipping_fee || 0) + (order.discount_amount || 0))}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; text-align: right;">Phí vận chuyển:</td>
+                <td style="padding: 10px; text-align: right;">${formatCurrency(order.shipping_fee || 0)}</td>
+              </tr>
+               ${order.discount_amount > 0 ? `
+              <tr>
+                <td style="padding: 10px; text-align: right; color: #059669;">Giảm giá:</td>
+                <td style="padding: 10px; text-align: right; color: #059669;">-${formatCurrency(order.discount_amount)}</td>
+              </tr>
+              ` : ''}
+              <tr class="total-row">
+                <td style="padding: 10px; text-align: right;">Tổng cộng:</td>
+                <td style="padding: 10px; text-align: right; color: #4F46E5;">${formatCurrency(order.total_amount)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p style="text-align: center;">
+            ${order.user_id ? 
+              `<a href="http://localhost:3001/orders/${order.id}" class="btn">Xem chi tiết đơn hàng</a>` : 
+              `<span style="color: #666; font-style: italic;">Vui lòng lưu lại email này để tra cứu khi cần thiết.</span>`
+            }
+          </p>
+        </div>
+        
+        <div class="footer">
+          <p>Nếu bạn có bất kỳ câu hỏi nào, vui lòng trả lời email này hoặc liên hệ hotline 1900 xxxx.</p>
+          <p>© 2026 Ocean Books. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return await sendEmail(to, `Xác nhận đơn hàng #${orderIdDisplay} - Ocean Books`, htmlContent);
+};

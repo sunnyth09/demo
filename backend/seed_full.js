@@ -1,15 +1,17 @@
-import { db } from "./src/config/db.js";
+import { sequelize as db } from "./src/config/sequelize.js";
 
 async function seedFull() {
   try {
     console.log("Seeding started...");
 
-    // 1. Clear tables
-    console.log("Clearing existing data...");
-    await db.query("DELETE FROM products");
-    await db.query("DELETE FROM categories");
-    await db.query("ALTER TABLE categories AUTO_INCREMENT = 1");
-    await db.query("ALTER TABLE products AUTO_INCREMENT = 1");
+    // 1. Clear tables (COMMENTED OUT FOR SAFETY)
+    console.log("Skipping clear tables to protect existing data...");
+    // await db.query("SET FOREIGN_KEY_CHECKS = 0");
+    // await db.query("DELETE FROM products");
+    // await db.query("DELETE FROM categories");
+    // await db.query("ALTER TABLE categories AUTO_INCREMENT = 1");
+    // await db.query("ALTER TABLE products AUTO_INCREMENT = 1");
+    // await db.query("SET FOREIGN_KEY_CHECKS = 1");
 
     // 2. Seed Categories
     console.log("Seeding categories...");
@@ -19,8 +21,12 @@ async function seedFull() {
 
     // Helper to insert category and store ID
     async function insertCat(name, icon, parentId = null) {
-      const [res] = await db.query("INSERT INTO categories(name, icon, parent_id) VALUES(?, ?, ?)", [name, icon, parentId]);
-      return res.insertId;
+      const [res] = await db.query(
+        "INSERT INTO categories(name, icon, parent_id) VALUES(:name, :icon, :parentId)",
+        { replacements: { name: name || null, icon: icon || null, parentId: parentId || null } }
+      );
+      // In Sequelize + MySQL, res is the insert ID
+      return res;
     }
 
     // --- Level 1 ---
@@ -237,7 +243,7 @@ async function seedFull() {
       },
       {
         name: "Quẳng Gánh Lo Đi Mà Vui Sống",
-        category_id: categoryIds.idVN_KyNang,
+        category_id: idVN_KyNang,
         price: 82000,
         author: "Dale Carnegie",
         publisher: "NXB Tổng Hợp TP.HCM",
@@ -246,7 +252,7 @@ async function seedFull() {
       },
       {
         name: "Hạt Giống Tâm Hồn",
-        category_id: categoryIds.idVN_KyNang,
+        category_id: idVN_KyNang,
         price: 55000,
         author: "Nhiều Tác Giả",
         publisher: "NXB Tổng Hợp TP.HCM",
@@ -549,20 +555,22 @@ async function seedFull() {
         await db.query(
          `INSERT INTO products 
          (name, slug, price, quantity, description, category_id, thumbnail, author, publisher, publication_year, status) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-         [
-           p.name, 
-           slug + '-' + Math.floor(Math.random() * 1000), // Randomize slug slightly to avoid dupes if any
-           p.price, 
-           quantity, 
-           p.description, 
-           p.category_id || null, 
-           p.thumbnail, 
-           p.author, 
-           p.publisher, 
-           2000 + Math.floor(Math.random() * 24),
-           'active'
-         ]
+         VALUES (:name, :slug, :price, :quantity, :description, :category_id, :thumbnail, :author, :publisher, :publication_year, :status)`,
+         {
+           replacements: {
+             name: p.name, 
+             slug: slug + '-' + Math.floor(Math.random() * 1000),
+             price: p.price, 
+             quantity: quantity, 
+             description: p.description, 
+             category_id: p.category_id || null, 
+             thumbnail: p.thumbnail, 
+             author: p.author, 
+             publisher: p.publisher, 
+             publication_year: 2000 + Math.floor(Math.random() * 24),
+             status: 'active'
+           }
+         }
        );
     }
 
@@ -591,8 +599,19 @@ async function seedFull() {
          const price = Math.floor(Math.random() * 100) * 1000 + 10000;
          await db.query(
              `INSERT INTO products (name, slug, price, quantity, description, category_id, thumbnail, status) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-             [item.name, slug, price, quantity, `Sản phẩm ${item.type} chất lượng cao`, item.cat, "https://via.placeholder.com/300?text=" + item.type, 'active']
+              VALUES (:name, :slug, :price, :quantity, :description, :category_id, :thumbnail, :status)`,
+             {
+               replacements: {
+                 name: item.name,
+                 slug: slug,
+                 price: price,
+                 quantity: quantity,
+                 description: `Sản phẩm ${item.type} chất lượng cao`,
+                 category_id: item.cat || null,
+                 thumbnail: "https://via.placeholder.com/300?text=" + item.type,
+                 status: 'active'
+               }
+             }
          );
     }
 

@@ -1,6 +1,8 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+import passport from "passport";
+import "./config/passport.js";
 
 import authRoute from "./routes/auth.route.js";
 import productRoute from "./routes/product.route.js";
@@ -16,10 +18,9 @@ import articleRoute from "./routes/article.route.js";
 import favoriteRoute from "./routes/favorite.route.js";
 import reviewRoute from "./routes/review.route.js";
 import paymentRoute from "./routes/payment.route.js";
+import contactRoute from "./routes/contact.route.js";
 
 import { initBucket } from "./services/minio.service.js";
-
-dotenv.config();
 
 initBucket().catch(console.error);
 
@@ -27,6 +28,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(passport.initialize());
 
 app.get("/", (req, res) => {
   res.status(200).json({
@@ -49,6 +51,7 @@ app.use("/api/articles", articleRoute);
 app.use("/api/favorites", favoriteRoute);
 app.use("/api/reviews", reviewRoute);
 app.use("/api/payment", paymentRoute);
+app.use("/api/contacts", contactRoute);
 
 app.use((req,res)=>{
   res.status(404).json({

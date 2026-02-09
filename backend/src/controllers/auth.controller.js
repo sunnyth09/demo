@@ -1,4 +1,4 @@
-import { registerService, loginService, forgotPasswordService, resetPasswordService } from "../services/auth.service.js";
+import { registerService, loginService, forgotPasswordService, resetPasswordService, loginWithSocial } from "../services/auth.service.js";
 
 export const register = async (req, res) => {
   try {
@@ -56,5 +56,29 @@ export const resetPassword = async (req, res) => {
       status: false,
       message: err.message
     });
+  }
+};
+
+export const socialCallback = async (req, res) => {
+  try {
+    const { user } = req;
+    if (!user) {
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=auth_failed`);
+    }
+    const result = await loginWithSocial(user);
+    
+    const { accessToken, refreshToken, user: userData } = result;
+
+    const params = new URLSearchParams({
+        accessToken,
+        refreshToken,
+        user: JSON.stringify(userData)
+    });
+
+    res.redirect(`${process.env.CLIENT_URL}/auth/callback?${params.toString()}`);
+
+  } catch (err) {
+    console.error("Social login error:", err);
+    res.redirect(`${process.env.CLIENT_URL}/login?error=server_error`);
   }
 };

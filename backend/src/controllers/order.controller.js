@@ -1,4 +1,5 @@
 import * as OrderService from "../services/order.service.js";
+import { sendOrderConfirmationEmail } from "../services/email.service.js";
 
 export const createOrder = async (req, res) => {
   try {
@@ -34,6 +35,13 @@ export const createOrder = async (req, res) => {
     };
 
     const order = await OrderService.createOrder(orderData, items);
+
+    // Send confirmation email (Async - don't wait)
+    if (order && order.customer_email) {
+      sendOrderConfirmationEmail(order.customer_email, order).catch(err => {
+        console.error('Failed to send confirmation email:', err);
+      });
+    }
 
     res.status(201).json({
       status: true,

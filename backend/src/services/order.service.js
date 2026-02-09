@@ -292,7 +292,11 @@ export const createOrder = async (orderData, items) => {
 
     // Commit
     await transaction.commit();
-    return order;
+    
+    // Return full order with items for email/frontend
+    return await Order.findByPk(order.id, {
+      include: [{ model: OrderItem, as: 'items' }]
+    });
 
   } catch (error) {
     // Rollback

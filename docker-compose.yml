@@ -12,6 +12,7 @@ services:
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
+      MINIO_ENDPOINT: minio
     depends_on:
       - minio
       - mysql

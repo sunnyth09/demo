@@ -47,7 +47,7 @@
         <div>
           <h4 class="font-semibold text-foreground mb-4">Hỗ trợ</h4>
           <ul class="space-y-3">
-            <li><a href="#" class="text-sm text-muted-foreground hover:text-primary transition-colors">Liên hệ</a></li>
+            <li><router-link to="/contact" class="text-sm text-muted-foreground hover:text-primary transition-colors">Liên hệ</router-link></li>
             <li><a href="#" class="text-sm text-muted-foreground hover:text-primary transition-colors">FAQ</a></li>
             <li><a href="#" class="text-sm text-muted-foreground hover:text-primary transition-colors">Chính sách đổi trả</a></li>
             <li><a href="#" class="text-sm text-muted-foreground hover:text-primary transition-colors">Điều khoản dịch vụ</a></li>

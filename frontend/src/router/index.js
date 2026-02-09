@@ -23,7 +23,9 @@ import AdminUsers from '@/views/admin/Users.vue'
 import AdminSettings from '@/views/admin/Settings.vue'
 import AdminRevenue from '@/views/admin/RevenueAnalytics.vue'
 import AdminArticles from '@/views/admin/Articles.vue'
+
 import AdminArticleForm from '@/views/admin/ArticleForm.vue'
+import AdminContacts from '@/views/admin/Contacts.vue'
 
 const routes = [
   // User routes - with UserLayout (Navbar + Footer)
@@ -36,6 +38,7 @@ const routes = [
       { path: 'products', name: 'products', component: Products, meta: { title: 'Sản phẩm' } },
       { path: 'products/:id', name: 'product-detail', component: () => import('@/views/ProductDetail.vue'), meta: { title: 'Chi tiết sản phẩm' } },
       { path: 'login', name: 'login', component: Login, meta: { title: 'Đăng nhập' } },
+      { path: 'auth/callback', name: 'auth-callback', component: () => import('@/views/AuthCallback.vue'), meta: { title: 'Đang xử lý đăng nhập...' } },
       { path: 'register', name: 'register', component: Register, meta: { title: 'Đăng ký' } },
       { path: 'forgot-password', name: 'forgot-password', component: ForgotPassword, meta: { title: 'Quên mật khẩu' } },
       { path: 'cart', name: 'cart', component: () => import('@/views/Cart.vue'), meta: { title: 'Giỏ hàng' } },
@@ -47,6 +50,8 @@ const routes = [
       { path: 'articles/:id', name: 'article-detail', component: () => import('@/views/ArticleDetail.vue'), meta: { title: 'Chi tiết bài viết' } },
       { path: 'favorites', name: 'favorites', component: () => import('@/views/Favorites.vue'), meta: { title: 'Sản phẩm yêu thích' } },
       { path: 'vouchers', name: 'vouchers', component: () => import('@/views/Vouchers.vue'), meta: { title: 'Săn Voucher' } },
+
+      { path: 'contact', name: 'contact', component: () => import('@/views/Contact.vue'), meta: { title: 'Liên hệ' } },
       { path: 'payment/result', name: 'payment-result', component: () => import('@/views/PaymentResult.vue'), meta: { title: 'Kết quả thanh toán' } },
     ]
   },
@@ -58,6 +63,8 @@ const routes = [
     children: [
       { path: '', name: 'admin-dashboard', component: AdminDashboard, meta: { title: 'Dashboard' } },
       { path: 'revenue', name: 'admin-revenue', component: AdminRevenue, meta: { title: 'Thống kê chi tiết' } },
+
+      { path: 'contacts', name: 'admin-contacts', component: AdminContacts, meta: { title: 'Liên hệ' } },
       { path: 'products', name: 'admin-products', component: AdminProducts, meta: { title: 'Sản phẩm' } },
       { path: 'products/create', name: 'admin-products-create', component: AdminProductForm, meta: { title: 'Thêm sản phẩm' } },
       { path: 'products/edit/:id', name: 'admin-products-edit', component: AdminProductForm, meta: { title: 'Sửa sản phẩm' } },

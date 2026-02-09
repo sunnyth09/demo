@@ -13,6 +13,7 @@ import Review from './Review.js';
 import ReviewReport from './ReviewReport.js';
 import UserCoupon from './UserCoupon.js';
 import CouponUsage from './CouponUsage.js';
+import Contact from './Contact.js';
 
 // ========== ĐỊNH NGHĨA QUAN HỆ GIỮA CÁC MODELS ==========
 
@@ -229,5 +230,5 @@ export const syncDatabase = async (options = {}) => {
 };
 
 // Export tất cả models
-export { sequelize, Category, Product, User, Address, Order, OrderItem, ShippingZone, Coupon, Article, Favorite, Review, ReviewReport, UserCoupon, CouponUsage };
+export { sequelize, Category, Product, User, Address, Order, OrderItem, ShippingZone, Coupon, Article, Favorite, Review, ReviewReport, UserCoupon, CouponUsage, Contact };
 

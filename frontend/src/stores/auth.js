@@ -5,7 +5,7 @@ import { authApi } from '@/api/auth';
 // Helper function để parse user từ localStorage
 const getUserFromStorage = () => {
   try {
-    const userStr = localStorage.getItem('user');
+    const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
   } catch {
     return null;
@@ -14,8 +14,8 @@ const getUserFromStorage = () => {
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(getUserFromStorage());
-  const accessToken = ref(localStorage.getItem('accessToken') || null);
-  const refreshToken = ref(localStorage.getItem('refreshToken') || null);
+  const accessToken = ref(localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken') || null);
+  const refreshToken = ref(localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken') || null);
   const loading = ref(false);
   const error = ref(null);
 
@@ -47,9 +47,11 @@ export const useAuthStore = defineStore('auth', () => {
         accessToken.value = result.accessToken;
         refreshToken.value = result.refreshToken;
         user.value = result.user;
-        localStorage.setItem('accessToken', result.accessToken);
-        localStorage.setItem('refreshToken', result.refreshToken);
-        localStorage.setItem('user', JSON.stringify(result.user));
+        
+        const storage = data.rememberMe ? localStorage : sessionStorage;
+        storage.setItem('accessToken', result.accessToken);
+        storage.setItem('refreshToken', result.refreshToken);
+        storage.setItem('user', JSON.stringify(result.user));
       }
       return result;
     } catch (err) {
@@ -100,6 +102,9 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('user');
   }
 
   // Xác thực token

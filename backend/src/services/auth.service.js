@@ -58,18 +58,21 @@ export const loginService = async (data) => {
     throw new Error("Sai email hoặc mật khẩu");
   }
 
+  // Determine expiration based on rememberMe
+  const expiresIn = data.rememberMe ? "30d" : "1d";
+
   // Tạo access token
   const accessToken = jwt.sign(
     { id: user.id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "7d" }  // Tăng lên 7 ngày để tiện development
+    { expiresIn }
   );
 
   // Tạo refresh token
   const refreshToken = jwt.sign(
     { id: user.id },
     process.env.JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn }
   );
 
   // Trả về thông tin user (không bao gồm password)
@@ -79,6 +82,38 @@ export const loginService = async (data) => {
     email: user.email,
     role: user.role,
     phone: user.phone,
+    created_at: user.created_at
+  };
+
+  return { status: true, accessToken, refreshToken, user: userData };
+};
+
+/**
+ * Đăng nhập bằng Social (Google, Facebook)
+ */
+export const loginWithSocial = async (user) => {
+  // Tạo access token
+  const accessToken = jwt.sign(
+    { id: user.id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "30d" } 
+  );
+
+  // Tạo refresh token
+  const refreshToken = jwt.sign(
+    { id: user.id },
+    process.env.JWT_SECRET,
+    { expiresIn: "30d" }
+  );
+
+  // Trả về thông tin user
+  const userData = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    phone: user.phone,
+    avatar: user.avatar,
     created_at: user.created_at
   };
 

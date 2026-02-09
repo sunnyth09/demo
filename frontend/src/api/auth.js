@@ -17,7 +17,8 @@ export const authApi = {
   async login(data) {
     const response = await axios.post(`${API_URL}/login`, {
       email: data.email,
-      password: data.password
+      password: data.password,
+      rememberMe: data.rememberMe
     });
     return response.data;
   },
