@@ -662,6 +662,7 @@ const onFileSelected = async (event) => {
   try {
     const formData = new FormData()
     formData.append('avatar', file)
+    // Name is optional in backend now, so we only send avatar for partial update
 
     // Show loading? Maybe global loading or toast
     const toastId = toast.loading('Đang cập nhật ảnh đại diện...')
@@ -705,18 +706,20 @@ const openProfileModal = () => {
 
 const updateProfile = async () => {
   try {
-    const formData = new FormData()
-    formData.append('name', profileForm.name)
-    if (profileForm.email) formData.append('email', profileForm.email)
-    if (profileForm.phone) formData.append('phone', profileForm.phone)
-    // No avatar here anymore
+    // Use JSON for text updates (cleaner and less error prone than FormData)
+    const payload = {
+      name: profileForm.name
+    }
+    if (profileForm.email) payload.email = profileForm.email
+    if (profileForm.phone) payload.phone = profileForm.phone
 
     const res = await fetch(`${API_URL}/user/profile`, {
       method: 'PUT',
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${authStore.accessToken}`
       },
-      body: formData
+      body: JSON.stringify(payload)
     })
     
     const json = await res.json()

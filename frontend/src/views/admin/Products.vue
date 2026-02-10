@@ -116,9 +116,19 @@
                 </span>
               </td>
               <td class="p-4">
-                <span class="font-medium text-foreground">
-                  {{ formatCurrency(product.price) }}
-                </span>
+                <div class="flex flex-col">
+                  <span class="font-medium text-foreground">
+                    {{ formatCurrency(product.price) }}
+                  </span>
+                  <div v-if="product.original_price && product.original_price > product.price" class="flex items-center gap-1 mt-0.5">
+                    <span class="text-xs text-muted-foreground line-through">
+                      {{ formatCurrency(product.original_price) }}
+                    </span>
+                    <span class="text-[10px] font-bold text-red-600 bg-red-100 px-1 rounded">
+                      -{{ Math.round(((product.original_price - product.price) / product.original_price) * 100) }}%
+                    </span>
+                  </div>
+                </div>
               </td>
               <td class="p-4">
                 <span :class="['text-sm', product.quantity > 0 ? 'text-foreground' : 'text-destructive font-medium']">

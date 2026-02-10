@@ -48,9 +48,9 @@
           <h4 class="font-semibold text-foreground mb-4">Hỗ trợ</h4>
           <ul class="space-y-3">
             <li><router-link to="/contact" class="text-sm text-muted-foreground hover:text-primary transition-colors">Liên hệ</router-link></li>
-            <li><a href="#" class="text-sm text-muted-foreground hover:text-primary transition-colors">FAQ</a></li>
-            <li><a href="#" class="text-sm text-muted-foreground hover:text-primary transition-colors">Chính sách đổi trả</a></li>
-            <li><a href="#" class="text-sm text-muted-foreground hover:text-primary transition-colors">Điều khoản dịch vụ</a></li>
+            <li><router-link to="/contact" class="text-sm text-muted-foreground hover:text-primary transition-colors">FAQ</router-link></li>
+            <li><router-link to="/about" class="text-sm text-muted-foreground hover:text-primary transition-colors">Chính sách đổi trả</router-link></li>
+            <li><router-link to="/about" class="text-sm text-muted-foreground hover:text-primary transition-colors">Điều khoản dịch vụ</router-link></li>
           </ul>
         </div>
 
@@ -77,11 +77,11 @@
           © 2026 <span class="font-medium text-foreground">Ocean Books</span>. All rights reserved.
         </p>
         <div class="flex items-center gap-4 text-sm text-muted-foreground">
-          <a href="#" class="hover:text-primary transition-colors">Chính sách bảo mật</a>
+          <router-link to="/about" class="hover:text-primary transition-colors">Chính sách bảo mật</router-link>
           <span class="text-border">|</span>
-          <a href="#" class="hover:text-primary transition-colors">Điều khoản sử dụng</a>
+          <router-link to="/about" class="hover:text-primary transition-colors">Điều khoản sử dụng</router-link>
           <span class="text-border">|</span>
-          <a href="#" class="hover:text-primary transition-colors">Cookies</a>
+          <router-link to="/about" class="hover:text-primary transition-colors">Cookies</router-link>
         </div>
       </div>
     </div>

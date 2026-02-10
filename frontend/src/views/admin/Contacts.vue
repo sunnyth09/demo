@@ -11,14 +11,15 @@
       <div v-if="loading" class="p-8 text-center text-muted-foreground">
         Đang tải dữ liệu...
       </div>
-      <table v-else class="w-full">
+      <div v-else class="overflow-x-auto">
+      <table class="w-full">
         <thead class="bg-muted/50">
           <tr>
-            <th class="text-left p-4 font-medium text-sm">Người gửi</th>
-            <th class="text-left p-4 font-medium text-sm w-1/4">Tiêu đề</th>
-            <th class="text-left p-4 font-medium text-sm w-1/3">Nội dung</th>
-            <th class="text-left p-4 font-medium text-sm">Ngày gửi</th>
-            <th class="text-right p-4 font-medium text-sm">Thao tác</th>
+            <th class="text-left p-4 font-medium text-sm whitespace-nowrap">Người gửi</th>
+            <th class="text-left p-4 font-medium text-sm whitespace-nowrap">Tiêu đề</th>
+            <th class="text-left p-4 font-medium text-sm whitespace-nowrap">Nội dung</th>
+            <th class="text-left p-4 font-medium text-sm whitespace-nowrap">Ngày gửi</th>
+            <th class="text-right p-4 font-medium text-sm whitespace-nowrap">Thao tác</th>
           </tr>
         </thead>
         <tbody>
@@ -63,6 +64,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
 
       <!-- Pagination (Simple implementation) -->
       <div v-if="pagination.totalPages > 1" class="p-4 border-t border-border flex justify-end gap-2">

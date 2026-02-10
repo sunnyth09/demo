@@ -237,9 +237,9 @@
                 <!-- Rating -->
                 <div class="flex items-center gap-1 mt-1.5">
                   <div class="flex text-yellow-500 text-xs">
-                    <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                    <span v-for="n in 5" :key="n">{{ n <= Math.round(product.rating || 0) ? '★' : '☆' }}</span>
                   </div>
-                  <span class="text-xs text-muted-foreground">(0)</span>
+                  <span class="text-xs text-muted-foreground">({{ product.review_count || 0 }})</span>
                 </div>
               </div>
             </div>
@@ -440,6 +440,8 @@ import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useFavoriteStore } from "../stores/favorite";
 import { storeToRefs } from "pinia";
+import { formatCurrency, calculateDiscount } from '@/utils/format';
+import { toast } from 'vue-sonner';
 
 const API_URL = import.meta.env.VITE_API_URL;
 const router = useRouter();
@@ -485,20 +487,7 @@ const getSortLabel = (value) => {
 const currentPage = computed(() => Math.floor(offset.value / limit.value) + 1);
 const totalPages = computed(() => Math.ceil(totalProducts.value / limit.value));
 
-// Format currency
-const formatCurrency = (value) => {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(value);
-};
 
-// Discount calculation (helper)
-const calculateDiscount = (price, original) => {
-  if (!original || original <= price) return 0;
-  return Math.round(((original - price) / original) * 100);
-};
 
 // Helper: Build Tree from Flat list
 const buildTree = (flatList) => {
@@ -543,7 +532,7 @@ const fetchCategories = async () => {
       // categoryTree.value.forEach(r => expandedCats.value.add(r.id))
     }
   } catch (error) {
-    console.error("Error fetching categories:", error);
+    toast.error('Không thể tải danh mục. Vui lòng thử lại!');
   }
 };
 
@@ -582,15 +571,17 @@ const fetchProducts = async () => {
 
       products.value = data;
 
-      // Pagination logic basic
-      if (data.length < limit.value) {
+      // Pagination logic
+      if (json.total !== undefined) {
+        totalProducts.value = json.total;
+      } else if (data.length < limit.value) {
         totalProducts.value = offset.value + data.length;
       } else {
-        totalProducts.value = offset.value + limit.value + 1; // Estimation
+        totalProducts.value = offset.value + limit.value + 1;
       }
     }
   } catch (error) {
-    console.error("Error fetching products:", error);
+    toast.error('Không thể tải sản phẩm. Vui lòng thử lại!');
   } finally {
     loading.value = false;
   }

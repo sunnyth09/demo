@@ -145,10 +145,12 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import QuillEditor from '@/components/QuillEditor.vue'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 const API_URL = import.meta.env.VITE_API_URL
 
 const isEditMode = computed(() => !!route.params.id)
@@ -229,7 +231,10 @@ const saveArticle = async () => {
 
     const res = await fetch(url, {
       method,
-      body: formData // No headers needed, browser sets Content-Type for FormData
+      headers: {
+        'Authorization': `Bearer ${authStore.accessToken}`
+      },
+      body: formData
     })
     
     const json = await res.json()

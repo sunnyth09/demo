@@ -9,7 +9,7 @@ const router = express.Router();
 // ========== QUY TẮC VALIDATION ==========
 
 const profileValidate = [
-  body("name").notEmpty().withMessage("Tên không được rỗng"),
+  body("name").optional().notEmpty().withMessage("Tên không được rỗng"),
   body("email").optional().isEmail().withMessage("Email không hợp lệ")
 ];
 

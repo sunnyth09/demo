@@ -38,7 +38,7 @@
               <div class="text-xs text-gray-500">{{ review.user?.email }}</div>
             </td>
             <td class="p-4 border-b text-blue-600">
-              <router-link :to="`/product/${review.product?.id}`" target="_blank">
+              <router-link :to="`/products/${review.product?.id}`" target="_blank">
                 {{ review.product?.name || 'Sản phẩm đã xóa' }}
               </router-link>
             </td>
@@ -51,7 +51,7 @@
               {{ review.comment }}
             </td>
             <td class="p-4 border-b text-gray-500">
-              {{ formatDate(review.created_at) }}
+              {{ formatReviewDate(review.created_at) }}
             </td>
             <td class="p-4 border-b">
               <div class="flex flex-col gap-2">
@@ -87,7 +87,9 @@
 import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { toast } from 'vue-sonner';
+import { formatDate } from '@/utils/format';
 
+const authStore = useAuthStore();
 const API_URL = import.meta.env.VITE_API_URL;
 const reviews = ref([]);
 const loading = ref(false);
@@ -103,18 +105,14 @@ const filteredReviews = computed(() => {
   );
 });
 
-const formatDate = (dateString) => {
-  if (!dateString) return '';
-  return new Date(dateString).toLocaleDateString('vi-VN', {
-    hour: '2-digit', 
-    minute: '2-digit'
-  });
+const formatReviewDate = (dateString) => {
+  return formatDate(dateString);
 };
 
 const fetchReviews = async () => {
   loading.value = true;
   try {
-    const token = localStorage.getItem('accessToken');
+    const token = authStore.accessToken;
     const res = await fetch(`${API_URL}/reviews/admin/all`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -157,7 +155,7 @@ const handleStatusChange = async (review, event) => {
 
 const toggleVisibility = async (review) => {
   try {
-    const token = localStorage.getItem('accessToken');
+    const token = authStore.accessToken;
     const res = await fetch(`${API_URL}/reviews/${review.id}/visibility`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${token}` }
@@ -180,7 +178,7 @@ const deleteReview = async (id) => {
   if (!confirm('Bạn có chắc chắn muốn xóa đánh giá này vĩnh viễn?')) return;
   
   try {
-    const token = localStorage.getItem('accessToken');
+    const token = authStore.accessToken;
     const res = await fetch(`${API_URL}/reviews/${id}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }

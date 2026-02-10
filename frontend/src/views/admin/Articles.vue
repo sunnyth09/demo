@@ -235,8 +235,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const API_URL = import.meta.env.VITE_API_URL
 
 const articles = ref([])
@@ -328,7 +330,10 @@ const deleteArticle = async () => {
   deleting.value = true
   try {
     const res = await fetch(`${API_URL}/articles/${articleToDelete.value.id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${authStore.accessToken}`
+      }
     })
     const json = await res.json()
     if (json.status) {

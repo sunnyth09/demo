@@ -152,6 +152,47 @@
             </div>
           </div>
         </div>
+
+        <!-- Promotion Info -->
+        <div class="border-t pt-6">
+          <h3 class="text-lg font-semibold mb-4">Thông tin khuyến mãi</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Original Price -->
+            <div>
+              <label class="block text-sm font-medium mb-2">Giá gốc (trước giảm)</label>
+              <input 
+                v-model.number="form.original_price" 
+                type="number" 
+                min="0"
+                class="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Nhập giá gốc nếu có"
+              />
+              <p class="text-xs text-muted-foreground mt-1">
+                Nếu nhập, giá bán sẽ hiển thị là giá khuyến mãi.
+              </p>
+            </div>
+
+            <!-- Discount Start -->
+            <div>
+              <label class="block text-sm font-medium mb-2">Bắt đầu giảm giá</label>
+              <input 
+                v-model="form.discount_start" 
+                type="datetime-local" 
+                class="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+
+            <!-- Discount End -->
+            <div>
+              <label class="block text-sm font-medium mb-2">Kết thúc giảm giá</label>
+              <input 
+                v-model="form.discount_end" 
+                type="datetime-local" 
+                class="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
         
         <!-- Description -->
         <div class="border-t pt-6">
@@ -397,7 +438,11 @@ const form = ref({
   status: 'active',
   author: '',
   publisher: '',
-  publication_year: null
+  publisher: '',
+  publication_year: null,
+  original_price: null,
+  discount_start: null,
+  discount_end: null
 })
 
 const toast = ref({
@@ -464,7 +509,11 @@ const fetchProductDetail = async () => {
         status: p.status || 'active',
         author: p.author || '',
         publisher: p.publisher || '',
-        publication_year: p.publication_year || null
+        publisher: p.publisher || '',
+        publication_year: p.publication_year || null,
+        original_price: p.original_price,
+        discount_start: p.discount_start ? new Date(p.discount_start).toISOString().slice(0, 16) : null,
+        discount_end: p.discount_end ? new Date(p.discount_end).toISOString().slice(0, 16) : null
       }
       thumbnailPreview.value = p.thumbnail || ''
       existingImages.value = p.images || []
@@ -551,6 +600,18 @@ const saveProduct = async () => {
     
     if (form.value.publication_year) {
       formData.append('publication_year', form.value.publication_year)
+    }
+
+    if (form.value.original_price) {
+      formData.append('original_price', form.value.original_price)
+    }
+
+    if (form.value.discount_start) {
+      formData.append('discount_start', form.value.discount_start)
+    }
+
+    if (form.value.discount_end) {
+      formData.append('discount_end', form.value.discount_end)
     }
     
     if (form.value.slug) {

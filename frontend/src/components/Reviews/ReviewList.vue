@@ -168,7 +168,7 @@ const deleteReview = async (id) => {
   if (!confirm('Bạn có chắc chắn muốn xóa đánh giá này?')) return;
   
   try {
-    const token = localStorage.getItem('accessToken');
+    const token = authStore.accessToken;
     const res = await fetch(`${API_URL}/reviews/${id}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
@@ -193,7 +193,7 @@ const reportReview = async (id) => {
   if (!reason) return;
 
   try {
-    const token = localStorage.getItem('accessToken');
+    const token = authStore.accessToken;
     const res = await fetch(`${API_URL}/reviews/${id}/report`, {
       method: 'POST',
       headers: { 

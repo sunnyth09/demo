@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./config/loadEnv.js";
 import express from "express";
 import cors from "cors";
 import session from "express-session";
@@ -20,6 +20,8 @@ import favoriteRoute from "./routes/favorite.route.js";
 import reviewRoute from "./routes/review.route.js";
 import paymentRoute from "./routes/payment.route.js";
 import contactRoute from "./routes/contact.route.js";
+
+
 
 import { initBucket } from "./services/minio.service.js";
 

@@ -45,7 +45,23 @@ const Product = sequelize.define('Product', {
     type: DataTypes.DECIMAL(15, 2),
     allowNull: false,
     defaultValue: 0,
-    comment: 'Giá sản phẩm'
+    comment: 'Giá sản phẩm (Giá bán thực tế)'
+  },
+  original_price: {
+    type: DataTypes.DECIMAL(15, 2),
+    allowNull: true,
+    defaultValue: null,
+    comment: 'Giá gốc trước khi giảm (nếu có)'
+  },
+  discount_start: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Ngày bắt đầu giảm giá'
+  },
+  discount_end: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Ngày kết thúc giảm giá'
   },
   quantity: {
     type: DataTypes.INTEGER,

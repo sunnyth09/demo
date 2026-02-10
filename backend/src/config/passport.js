@@ -67,6 +67,7 @@ passport.use(new GoogleStrategy({
   }
 ));
 
+
 // Facebook Strategy
 passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID,

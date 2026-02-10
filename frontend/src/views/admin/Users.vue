@@ -17,14 +17,15 @@
       <div v-if="loading" class="p-8 text-center text-muted-foreground">
         Đang tải dữ liệu...
       </div>
-      <table v-else class="w-full">
+      <div v-else class="overflow-x-auto">
+      <table class="w-full">
         <thead class="bg-muted/50">
           <tr>
-            <th class="text-left p-4 font-medium text-sm">Người dùng</th>
-            <th class="text-left p-4 font-medium text-sm">Email</th>
-            <th class="text-left p-4 font-medium text-sm">Vai trò</th>
-            <th class="text-left p-4 font-medium text-sm">Ngày tạo</th>
-            <th class="text-right p-4 font-medium text-sm">Thao tác</th>
+            <th class="text-left p-4 font-medium text-sm whitespace-nowrap">Người dùng</th>
+            <th class="text-left p-4 font-medium text-sm whitespace-nowrap">Email</th>
+            <th class="text-left p-4 font-medium text-sm whitespace-nowrap">Vai trò</th>
+            <th class="text-left p-4 font-medium text-sm whitespace-nowrap">Ngày tạo</th>
+            <th class="text-right p-4 font-medium text-sm whitespace-nowrap">Thao tác</th>
           </tr>
         </thead>
         <tbody>
@@ -77,6 +78,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <!-- Modal Form -->

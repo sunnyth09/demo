@@ -53,7 +53,7 @@
                   Khám phá ngay
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                </router-link>
-               <button class="px-5 py-2.5 bg-card hover:bg-muted text-foreground border border-border rounded-xl font-semibold text-sm shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md flex items-center gap-2">
+               <button @click="toast.info('Video giới thiệu đang được cập nhật!')" class="px-5 py-2.5 bg-card hover:bg-muted text-foreground border border-border rounded-xl font-semibold text-sm shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md flex items-center gap-2">
                   <div class="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-primary" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                   </div>
@@ -212,15 +212,17 @@
         </div>
 
         <!-- Category Grid -->
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+        <div v-if="categoriesLoading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+          <div v-for="i in 6" :key="i" class="h-[80px] bg-muted rounded-xl animate-pulse"></div>
+        </div>
+        <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
           <div 
-            v-for="(cat, index) in categories.slice(0, 6)" 
+            v-for="cat in categories.slice(0, 6)" 
             :key="cat.id"
             @click="goToCategory(cat.id)"
             class="group cursor-pointer bg-card rounded-xl p-5 border border-border hover:border-primary shadow-sm hover:shadow-md transition-all duration-300 text-center hover:-translate-y-1"
           >
             <h3 class="font-semibold text-card-foreground group-hover:text-primary transition-colors text-sm md:text-base">{{ cat.name }}</h3>
-            <p class="text-xs text-muted-foreground mt-1">{{ [256, 189, 342, 127, 298, 215][index % 6] }}+ sách</p>
           </div>
         </div>
       </div>
@@ -293,17 +295,17 @@
                 <!-- Countdown Timer -->
                 <div class="flex gap-2 items-center text-sm">
                   <div class="bg-white/15 rounded-lg px-3 py-2 text-center min-w-[50px]">
-                    <span class="block text-lg font-bold">03</span>
+                    <span class="block text-lg font-bold">{{ countdown.days }}</span>
                     <span class="text-[10px] text-white/60">Ngày</span>
                   </div>
                   <span class="font-bold text-white/50">:</span>
                   <div class="bg-white/15 rounded-lg px-3 py-2 text-center min-w-[50px]">
-                    <span class="block text-lg font-bold">12</span>
+                    <span class="block text-lg font-bold">{{ countdown.hours }}</span>
                     <span class="text-[10px] text-white/60">Giờ</span>
                   </div>
                   <span class="font-bold text-white/50">:</span>
                   <div class="bg-white/15 rounded-lg px-3 py-2 text-center min-w-[50px]">
-                    <span class="block text-lg font-bold">45</span>
+                    <span class="block text-lg font-bold">{{ countdown.minutes }}</span>
                     <span class="text-[10px] text-white/60">Phút</span>
                   </div>
                 </div>
@@ -490,13 +492,15 @@
             
             <div class="flex flex-col sm:flex-row gap-3">
               <input 
+                v-model="newsletterEmail"
                 type="email" 
                 placeholder="Nhập email của bạn..." 
                 class="flex-1 bg-white/15 border border-white/20 text-white placeholder-white/50 focus:ring-2 focus:ring-white/30 focus:border-transparent rounded-lg px-4 h-12 text-sm"
+                @keydown.enter="handleNewsletter"
               />
-              <button class="h-12 px-6 rounded-lg bg-white text-primary font-semibold hover:bg-white/90 transition-all shadow-md flex items-center justify-center gap-2 text-sm">
-                Đăng ký
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              <button @click="handleNewsletter" :disabled="newsletterLoading" class="h-12 px-6 rounded-lg bg-white text-primary font-semibold hover:bg-white/90 transition-all shadow-md flex items-center justify-center gap-2 text-sm disabled:opacity-50">
+                {{ newsletterLoading ? 'Đang gửi...' : 'Đăng ký' }}
+                <svg v-if="!newsletterLoading" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
               </button>
             </div>
             
@@ -543,10 +547,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import ProductCard from '@/components/ProductCard.vue';
 import { useCartStore } from '@/stores/cart';
+import { formatCurrency } from '@/utils/format';
+import { toast } from 'vue-sonner';
 import { 
   Truck, ShieldCheck, RefreshCw, BookOpen, Sparkles, Tag, Lightbulb, Zap, Lock, Star 
 } from 'lucide-vue-next';
@@ -558,7 +564,10 @@ const cartStore = useCartStore();
 const categories = ref([]);
 const products = ref([]);
 const loading = ref(true);
+const categoriesLoading = ref(true);
 const activeTab = ref('new_arrival');
+const newsletterEmail = ref('');
+const newsletterLoading = ref(false);
 
 const tabs = [
   { id: 'new_arrival', label: 'Mới phát hành', icon: Sparkles },
@@ -611,6 +620,38 @@ const features = [
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+// Countdown Timer
+const countdown = ref({ days: '00', hours: '00', minutes: '00' });
+let countdownInterval = null;
+
+const startCountdown = () => {
+  // Set target to 7 days from now (repeating weekly promo)
+  const now = new Date();
+  const daysUntilSunday = (7 - now.getDay()) || 7;
+  const target = new Date(now);
+  target.setDate(now.getDate() + daysUntilSunday);
+  target.setHours(23, 59, 59, 0);
+
+  const update = () => {
+    const now = new Date();
+    const diff = target - now;
+    if (diff <= 0) {
+      countdown.value = { days: '00', hours: '00', minutes: '00' };
+      return;
+    }
+    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    countdown.value = {
+      days: String(d).padStart(2, '0'),
+      hours: String(h).padStart(2, '0'),
+      minutes: String(m).padStart(2, '0')
+    };
+  };
+  update();
+  countdownInterval = setInterval(update, 60000); // Update every minute
+};
+
 const bestSellers = computed(() => {
   return products.value.slice(0, 4);
 });
@@ -640,12 +681,35 @@ const toastMessage = ref('');
 
 const addToCart = (product) => {
   cartStore.addToCart(product);
-  // Show toast notification
   toastMessage.value = `Đã thêm "${product.name}" vào giỏ hàng`;
   showToast.value = true;
   setTimeout(() => {
     showToast.value = false;
   }, 3000);
+};
+
+// Newsletter handler
+const handleNewsletter = async () => {
+  if (!newsletterEmail.value.trim()) {
+    toast.error('Vui lòng nhập email');
+    return;
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(newsletterEmail.value)) {
+    toast.error('Email không hợp lệ');
+    return;
+  }
+  newsletterLoading.value = true;
+  try {
+    // Simulate API call (replace with real endpoint when available)
+    await new Promise(resolve => setTimeout(resolve, 800));
+    toast.success('Đăng ký thành công! Cảm ơn bạn 🎉');
+    newsletterEmail.value = '';
+  } catch (error) {
+    toast.error('Có lỗi xảy ra, vui lòng thử lại!');
+  } finally {
+    newsletterLoading.value = false;
+  }
 };
 
 // Data Fetching
@@ -663,6 +727,7 @@ const fetchData = async () => {
     const articleJson = await articleRes.json();
 
     if (catJson.status) categories.value = catJson.data || [];
+    categoriesLoading.value = false;
     if (prodJson.status) products.value = prodJson.data || [];
     
     if (articleJson.status) {
@@ -679,7 +744,8 @@ const fetchData = async () => {
     }
 
   } catch (error) {
-    console.error("Error fetching home data:", error);
+    toast.error('Không thể tải dữ liệu. Vui lòng thử lại!');
+    categoriesLoading.value = false;
   } finally {
     loading.value = false;
   }
@@ -688,6 +754,11 @@ const fetchData = async () => {
 onMounted(() => {
   fetchData();
   typeWriter();
+  startCountdown();
+});
+
+onUnmounted(() => {
+  if (countdownInterval) clearInterval(countdownInterval);
 });
 </script>
 

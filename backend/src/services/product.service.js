@@ -39,7 +39,7 @@ export const getProducts = async ({ limit = 10, offset = 0, category_id = null, 
   }
 
   const products = await Product.findAll({
-    attributes: ['id', 'name', 'slug', 'sku', 'price', 'quantity', 'thumbnail', 'status'],
+    attributes: ['id', 'name', 'slug', 'sku', 'price', 'original_price', 'discount_start', 'discount_end', 'quantity', 'thumbnail', 'status'],
     include: [
       {
         model: Category,
@@ -60,6 +60,9 @@ export const getProducts = async ({ limit = 10, offset = 0, category_id = null, 
     slug: p.slug,
     sku: p.sku,
     price: p.price,
+    original_price: p.original_price,
+    discount_start: p.discount_start,
+    discount_end: p.discount_end,
     quantity: p.quantity,
     thumbnail: p.thumbnail,
     status: p.status,
@@ -169,6 +172,9 @@ export const create = async (data, files) => {
     slug: slug,
     sku: data.sku || null,
     price: data.price,
+    original_price: data.original_price || null,
+    discount_start: data.discount_start || null,
+    discount_end: data.discount_end || null,
     quantity: data.quantity || 0,
     description: data.description || null,
     category_id: data.category_id || null,
@@ -248,6 +254,9 @@ export const update = async (id, data, files) => {
     slug: slug,
     sku: data.sku !== undefined ? data.sku : product.sku,
     price: data.price,
+    original_price: data.original_price !== undefined ? data.original_price : product.original_price,
+    discount_start: data.discount_start !== undefined ? data.discount_start : product.discount_start,
+    discount_end: data.discount_end !== undefined ? data.discount_end : product.discount_end,
     quantity: data.quantity !== undefined ? data.quantity : product.quantity,
     description: data.description !== undefined ? data.description : product.description,
     category_id: data.category_id !== undefined ? data.category_id : product.category_id,

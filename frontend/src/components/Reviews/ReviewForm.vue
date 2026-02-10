@@ -184,7 +184,7 @@ const submitReview = async () => {
   loading.value = true;
 
   try {
-    const token = localStorage.getItem('accessToken');
+    const token = authStore.accessToken;
     const res = await fetch(`${API_URL}/reviews`, {
       method: 'POST',
       headers: {

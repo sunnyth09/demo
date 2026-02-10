@@ -35,16 +35,17 @@
          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
       </div>
       
-      <table v-else class="w-full text-sm text-left">
+      <div v-else class="overflow-x-auto">
+      <table class="w-full text-sm text-left">
         <thead class="bg-gray-50 text-gray-500 font-medium border-b">
           <tr>
-            <th class="px-6 py-4">Mã Voucher</th>
-            <th class="px-6 py-4">Loại & Giá trị</th>
-            <th class="px-6 py-4">Đơn tối thiểu</th>
-            <th class="px-6 py-4">Số lượng</th>
-            <th class="px-6 py-4">Thời gian</th>
-            <th class="px-6 py-4">Trạng thái</th>
-            <th class="px-6 py-4 text-right">Thao tác</th>
+            <th class="px-6 py-4 whitespace-nowrap">Mã Voucher</th>
+            <th class="px-6 py-4 whitespace-nowrap">Loại & Giá trị</th>
+            <th class="px-6 py-4 whitespace-nowrap">Đơn tối thiểu</th>
+            <th class="px-6 py-4 whitespace-nowrap">Số lượng</th>
+            <th class="px-6 py-4 whitespace-nowrap">Thời gian</th>
+            <th class="px-6 py-4 whitespace-nowrap">Trạng thái</th>
+            <th class="px-6 py-4 text-right whitespace-nowrap">Thao tác</th>
           </tr>
         </thead>
         <tbody class="divide-y">
@@ -123,6 +124,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <!-- Modal Form -->
@@ -271,13 +273,14 @@
       <div v-if="loadingStats" class="p-8 text-center">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
       </div>
-      <table v-else class="w-full text-sm text-left">
+      <div v-else class="overflow-x-auto">
+      <table class="w-full text-sm text-left">
         <thead class="bg-gray-50 text-gray-500 font-medium border-b">
           <tr>
-            <th class="px-6 py-4">Mã Voucher</th>
-            <th class="px-6 py-4">Mô tả</th>
-            <th class="px-6 py-4">Lượt sử dụng</th>
-            <th class="px-6 py-4">Tổng tiền giảm</th>
+            <th class="px-6 py-4 whitespace-nowrap">Mã Voucher</th>
+            <th class="px-6 py-4 whitespace-nowrap">Mô tả</th>
+            <th class="px-6 py-4 whitespace-nowrap">Lượt sử dụng</th>
+            <th class="px-6 py-4 whitespace-nowrap">Tổng tiền giảm</th>
           </tr>
         </thead>
         <tbody class="divide-y">
@@ -294,6 +297,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
   </div>
 </template>

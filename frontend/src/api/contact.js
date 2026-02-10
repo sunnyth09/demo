@@ -2,6 +2,8 @@ import axios from 'axios';
 
 const API_URL = `${import.meta.env.VITE_API_URL}/contacts`;
 
+const getToken = () => localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+
 export const contactApi = {
   // Gửi liên hệ (Public)
   async submitContact(data) {
@@ -14,7 +16,7 @@ export const contactApi = {
     const response = await axios.get(`${API_URL}`, { 
       params,
       headers: {
-        Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        Authorization: `Bearer ${getToken()}`
       }
     });
     return response.data;
@@ -24,7 +26,7 @@ export const contactApi = {
   async deleteContact(id) {
     const response = await axios.delete(`${API_URL}/${id}`, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        Authorization: `Bearer ${getToken()}`
       }
     });
     return response.data;
@@ -34,9 +36,10 @@ export const contactApi = {
   async replyContact(id, data) {
     const response = await axios.post(`${API_URL}/${id}/reply`, data, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        Authorization: `Bearer ${getToken()}`
       }
     });
     return response.data;
   }
 };
+

@@ -465,6 +465,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
 import { useFavoriteStore } from '@/stores/favorite'
 import { storeToRefs } from 'pinia'
+import { formatCurrency } from '@/utils/format'
+import { toast } from 'vue-sonner'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -489,14 +491,7 @@ const suggestions = ref({ keywords: [], products: [] })
 const showSuggestions = ref(false)
 let searchTimeout = null
 
-// Format Currency
-const formatCurrency = (value) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0
-  }).format(value)
-}
+
 
 // Watch search
 watch(searchQuery, (newVal) => {
@@ -520,7 +515,7 @@ watch(searchQuery, (newVal) => {
         suggestions.value.keywords = cats
       }
     } catch (e) {
-      console.error(e)
+      toast.error('Lỗi tìm kiếm, vui lòng thử lại');
     }
   }, 300)
 })
@@ -618,7 +613,7 @@ const fetchCategories = async () => {
       }));
     }
   } catch (error) {
-    console.error('Error fetching categories:', error)
+    toast.error('Không thể tải danh mục');
   }
 }
 
@@ -633,7 +628,7 @@ const fetchNewVouchersCount = async () => {
       newVouchersCount.value = json.data.count
     }
   } catch (e) {
-    console.error(e)
+    // Silently fail for voucher count
   }
 }
 
