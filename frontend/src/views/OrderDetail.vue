@@ -270,6 +270,20 @@
       <p class="text-muted-foreground">Không tìm thấy đơn hàng</p>
       <router-link to="/orders" class="text-primary hover:underline mt-2 inline-block">Quay lại</router-link>
     </div>
+  <AlertDialog :open="showCancelDialog" @update:open="showCancelDialog = false">
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Hủy đơn hàng</AlertDialogTitle>
+        <AlertDialogDescription>
+          Bạn có chắc muốn hủy đơn hàng này? Hành động này không thể hoàn tác.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Hủy</AlertDialogCancel>
+        <AlertDialogAction @click="handleCancel" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">Xác nhận hủy</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
   </div>
 </template>
 
@@ -278,7 +292,18 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
+
 import { toast } from 'vue-sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 const route = useRoute()
 const router = useRouter()
@@ -471,8 +496,14 @@ const fetchOrder = async () => {
   }
 }
 
-const cancelOrder = async () => {
-  if (!confirm('Bạn có chắc muốn hủy đơn hàng này?')) return
+const showCancelDialog = ref(false)
+
+const cancelOrder = () => {
+  showCancelDialog.value = true
+}
+
+const handleCancel = async () => {
+  showCancelDialog.value = false
   
   try {
     const res = await fetch(`${API_URL}/orders/my-orders/${order.value.id}/cancel`, {

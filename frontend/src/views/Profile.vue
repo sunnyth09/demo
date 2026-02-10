@@ -563,6 +563,22 @@
       </div>
     </div>
   </div>
+
+
+  <AlertDialog :open="confirmDialog.isOpen" @update:open="confirmDialog.isOpen = false">
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>{{ confirmDialog.title }}</AlertDialogTitle>
+        <AlertDialogDescription>
+          {{ confirmDialog.description }}
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Hủy</AlertDialogCancel>
+        <AlertDialogAction @click="handleConfirm" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">{{ confirmDialog.actionLabel }}</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 </template>
 
 <script setup>
@@ -576,6 +592,16 @@ import {
   Package, Truck, CheckCircle2, ClipboardList, XCircle 
 } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 const router = useRouter()
 const route = useRoute()
@@ -1035,20 +1061,52 @@ const saveAddress = async () => {
   }
 }
 
-const deleteAddress = async (id) => {
-  if (!confirm('Bạn có chắc muốn xóa địa chỉ này?')) return
-  try {
-    const res = await fetch(`${API_URL}/addresses/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
-    })
-    const json = await res.json()
-    if (json.status) {
-      fetchAddresses()
-    }
-  } catch (error) {
-    console.error(error)
-  }
+// Confirmation State
+const confirmDialog = reactive({
+  isOpen: false,
+  title: '',
+  description: '',
+  action: null,
+  actionLabel: 'Xác nhận'
+})
+
+const openConfirmDialog = (title, desc, action, label = 'Xác nhận') => {
+  confirmDialog.title = title
+  confirmDialog.description = desc
+  confirmDialog.action = action
+  confirmDialog.actionLabel = label
+  confirmDialog.isOpen = true
+}
+
+const handleConfirm = () => {
+  if (confirmDialog.action) confirmDialog.action()
+  confirmDialog.isOpen = false
+}
+
+const deleteAddress = (id) => {
+  openConfirmDialog(
+    'Xóa địa chỉ',
+    'Bạn có chắc muốn xóa địa chỉ này?',
+    async () => {
+      try {
+        const res = await fetch(`${API_URL}/addresses/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+        })
+        const json = await res.json()
+        if (json.status) {
+          fetchAddresses()
+          toast.success('Đã xóa địa chỉ')
+        } else {
+          toast.error(json.message || 'Xóa thất bại')
+        }
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lỗi xảy ra')
+      }
+    },
+    'Xóa'
+  )
 }
 
 // Redirect nếu chưa đăng nhập
@@ -1068,10 +1126,16 @@ const userInitial = computed(() => {
   return authStore.user?.name?.charAt(0)?.toUpperCase() || 'U'
 })
 
-const toggleFavorite = async (product) => {
-    if (confirm('Bạn muốn xáo sản phẩm này khỏi danh sách yêu thích?')) {
-        await favoriteStore.toggleFavorite(product);
-    }
+const toggleFavorite = (product) => {
+    openConfirmDialog(
+      'Xóa khỏi yêu thích',
+      'Bạn muốn xóa sản phẩm này khỏi danh sách yêu thích?',
+      async () => {
+          await favoriteStore.toggleFavorite(product);
+          toast.success('Đã xóa khỏi danh sách yêu thích')
+      },
+      'Xóa'
+    )
 };
 
 const formatCurrency = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value)

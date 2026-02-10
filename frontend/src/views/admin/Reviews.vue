@@ -80,7 +80,23 @@
         </tbody>
       </table>
     </div>
+
   </div>
+
+  <AlertDialog :open="showDeleteDialog" @update:open="showDeleteDialog = false">
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Xóa đánh giá</AlertDialogTitle>
+        <AlertDialogDescription>
+          Bạn có chắc chắn muốn xóa đánh giá này vĩnh viễn? Hành động này không thể hoàn tác.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Hủy</AlertDialogCancel>
+        <AlertDialogAction @click="confirmDelete" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">Xóa vĩnh viễn</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 </template>
 
 <script setup>
@@ -88,6 +104,16 @@ import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { toast } from 'vue-sonner';
 import { formatDate } from '@/utils/format';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 const authStore = useAuthStore();
 const API_URL = import.meta.env.VITE_API_URL;
@@ -132,14 +158,10 @@ const handleStatusChange = async (review, event) => {
   
   // Case: Delete
   if (newValue === 'DELETE') {
-    // Restore select value immediately to prev state (beacause confirm will block)
-    // Actually, Vue will re-render if we don't change state. 
-    // Just handle delete:
-    await deleteReview(review.id);
-    
-    // If delete cancelled/failed, we might need to reset selection manually in DOM if Vue didn't re-render.
-    // But since `review` is reactive and bound via :value, if we didn't change review.is_hidden, it should snap back.
-    // To be safe, force update or let delete logic handle refresh.
+    deleteReview(review.id);
+    // Reset select to previous value (visually) until delete confirms
+    // This is tricky with v-model binding directly to is_hidden which is boolean.
+    // We just trigger the dialog.
     return;
   }
 
@@ -174,12 +196,20 @@ const toggleVisibility = async (review) => {
   }
 };
 
-const deleteReview = async (id) => {
-  if (!confirm('Bạn có chắc chắn muốn xóa đánh giá này vĩnh viễn?')) return;
+const showDeleteDialog = ref(false)
+const reviewToDelete = ref(null)
+
+const deleteReview = (id) => {
+  reviewToDelete.value = id
+  showDeleteDialog.value = true
+}
+
+const confirmDelete = async () => {
+  if (!reviewToDelete.value) return
   
   try {
     const token = authStore.accessToken;
-    const res = await fetch(`${API_URL}/reviews/${id}`, {
+    const res = await fetch(`${API_URL}/reviews/${reviewToDelete.value}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -192,6 +222,9 @@ const deleteReview = async (id) => {
     }
   } catch (error) {
     console.error(error);
+  } finally {
+    showDeleteDialog.value = false
+    reviewToDelete.value = null
   }
 };
 

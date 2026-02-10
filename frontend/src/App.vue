@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onErrorCaptured } from 'vue'
-import { Toaster } from 'vue-sonner'
+import Toaster from '@/components/ui/sonner/Sonner.vue'
 
 const globalError = ref(null)
 
@@ -42,5 +42,5 @@ const reloadPage = () => {
   </div>
 
   <router-view v-else />
-  <Toaster position="top-right" richColors closeButton />
+  <Toaster closeButton />
 </template>

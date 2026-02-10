@@ -16,12 +16,15 @@
         <!-- Form -->
         <form @submit.prevent="handleLogin" class="space-y-4">
           <!-- Error Message -->
-          <div v-if="errorMessage" class="p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <Alert v-if="errorMessage" variant="destructive">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
-            {{ errorMessage }}
-          </div>
+            <AlertTitle>Lỗi</AlertTitle>
+            <AlertDescription>
+              {{ errorMessage }}
+            </AlertDescription>
+          </Alert>
 
           <!-- Email Field -->
           <div>
@@ -136,6 +139,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 const API_URL = import.meta.env.VITE_API_URL
 

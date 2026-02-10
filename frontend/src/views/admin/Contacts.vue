@@ -138,12 +138,39 @@
       </div>
     </div>
   </div>
+
+
+  <AlertDialog :open="showDeleteDialog" @update:open="showDeleteDialog = false">
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Xóa liên hệ</AlertDialogTitle>
+        <AlertDialogDescription>
+          Bạn có chắc chắn muốn xóa liên hệ này? Hành động này không thể hoàn tác.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Hủy</AlertDialogCancel>
+        <AlertDialogAction @click="confirmDelete" class="bg-red-100 text-red-600 hover:bg-red-200">Xóa vĩnh viễn</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import { contactApi } from '@/api/contact';
+
 import { toast } from 'vue-sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 const contacts = ref([]);
 const loading = ref(false);
@@ -219,11 +246,19 @@ const sendReply = async () => {
   }
 };
 
-const deleteContact = async (id) => {
-  if (!confirm('Bạn có chắc chắn muốn xóa liên hệ này?')) return;
+const showDeleteDialog = ref(false)
+const contactToDelete = ref(null)
+
+const deleteContact = (id) => {
+  contactToDelete.value = id
+  showDeleteDialog.value = true
+}
+
+const confirmDelete = async () => {
+  if (!contactToDelete.value) return
 
   try {
-    const res = await contactApi.deleteContact(id);
+    const res = await contactApi.deleteContact(contactToDelete.value);
     if (res.status === 'success') {
       toast.success('Xóa thành công');
       fetchContacts(pagination.value.page);
@@ -231,6 +266,9 @@ const deleteContact = async (id) => {
   } catch (error) {
     console.error(error);
     toast.error('Có lỗi xảy ra khi xóa');
+  } finally {
+    showDeleteDialog.value = false
+    contactToDelete.value = null
   }
 };
 

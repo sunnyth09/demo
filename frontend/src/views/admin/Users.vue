@@ -166,13 +166,40 @@
         </form>
       </div>
     </div>
-  </div>
+    </div>
+
+
+  <AlertDialog :open="showDeleteDialog" @update:open="showDeleteDialog = false">
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Xóa người dùng</AlertDialogTitle>
+        <AlertDialogDescription>
+          Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể hoàn tác.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Hủy</AlertDialogCancel>
+        <AlertDialogAction @click="confirmDelete" class="bg-red-100 text-red-600 hover:bg-red-200">Xóa vĩnh viễn</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 </template>
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+
 import { toast } from 'vue-sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 const authStore = useAuthStore()
 const users = ref([])
@@ -297,11 +324,19 @@ const saveUser = async () => {
   }
 }
 
-const deleteUser = async (id) => {
-  if (!confirm('Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể hoàn tác.')) return
+const showDeleteDialog = ref(false)
+const userToDelete = ref(null)
+
+const deleteUser = (id) => {
+  userToDelete.value = id
+  showDeleteDialog.value = true
+}
+
+const confirmDelete = async () => {
+  if (!userToDelete.value) return
 
   try {
-    const res = await fetch(`${API_URL}/user/admin/users/${id}`, {
+    const res = await fetch(`${API_URL}/user/admin/users/${userToDelete.value}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${authStore.accessToken}`
@@ -317,6 +352,9 @@ const deleteUser = async (id) => {
   } catch (error) {
     console.error(error)
     toast.error('Có lỗi xảy ra')
+  } finally {
+    showDeleteDialog.value = false
+    userToDelete.value = null
   }
 }
 

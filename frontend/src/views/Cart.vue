@@ -142,8 +142,24 @@
         </div>
       </div>
     </div>
+    </div>
   </div>
-</div>
+
+  <AlertDialog :open="!!itemToDelete" @update:open="itemToDelete = null">
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+        <AlertDialogDescription>
+          Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng không?
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Hủy</AlertDialogCancel>
+        <AlertDialogAction @click="confirmDelete" class="bg-red-100 text-red-600 hover:bg-red-200">Xóa</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
+
 </template>
 
 <script setup>
@@ -151,6 +167,16 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
 import { storeToRefs } from 'pinia'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -173,9 +199,16 @@ const updateQuantity = (id, delta) => {
 cartStore.updateQuantity(id, delta)
 }
 
+const itemToDelete = ref(null)
+
 const removeItem = (id) => {
-  if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?')) {
-    cartStore.removeItem(id)
+  itemToDelete.value = id
+}
+
+const confirmDelete = () => {
+  if (itemToDelete.value) {
+    cartStore.removeItem(itemToDelete.value)
+    itemToDelete.value = null
   }
 }
 
