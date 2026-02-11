@@ -461,6 +461,11 @@ export const updateStatus = async (orderId, newStatus, extraData = {}) => {
       updateData[timestampField[newStatus]] = new Date();
     }
 
+    // Auto-update payment status for COD when delivered
+    if (newStatus === 'delivered' && order.payment_method === 'cod' && order.payment_status === 'pending') {
+      updateData.payment_status = 'paid';
+    }
+
     // Save cancel reason if provided (for both request and final cancel)
     if ((newStatus === 'cancelled' || newStatus === 'request_cancel') && extraData.cancel_reason) {
       updateData.cancel_reason = extraData.cancel_reason;
