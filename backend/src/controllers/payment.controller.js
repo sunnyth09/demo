@@ -85,7 +85,7 @@ export const createPaymentUrl = (req, res) => {
         signData = signData.slice(0, -1); 
 
         let hmac = crypto.createHmac("sha512", secretKey);
-        let signed = hmac.update(new Buffer.from(signData, 'utf-8')).digest("hex"); 
+        let signed = hmac.update(Buffer.from(signData, 'utf-8')).digest("hex"); 
         
         vnp_Params['vnp_SecureHash'] = signed;
         
@@ -121,7 +121,7 @@ export const vnpayReturn = async (req, res) => {
     signData = signData.slice(0, -1);
 
     let hmac = crypto.createHmac("sha512", secretKey);
-    let signed = hmac.update(new Buffer.from(signData, 'utf-8')).digest("hex");     
+    let signed = hmac.update(Buffer.from(signData, 'utf-8')).digest("hex");     
 
     if(secureHash === signed){
         const responseCode = vnp_Params['vnp_ResponseCode'];
@@ -145,6 +145,7 @@ export const vnpayReturn = async (req, res) => {
 };
 
 export const vnpayIpn = async (req, res) => {
+  try {
     let vnp_Params = req.query;
     let secureHash = vnp_Params['vnp_SecureHash'];
     
@@ -164,7 +165,7 @@ export const vnpayIpn = async (req, res) => {
     signData = signData.slice(0, -1);
     
     let hmac = crypto.createHmac("sha512", secretKey);
-    let signed = hmac.update(new Buffer.from(signData, 'utf-8')).digest("hex");
+    let signed = hmac.update(Buffer.from(signData, 'utf-8')).digest("hex");
     
     if(secureHash === signed){ 
         // Kiểm tra order có tồn tại không
@@ -196,4 +197,8 @@ export const vnpayIpn = async (req, res) => {
     } else {
         res.status(200).json({RspCode: '97', Message: 'Checksum failed'});
     }
+  } catch (error) {
+    console.error("VNPay IPN Error:", error);
+    return res.status(200).json({RspCode: '99', Message: 'Internal error'});
+  }
 };

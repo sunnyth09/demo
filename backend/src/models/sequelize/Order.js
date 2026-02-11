@@ -68,7 +68,7 @@ const Order = sequelize.define('Order', {
     allowNull: true
   },
   status: {
-    type: DataTypes.STRING, // pending, confirmed, packing, picked_up, in_transit, arrived_hub, out_for_delivery, delivered, cancelled
+    type: DataTypes.STRING, // pending, confirmed, packing, picked_up, in_transit, arrived_hub, out_for_delivery, delivered, request_cancel, cancelled
     defaultValue: 'pending'
   },
   // Timestamp fields for tracking
@@ -103,6 +103,11 @@ const Order = sequelize.define('Order', {
   cancelled_at: {
     type: DataTypes.DATE,
     allowNull: true
+  },
+  cancel_reason: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Lý do hủy đơn hàng'
   }
 }, {
   tableName: 'orders',

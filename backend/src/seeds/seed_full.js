@@ -1,4 +1,4 @@
-import { sequelize as db } from "./src/config/sequelize.js";
+import { sequelize as db } from "../config/sequelize.js";
 
 async function seedFull() {
   try {

@@ -48,6 +48,7 @@
             <option value="out_for_delivery">Đang giao hàng</option>
             <option value="delivered">Giao thành công</option>
             <option value="cancelled">Đã hủy</option>
+            <option value="request_cancel">Đang yêu cầu hủy</option>
          </select>
       </div>
       <div class="w-full md:w-72 relative">
@@ -280,6 +281,7 @@ const getStatusClass = (status) => {
     'out_for_delivery': 'bg-cyan-100 text-cyan-700',
     'delivered': 'bg-green-100 text-green-700',
     'cancelled': 'bg-red-100 text-red-700',
+    'request_cancel': 'bg-orange-100 text-orange-700',
     // Legacy status support
     'processing': 'bg-yellow-100 text-yellow-700',
     'shipped': 'bg-blue-100 text-blue-700',
@@ -299,6 +301,7 @@ const getStatusLabel = (status) => {
     'out_for_delivery': 'Đang giao hàng',
     'delivered': 'Giao thành công',
     'cancelled': 'Đã hủy',
+    'request_cancel': 'Đang yêu cầu hủy',
     // Legacy status support
     'processing': 'Đang xử lý',
     'shipped': 'Đang giao hàng',

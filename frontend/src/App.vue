@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onErrorCaptured } from 'vue'
 import Toaster from '@/components/ui/sonner/Sonner.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const globalError = ref(null)
 
@@ -43,4 +44,5 @@ const reloadPage = () => {
 
   <router-view v-else />
   <Toaster closeButton />
+  <ConfirmDialog />
 </template>

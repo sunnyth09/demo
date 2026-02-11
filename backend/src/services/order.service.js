@@ -1,5 +1,6 @@
 import { Order, OrderItem, Product, User, Coupon, CouponUsage, UserCoupon, Category, sequelize } from "../models/sequelize/index.js";
 import { Op } from "sequelize";
+import { validateCoupon } from "./coupon.service.js";
 
 // ... (previous code)
 
@@ -176,52 +177,18 @@ export const createOrder = async (orderData, items) => {
         appliedCoupon = couponResult.coupon;
         finalDiscountAmount = couponResult.discountAmount;
 
-        // Also check if result is free shipping
+        // Handle free shipping coupon
         if (couponResult.type === 'free_shipping') {
             finalDiscountAmount = orderData.shipping_fee || 0;
-            // Note: validateCoupon returns full coupon object in 'coupon' property usually? 
-            // My modified validateCoupon returns { ... }? 
-            // Wait, calculateDiscount in validateCoupon returns just amount?
-            // Let's re-check validateCoupon output. 
-            // It modifies 'discountAmount' variable but does it RETURN it?
-            // Existing code didn't show return statement. I need to CHECK validateCoupon RETURN.
         }
       } catch (err) {
-         // Should we fail order if coupon invalid? Yes, usually.
          throw new Error(`Lỗi áp dụng mã giảm giá: ${err.message}`);
       }
     }
     
-    // Quick Check on validateCoupon return
-    // Function body I wrote earlier for validateCoupon:
-    // ... logic ...
-    //   if (coupon.type === 'free_shipping') {
-    //     return {
-    //       isValid: true,
-    //       coupon,
-    //       type: 'free_shipping',
-    //       discountAmount: 0 // handled by caller? or set to 0 here/
-    //     };
-    //   }
-    //   return {
-    //     isValid: true,
-    //     coupon,
-    //     discountAmount,
-    //     type: coupon.type
-    //   };
-    // I need to ensure validateCoupon returns this structure.
-    
     
     // 0.2 Decrement Coupon Quantity (Action)
     if (appliedCoupon) {
-      // Re-fetch coupon with lock or use the one from validateCoupon if it wasn't locked? 
-      // validateCoupon generally just Reads. createOrder needs to Write.
-      // We should decrement 'appliedCoupon'. 
-      // Since validateCoupon doesn't lock for update (it might but usually just reads), 
-      // we should decrement. 
-      // Safe way: appliedCoupon.decrement... 
-      // Note: appliedCoupon is a Sequelize instance from validateCoupon?
-      // Yes if validateCoupon returns it.
       await appliedCoupon.decrement('quantity', { transaction });
     }
 
@@ -294,13 +261,17 @@ export const createOrder = async (orderData, items) => {
     await transaction.commit();
     
     // Return full order with items for email/frontend
+    // NOTE: Query này PHẢI nằm ngoài try-catch vì transaction đã commit
+    // Nếu fail ở đây mà vẫn gọi rollback() → crash
     return await Order.findByPk(order.id, {
       include: [{ model: OrderItem, as: 'items' }]
     });
 
   } catch (error) {
-    // Rollback
-    await transaction.rollback();
+    // Chỉ rollback nếu transaction chưa commit/rollback
+    if (!transaction.finished) {
+      await transaction.rollback();
+    }
     throw error;
   }
 };
@@ -420,7 +391,7 @@ export const getOrderById = async (orderId) => {
 /**
  * Update order status
  */
-export const updateStatus = async (orderId, newStatus) => {
+export const updateStatus = async (orderId, newStatus, extraData = {}) => {
   const transaction = await sequelize.transaction();
 
   try {
@@ -465,29 +436,11 @@ export const updateStatus = async (orderId, newStatus) => {
 
           // Delete Usage Record (so user can use again if allowed)
           await couponUsage.destroy({ transaction });
-
-          // Check if we need to unlock UserCoupon (reset is_used)
-          const coupon = await Coupon.findByPk(couponUsage.coupon_id, { transaction });
-          if (coupon) {
-             const currentUsageCount = await CouponUsage.count({
-                where: { user_id: order.user_id, coupon_id: coupon.id },
-                transaction
-             });
-             
-             // If usage count is now LESS than max, unlock it
-             // Note: We just deleted 1, so currentUsageCount is the NEW count
-             if (currentUsageCount < coupon.max_uses_per_user) {
-                await UserCoupon.update(
-                   { is_used: false, used_at: null },
-                   { 
-                      where: { user_id: order.user_id, coupon_id: coupon.id },
-                      transaction 
-                   }
-                );
-             }
-          }
+          
+          // Legacy check for UserCoupon unlock
        }
     }
+    // request_cancel: Just update status, no restoration yet
 
     // Map status -> timestamp field
     const timestampField = {
@@ -508,6 +461,11 @@ export const updateStatus = async (orderId, newStatus) => {
       updateData[timestampField[newStatus]] = new Date();
     }
 
+    // Save cancel reason if provided (for both request and final cancel)
+    if ((newStatus === 'cancelled' || newStatus === 'request_cancel') && extraData.cancel_reason) {
+      updateData.cancel_reason = extraData.cancel_reason;
+    }
+
     await order.update(updateData, { transaction });
     
     await transaction.commit();
@@ -518,5 +476,3 @@ export const updateStatus = async (orderId, newStatus) => {
     throw error;
   }
 };
-
-

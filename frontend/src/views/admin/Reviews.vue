@@ -83,20 +83,6 @@
 
   </div>
 
-  <AlertDialog :open="showDeleteDialog" @update:open="showDeleteDialog = false">
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Xóa đánh giá</AlertDialogTitle>
-        <AlertDialogDescription>
-          Bạn có chắc chắn muốn xóa đánh giá này vĩnh viễn? Hành động này không thể hoàn tác.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel>Hủy</AlertDialogCancel>
-        <AlertDialogAction @click="confirmDelete" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">Xóa vĩnh viễn</AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
 </template>
 
 <script setup>
@@ -104,19 +90,11 @@ import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { toast } from 'vue-sonner';
 import { formatDate } from '@/utils/format';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
 const authStore = useAuthStore();
 const API_URL = import.meta.env.VITE_API_URL;
+const { confirm } = useConfirmDialog()
 const reviews = ref([]);
 const loading = ref(false);
 const search = ref('');
@@ -196,20 +174,13 @@ const toggleVisibility = async (review) => {
   }
 };
 
-const showDeleteDialog = ref(false)
-const reviewToDelete = ref(null)
-
-const deleteReview = (id) => {
-  reviewToDelete.value = id
-  showDeleteDialog.value = true
-}
-
-const confirmDelete = async () => {
-  if (!reviewToDelete.value) return
+const deleteReview = async (id) => {
+  const ok = await confirm('Xóa đánh giá', 'Bạn có chắc chắn muốn xóa đánh giá này vĩnh viễn? Hành động này không thể hoàn tác.', { actionLabel: 'Xóa vĩnh viễn' })
+  if (!ok) return
   
   try {
     const token = authStore.accessToken;
-    const res = await fetch(`${API_URL}/reviews/${reviewToDelete.value}`, {
+    const res = await fetch(`${API_URL}/reviews/${id}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -222,9 +193,6 @@ const confirmDelete = async () => {
     }
   } catch (error) {
     console.error(error);
-  } finally {
-    showDeleteDialog.value = false
-    reviewToDelete.value = null
   }
 };
 

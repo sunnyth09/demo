@@ -163,6 +163,17 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform group-hover:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
                     Mua lại
                   </button>
+                   <button 
+                    v-else-if="order.status === 'pending' || order.status === 'confirmed'"
+                    @click.prevent="cancelOrderFromProfile(order)"
+                    :disabled="cancellingOrderId === order.id"
+                    class="mt-2 text-xs font-medium px-4 py-2 border border-red-400 text-red-500 rounded-full shadow-sm hover:shadow-md hover:bg-red-50 transition-all flex items-center gap-1"
+                   >
+                    <svg v-if="cancellingOrderId !== order.id" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                    <svg v-else class="w-3.5 h-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    {{ cancellingOrderId === order.id ? 'Đang gửi...' : 'Yêu cầu hủy' }}
+                  </button>
+
                 </div>
               </div>
             </router-link>
@@ -488,7 +499,8 @@
             </div>
          </div>
          
-         <div v-else class="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg flex items-center gap-3 text-red-700">
+         <div v-else class="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg text-red-700">
+           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                <XCircle class="w-6 h-6" />
             </div>
@@ -496,6 +508,10 @@
                <h4 class="font-bold">Đơn hàng đã bị hủy</h4>
                <p class="text-sm opacity-90">Đơn hàng này đã bị hủy và không thể tiếp tục xử lý.</p>
             </div>
+           </div>
+           <div v-if="selectedOrder?.cancel_reason" class="mt-3 pt-3 border-t border-red-200">
+             <p class="text-sm"><span class="font-medium">Lý do hủy:</span> {{ selectedOrder.cancel_reason }}</p>
+           </div>
          </div>
 
          <!-- Status Text (Legacy) -->
@@ -538,7 +554,7 @@
             </div>
          </div>
 
-         <!-- Summary -->
+          <!-- Summary -->
          <div class="border-t pt-4 space-y-2">
             <div class="flex justify-between text-sm">
                <span class="text-muted-foreground">Phương thức thanh toán</span>
@@ -552,33 +568,28 @@
       </div>
       
       <div class="mt-8 flex justify-end gap-3">
-         <button 
+          <button 
             v-if="selectedOrder?.status === 'cancelled'"
             @click="repurchase(selectedOrder)"
             class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
-         >
+          >
             Mua lại đơn này
-         </button>
-         <button @click="showOrderModal = false" class="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">Đóng</button>
-      </div>
+          </button>
+          <button 
+            v-else-if="selectedOrder?.status === 'pending' || selectedOrder?.status === 'confirmed'"
+            @click="cancelOrderFromProfile(selectedOrder)"
+            :disabled="cancellingOrderId === selectedOrder?.id"
+            class="px-6 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg v-if="cancellingOrderId !== selectedOrder?.id" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+            <svg v-else class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+            {{ cancellingOrderId === selectedOrder?.id ? 'Đang hủy...' : 'Hủy đơn hàng' }}
+          </button>
+          <button @click="showOrderModal = false" class="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">Đóng</button>
+       </div>
     </div>
   </div>
 
-
-  <AlertDialog :open="confirmDialog.isOpen" @update:open="confirmDialog.isOpen = false">
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>{{ confirmDialog.title }}</AlertDialogTitle>
-        <AlertDialogDescription>
-          {{ confirmDialog.description }}
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel>Hủy</AlertDialogCancel>
-        <AlertDialogAction @click="handleConfirm" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">{{ confirmDialog.actionLabel }}</AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
 </template>
 
 <script setup>
@@ -589,19 +600,10 @@ import { useCartStore } from '@/stores/cart'
 import { useFavoriteStore } from '@/stores/favorite'
 import { storeToRefs } from 'pinia'
 import { 
-  Package, Truck, CheckCircle2, ClipboardList, XCircle 
+  Package, Truck, CheckCircle2, ClipboardList, XCircle, FileQuestion 
 } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
 const router = useRouter()
 const route = useRoute()
@@ -1061,52 +1063,27 @@ const saveAddress = async () => {
   }
 }
 
-// Confirmation State
-const confirmDialog = reactive({
-  isOpen: false,
-  title: '',
-  description: '',
-  action: null,
-  actionLabel: 'Xác nhận'
-})
+const { confirm } = useConfirmDialog()
 
-const openConfirmDialog = (title, desc, action, label = 'Xác nhận') => {
-  confirmDialog.title = title
-  confirmDialog.description = desc
-  confirmDialog.action = action
-  confirmDialog.actionLabel = label
-  confirmDialog.isOpen = true
-}
-
-const handleConfirm = () => {
-  if (confirmDialog.action) confirmDialog.action()
-  confirmDialog.isOpen = false
-}
-
-const deleteAddress = (id) => {
-  openConfirmDialog(
-    'Xóa địa chỉ',
-    'Bạn có chắc muốn xóa địa chỉ này?',
-    async () => {
-      try {
-        const res = await fetch(`${API_URL}/addresses/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
-        })
-        const json = await res.json()
-        if (json.status) {
-          fetchAddresses()
-          toast.success('Đã xóa địa chỉ')
-        } else {
-          toast.error(json.message || 'Xóa thất bại')
-        }
-      } catch (error) {
-        console.error(error)
-        toast.error('Có lỗi xảy ra')
-      }
-    },
-    'Xóa'
-  )
+const deleteAddress = async (id) => {
+  const ok = await confirm('Xóa địa chỉ', 'Bạn có chắc muốn xóa địa chỉ này?', { actionLabel: 'Xóa' })
+  if (!ok) return
+  try {
+    const res = await fetch(`${API_URL}/addresses/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+    })
+    const json = await res.json()
+    if (json.status) {
+      fetchAddresses()
+      toast.success('Đã xóa địa chỉ')
+    } else {
+      toast.error(json.message || 'Xóa thất bại')
+    }
+  } catch (error) {
+    console.error(error)
+    toast.error('Có lỗi xảy ra')
+  }
 }
 
 // Redirect nếu chưa đăng nhập
@@ -1126,16 +1103,12 @@ const userInitial = computed(() => {
   return authStore.user?.name?.charAt(0)?.toUpperCase() || 'U'
 })
 
-const toggleFavorite = (product) => {
-    openConfirmDialog(
-      'Xóa khỏi yêu thích',
-      'Bạn muốn xóa sản phẩm này khỏi danh sách yêu thích?',
-      async () => {
-          await favoriteStore.toggleFavorite(product);
-          toast.success('Đã xóa khỏi danh sách yêu thích')
-      },
-      'Xóa'
-    )
+const toggleFavorite = async (product) => {
+  const ok = await confirm('Xóa khỏi yêu thích', 'Bạn muốn xóa sản phẩm này khỏi danh sách yêu thích?', { actionLabel: 'Xóa' })
+  if (ok) {
+    await favoriteStore.toggleFavorite(product)
+    toast.success('Đã xóa khỏi danh sách yêu thích')
+  }
 };
 
 const formatCurrency = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value)
@@ -1160,6 +1133,7 @@ const getStatusClass = (status) => {
     'arrived_hub': 'bg-purple-100 text-purple-700',
     'out_for_delivery': 'bg-cyan-100 text-cyan-700',
     'delivered': 'bg-green-100 text-green-700',
+    'request_cancel': 'bg-red-50 text-red-600 border border-red-200',
     'cancelled': 'bg-red-100 text-red-700',
     // Legacy status support
     'processing': 'bg-yellow-100 text-yellow-700',
@@ -1179,8 +1153,8 @@ const getStatusLabel = (status) => {
     'arrived_hub': 'Đã đến kho',
     'out_for_delivery': 'Đang giao hàng',
     'delivered': 'Giao thành công',
+    'request_cancel': 'Đang yêu cầu hủy',
     'cancelled': 'Đã hủy',
-    // Legacy status support
     'processing': 'Đang xử lý',
     'shipped': 'Đang giao hàng',
     'completed': 'Hoàn thành'
@@ -1227,6 +1201,7 @@ const getStatusMessage = (status) => {
     'arrived_hub': 'Đơn hàng đã đến kho gần bạn',
     'out_for_delivery': 'Shipper đang giao hàng đến bạn 🛵',
     'delivered': 'Giao hàng thành công. Cảm ơn bạn!',
+    'request_cancel': 'Yêu cầu hủy đang chờ Admin duyệt',
     'cancelled': 'Đơn hàng đã bị hủy',
     // Legacy
     'processing': 'Đơn hàng đang được xử lý',
@@ -1246,6 +1221,7 @@ const getStatusIcon = (status) => {
     'arrived_hub': Package,
     'out_for_delivery': Truck,
     'delivered': CheckCircle2,
+    'request_cancel': FileQuestion,
     'cancelled': XCircle,
     // Legacy
     'processing': Package,
@@ -1265,6 +1241,7 @@ const getStatusColor = (status) => {
     'arrived_hub': 'text-purple-600',
     'out_for_delivery': 'text-cyan-600',
     'delivered': 'text-green-600',
+    'request_cancel': 'text-orange-600',
     'cancelled': 'text-red-500',
     // Legacy
     'processing': 'text-yellow-600',
@@ -1297,22 +1274,59 @@ const repurchase = (order) => {
   
   // Add all items from order to cart
   order.items.forEach(item => {
-    // Map order item to product structure expected by cart
     const product = {
       id: item.product_id,
       name: item.product_name,
       price: item.price,
-      // Assuming we might need to fetch full product details if something is missing, 
-      // but cart usually needs id, name, price, thumbnail. 
-      // OrderItem usually has these. If thumbnail is missing in OrderItem, it might be an issue, 
-      // but let's assume item.product has it as populated in fetch.
       thumbnail: item.product?.thumbnail,
       category_name: item.product?.category_name
     }
     cartStore.addToCart(product, item.quantity)
   })
   
-  // Redirect to cart 
-  router.push('/cart') // Adjust route if needed, usually '/cart' or just open sidebar
+  router.push('/cart')
+}
+
+// Cancel order from profile page
+const cancellingOrderId = ref(null)
+
+const cancelOrderFromProfile = async (order) => {
+  if (!order) return
+  
+  const { prompt } = useConfirmDialog()
+  const reason = await prompt('Hủy đơn hàng', 'Vui lòng cho chúng tôi biết lý do bạn muốn hủy đơn hàng này.', {
+    actionLabel: 'Xác nhận hủy',
+    actionClass: 'bg-red-100 text-red-600 hover:bg-red-200',
+    placeholder: 'Nhập lý do hủy (không bắt buộc)...'
+  })
+  if (reason === null) return
+  
+  cancellingOrderId.value = order.id
+  try {
+    const res = await fetch(`${API_URL}/orders/my-orders/${order.id}/cancel`, {
+      method: 'PUT',
+      headers: { 
+        'Authorization': `Bearer ${authStore.accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ cancel_reason: reason || undefined })
+    })
+    const json = await res.json()
+    if (json.status) {
+      toast.success(json.message || 'Đã hủy đơn hàng')
+      // Refresh orders list
+      await fetchMyOrders()
+      // Close modal if open
+      if (showOrderModal.value && selectedOrder.value?.id === order.id) {
+        showOrderModal.value = false
+      }
+    } else {
+      toast.error(json.message || 'Có lỗi xảy ra')
+    }
+  } catch (e) {
+    toast.error('Có lỗi xảy ra')
+  } finally {
+    cancellingOrderId.value = null
+  }
 }
 </script>

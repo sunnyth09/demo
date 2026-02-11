@@ -169,39 +169,17 @@
     </div>
 
 
-  <AlertDialog :open="showDeleteDialog" @update:open="showDeleteDialog = false">
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Xóa người dùng</AlertDialogTitle>
-        <AlertDialogDescription>
-          Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể hoàn tác.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel>Hủy</AlertDialogCancel>
-        <AlertDialogAction @click="confirmDelete" class="bg-red-100 text-red-600 hover:bg-red-200">Xóa vĩnh viễn</AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
+
 </template>
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-
 import { toast } from 'vue-sonner'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
 const authStore = useAuthStore()
+const { confirm } = useConfirmDialog()
 const users = ref([])
 const loading = ref(false)
 const isLoadingAction = ref(false)
@@ -324,19 +302,12 @@ const saveUser = async () => {
   }
 }
 
-const showDeleteDialog = ref(false)
-const userToDelete = ref(null)
-
-const deleteUser = (id) => {
-  userToDelete.value = id
-  showDeleteDialog.value = true
-}
-
-const confirmDelete = async () => {
-  if (!userToDelete.value) return
+const deleteUser = async (id) => {
+  const ok = await confirm('Xóa người dùng', 'Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể hoàn tác.', { actionLabel: 'Xóa vĩnh viễn', actionClass: 'bg-red-100 text-red-600 hover:bg-red-200' })
+  if (!ok) return
 
   try {
-    const res = await fetch(`${API_URL}/user/admin/users/${userToDelete.value}`, {
+    const res = await fetch(`${API_URL}/user/admin/users/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${authStore.accessToken}`
@@ -352,9 +323,6 @@ const confirmDelete = async () => {
   } catch (error) {
     console.error(error)
     toast.error('Có lỗi xảy ra')
-  } finally {
-    showDeleteDialog.value = false
-    userToDelete.value = null
   }
 }
 

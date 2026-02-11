@@ -180,6 +180,9 @@
               <p class="text-sm opacity-90">
                 {{ formatDateTime(order.cancelled_at) }}
               </p>
+              <p v-if="order.cancel_reason" class="text-sm mt-1 italic">
+                Lý do: "{{ order.cancel_reason }}"
+              </p>
             </div>
           </div>
 
@@ -226,6 +229,41 @@
         <div class="bg-card rounded-xl border p-6">
           <h3 class="text-lg font-bold mb-4">Cập nhật trạng thái</h3>
           <div class="flex flex-wrap gap-4 items-end">
+            <!-- Cancellation Request Logic -->
+             <div v-if="order.status === 'request_cancel'" class="w-full mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <h4 class="font-bold text-orange-800 flex items-center gap-2 mb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  Yêu cầu hủy đơn hàng
+                </h4>
+                <p class="text-sm text-orange-700 mb-2">
+                  Khách hàng muốn hủy đơn này. Lý do: <strong>{{ order.cancel_reason || 'Không có lý do' }}</strong>
+                </p>
+                
+                <!-- Warning for PAID orders -->
+                <div v-if="order.payment_status === 'paid'" class="mb-3 p-3 bg-red-100 text-red-700 rounded border border-red-200 text-sm">
+                   <strong>Lưu ý:</strong> Đơn hàng đã thanh toán. Vui lòng <strong>hoàn tiền thủ công</strong> cho khách trước khi duyệt hủy.
+                </div>
+
+                <div class="flex gap-2 mt-3">
+                  <button 
+                     @click="approveCancel" 
+                     class="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                  >
+                     Duyệt hủy đơn {{ order.payment_status === 'paid' ? '(Đã hoàn tiền)' : '' }}
+                  </button>
+                  <button 
+                     @click="rejectCancel" 
+                     class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                     Từ chối hủy
+                  </button>
+                </div>
+             </div>
+
             <div class="flex-1 min-w-[200px]">
               <label class="block text-sm font-medium mb-2"
                 >Trạng thái mới</label
@@ -237,6 +275,7 @@
                   order.status === 'delivered' || order.status === 'cancelled'
                 "
               >
+                <option value="request_cancel" disabled>Đang yêu cầu hủy</option>
                 <option
                   v-for="opt in statusOptions"
                   :key="opt.value"
@@ -422,47 +461,20 @@
       >
     </div>
   </div>
-  <AlertDialog :open="showCancelDialog" @update:open="showCancelDialog = false">
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Hủy đơn hàng</AlertDialogTitle>
-        <AlertDialogDescription>
-          Bạn có chắc muốn xóa/hủy đơn hàng này?
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel>Hủy</AlertDialogCancel>
-        <AlertDialogAction
-          @click="handleCancel"
-          class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >Xác nhận hủy</AlertDialogAction
-        >
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
-
 import { toast } from "vue-sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const API_URL = import.meta.env.VITE_API_URL;
+const { confirm } = useConfirmDialog()
 
 const order = ref(null);
 const loading = ref(true);
@@ -479,6 +491,8 @@ const statusOptions = [
   { value: "out_for_delivery", label: "Đang giao hàng" },
   { value: "delivered", label: "Giao thành công" },
   { value: "cancelled", label: "Đã hủy" },
+  { value: "request_cancel", label: "Đang yêu cầu hủy" },
+
 ];
 
 // Main timeline steps (5 steps)
@@ -661,17 +675,26 @@ const updateOrderStatus = async () => {
   }
 };
 
-const showCancelDialog = ref(false);
-
-const cancelOrder = () => {
-  showCancelDialog.value = true;
-};
-
-const handleCancel = async () => {
-  showCancelDialog.value = false;
+const cancelOrder = async () => {
+  const ok = await confirm('Hủy đơn hàng', 'Bạn có chắc muốn xóa/hủy đơn hàng này?', { actionLabel: 'Xác nhận hủy' })
+  if (!ok) return
   newStatus.value = "cancelled";
   await updateOrderStatus();
 };
+
+const approveCancel = async () => {
+   const ok = await confirm('Duyệt hủy đơn', 'Xác nhận duyệt hủy đơn hàng này? Kiểm tra kỹ nếu cần hoàn tiền.', { actionLabel: 'Duyệt hủy' });
+   if (!ok) return;
+   newStatus.value = 'cancelled';
+   await updateOrderStatus();
+}
+
+const rejectCancel = async () => {
+   const ok = await confirm('Từ chối hủy', 'Từ chối hủy đơn hàng? Trạng thái sẽ trở về "Chờ xác nhận".', { actionLabel: 'Từ chối' });
+   if (!ok) return;
+   newStatus.value = 'pending';
+   await updateOrderStatus();
+}
 
 const printOrder = () => {
   window.print();

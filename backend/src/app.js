@@ -3,6 +3,8 @@ import express from "express";
 import cors from "cors";
 import session from "express-session";
 import passport from "passport";
+import helmet from "helmet";
+import morgan from "morgan";
 import "./config/passport.js";
 
 import authRoute from "./routes/auth.route.js";
@@ -29,6 +31,8 @@ initBucket().catch(console.error);
 
 const app = express();
 
+app.use(helmet());
+app.use(morgan("dev"));
 app.use(cors());
 app.use(express.json());
 

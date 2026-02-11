@@ -112,13 +112,15 @@
         <p>Hãy là người đầu tiên đánh giá!</p>
       </div>
     </template>
+
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { toast } from 'vue-sonner';
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
 const authStore = useAuthStore();
 const emit = defineEmits(['edit-review', 'refresh']);
@@ -135,6 +137,7 @@ const props = defineProps({
 });
 
 const API_URL = import.meta.env.VITE_API_URL;
+const { confirm, prompt } = useConfirmDialog();
 
 // Computed Statistics
 const averageRating = computed(() => {
@@ -165,7 +168,8 @@ const formatDate = (dateString) => {
 };
 
 const deleteReview = async (id) => {
-  if (!confirm('Bạn có chắc chắn muốn xóa đánh giá này?')) return;
+  const ok = await confirm('Xác nhận xóa', 'Bạn có chắc chắn muốn xóa đánh giá này? Hành động này không thể hoàn tác.')
+  if (!ok) return
   
   try {
     const token = authStore.accessToken;
@@ -177,7 +181,6 @@ const deleteReview = async (id) => {
     if (res.ok) {
       toast.success('Đã xóa đánh giá');
       emit('refresh');
-      // fetchReviews removed, relying on parent refresh
     } else {
       const data = await res.json();
       toast.error(data.message || 'Lỗi khi xóa đánh giá');
@@ -189,8 +192,8 @@ const deleteReview = async (id) => {
 };
 
 const reportReview = async (id) => {
-  const reason = prompt('Nhập lý do báo cáo:');
-  if (!reason) return;
+  const reason = await prompt('Báo cáo đánh giá', 'Vui lòng nhập lý do báo cáo đánh giá này.', { placeholder: 'Nhập lý do báo cáo...', actionLabel: 'Gửi báo cáo', actionClass: 'bg-yellow-600 text-white hover:bg-yellow-700' })
+  if (!reason) return
 
   try {
     const token = authStore.accessToken;
@@ -215,3 +218,4 @@ const reportReview = async (id) => {
   }
 };
 </script>
+

@@ -91,7 +91,7 @@
 
                  <!-- Delete Button -->
                  <button 
-                  @click="removeItem(item.id)" 
+                  @click="removeItem(item)" 
                   class="p-2 text-gray-400 hover:text-destructive hover:bg-destructive/10 rounded-full transition-all"
                   title="Xóa sản phẩm"
                  >
@@ -145,20 +145,6 @@
     </div>
   </div>
 
-  <AlertDialog :open="!!itemToDelete" @update:open="itemToDelete = null">
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
-        <AlertDialogDescription>
-          Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng không?
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel>Hủy</AlertDialogCancel>
-        <AlertDialogAction @click="confirmDelete" class="bg-red-100 text-red-600 hover:bg-red-200">Xóa</AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
 
 </template>
 
@@ -167,20 +153,12 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
 import { storeToRefs } from 'pinia'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
 const router = useRouter()
 const cartStore = useCartStore()
 const { items: cartItems, subtotal } = storeToRefs(cartStore)
+const { confirm } = useConfirmDialog()
 
 const couponCode = ref('')
 const shippingFee = ref(0)
@@ -199,17 +177,9 @@ const updateQuantity = (id, delta) => {
 cartStore.updateQuantity(id, delta)
 }
 
-const itemToDelete = ref(null)
-
-const removeItem = (id) => {
-  itemToDelete.value = id
-}
-
-const confirmDelete = () => {
-  if (itemToDelete.value) {
-    cartStore.removeItem(itemToDelete.value)
-    itemToDelete.value = null
-  }
+const removeItem = async (item) => {
+  const ok = await confirm('Xác nhận xóa', 'Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng không?', { actionLabel: 'Xóa', actionClass: 'bg-red-100 text-red-600 hover:bg-red-200' })
+  if (ok) cartStore.removeItem(item.id)
 }
 
 const toggleSelection = (id) => {

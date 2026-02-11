@@ -1,5 +1,5 @@
 
-import { Review, User, Product, ReviewReport } from "../models/sequelize/index.js";
+import { Review, User, Product, ReviewReport, Order, OrderItem } from "../models/sequelize/index.js";
 
 export const createReview = async (req, res) => {
   try {
@@ -16,6 +16,25 @@ export const createReview = async (req, res) => {
     if (rating < 1 || rating > 5) {
       return res.status(400).json({
         message: "Đánh giá phải từ 1 đến 5 sao"
+      });
+    }
+
+    // 1. Check Verified Purchase: User must have bought this product & order must be delivered
+    const hasPurchased = await Order.findOne({
+      where: {
+        user_id,
+        status: 'delivered' // Only allow review if delivered
+      },
+      include: [{
+        model: OrderItem,
+        as: 'items',
+        where: { product_id }
+      }]
+    });
+
+    if (!hasPurchased) {
+      return res.status(403).json({
+        message: "Bạn cần mua và nhận hàng thành công sản phẩm này trước khi đánh giá."
       });
     }
 

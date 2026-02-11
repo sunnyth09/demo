@@ -456,16 +456,8 @@ export const updateCoupon = async (id, data) => {
   await coupon.update(data);
 
   // Gửi email thông báo cho tất cả user nếu được yêu cầu (ngay cả khi update)
-  console.log('Update Coupon Data:', { 
-    notifyUsers: data.notifyUsers, 
-    is_public: coupon.is_public, 
-    is_active: coupon.is_active 
-  });
-  
   if (data.notifyUsers && coupon.is_public && coupon.is_active) {
-    console.log('Condition met! Preparing to send emails...');
     getAllUsersForNotification().then(users => {
-      console.log(`Sending coupon email (update) to ${users.length} users...`);
       users.forEach(user => {
         if (user.email) {
           sendCouponEmail(user.email, coupon, `Cập nhật: Ưu đãi ${coupon.code} đã quay trở lại!`).catch(err => 
@@ -474,8 +466,6 @@ export const updateCoupon = async (id, data) => {
         }
       });
     }).catch(err => console.error('Failed to fetch users for notification:', err));
-  } else {
-    console.log('Email condition NOT met.');
   }
 
   return coupon;

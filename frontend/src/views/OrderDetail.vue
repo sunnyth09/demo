@@ -73,23 +73,31 @@
             
             <!-- Hủy đơn button -->
             <button 
-              v-if="order.status !== 'cancelled' && order.status !== 'delivered' && order.status !== 'completed'"
+              v-if="order.status !== 'delivered' && order.status !== 'cancelled' && order.status !== 'request_cancel'"
               @click="cancelOrder"
-              :disabled="!canCancel"
-              :class="[
-                'px-4 py-2 border rounded-lg transition-colors flex items-center gap-2',
-                canCancel 
-                  ? 'border-red-500 text-red-500 hover:bg-red-50 cursor-pointer' 
-                  : 'border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed'
-              ]"
+              :disabled="cancelling"
+              class="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-2"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg v-if="!cancelling" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"/>
                 <path d="m15 9-6 6"/>
                 <path d="m9 9 6 6"/>
               </svg>
-              Hủy đơn
+              <svg v-else class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+              <span>{{ cancelling ? 'Đang gửi...' : 'Yêu cầu hủy' }}</span>
             </button>
+            
+            <div v-if="order.status === 'request_cancel'" class="px-4 py-2 bg-orange-50 border border-orange-200 text-orange-600 rounded-lg font-medium flex items-center gap-2">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="16" x2="12" y2="12"/>
+                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+               </svg>
+               Đang chờ duyệt hủy
+            </div>
           </div>
         </div>
       </div>
@@ -156,11 +164,16 @@
         </div>
 
         <!-- Cancelled State -->
-        <div v-else class="p-4 bg-red-50 border border-red-100 rounded-lg flex items-center gap-3 text-red-700 mb-6">
-          <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0 text-xl">✕</div>
-          <div>
-            <h4 class="font-bold">Đơn hàng đã bị hủy</h4>
-            <p class="text-sm opacity-90">{{ formatDateTime(order.cancelled_at) }}</p>
+        <div v-else class="p-4 bg-red-50 border border-red-100 rounded-lg text-red-700 mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0 text-xl">✕</div>
+            <div>
+              <h4 class="font-bold">Đơn hàng đã bị hủy</h4>
+              <p class="text-sm opacity-90">{{ formatDateTime(order.cancelled_at) }}</p>
+              <p v-if="order.cancel_reason" class="text-sm mt-1 italic">
+                 Lý do: "{{ order.cancel_reason }}"
+              </p>
+            </div>
           </div>
         </div>
 
@@ -270,20 +283,6 @@
       <p class="text-muted-foreground">Không tìm thấy đơn hàng</p>
       <router-link to="/orders" class="text-primary hover:underline mt-2 inline-block">Quay lại</router-link>
     </div>
-  <AlertDialog :open="showCancelDialog" @update:open="showCancelDialog = false">
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Hủy đơn hàng</AlertDialogTitle>
-        <AlertDialogDescription>
-          Bạn có chắc muốn hủy đơn hàng này? Hành động này không thể hoàn tác.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel>Hủy</AlertDialogCancel>
-        <AlertDialogAction @click="handleCancel" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">Xác nhận hủy</AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
   </div>
 </template>
 
@@ -292,27 +291,19 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
-
 import { toast } from 'vue-sonner'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const cartStore = useCartStore()
 const API_URL = import.meta.env.VITE_API_URL
+const { confirm } = useConfirmDialog()
 
 const order = ref(null)
 const loading = ref(true)
+const cancelling = ref(false)
 
 // Check if order can be cancelled
 const canCancel = computed(() => {
@@ -448,6 +439,7 @@ const statusHistory = computed(() => {
     { key: 'picked_up', field: 'picked_up_at', label: 'Đã giao cho đơn vị vận chuyển', desc: 'Đơn hàng đã được giao cho đơn vị vận chuyển' },
     { key: 'packing', field: 'packing_at', label: 'Đang đóng gói', desc: 'Shop đang chuẩn bị đơn hàng của bạn' },
     { key: 'confirmed', field: 'confirmed_at', label: 'Đã xác nhận', desc: 'Shop đã xác nhận đơn hàng' },
+    { key: 'request_cancel', field: 'created_at', label: 'Đang yêu cầu hủy', desc: 'Đang chờ Admin duyệt hủy đơn' },
     { key: 'pending', field: 'createdAt', label: 'Đặt hàng thành công', desc: 'Đơn hàng đã được tạo' }
   ]
 
@@ -496,29 +488,37 @@ const fetchOrder = async () => {
   }
 }
 
-const showCancelDialog = ref(false)
-
-const cancelOrder = () => {
-  showCancelDialog.value = true
-}
-
-const handleCancel = async () => {
-  showCancelDialog.value = false
+const cancelOrder = async () => {
+  const { prompt } = useConfirmDialog()
+  const reason = await prompt('Hủy đơn hàng', 'Vui lòng cho chúng tôi biết lý do bạn muốn hủy đơn hàng này.', {
+    actionLabel: 'Xác nhận hủy',
+    actionClass: 'bg-red-100 text-red-600 hover:bg-red-200',
+    placeholder: 'Nhập lý do hủy (không bắt buộc)...'
+  })
+  // prompt returns null if cancelled, empty string or text if confirmed
+  if (reason === null) return
   
+  cancelling.value = true
   try {
     const res = await fetch(`${API_URL}/orders/my-orders/${order.value.id}/cancel`, {
       method: 'PUT',
-      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+      headers: { 
+        'Authorization': `Bearer ${authStore.accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ cancel_reason: reason || undefined })
     })
     const json = await res.json()
     if (json.status) {
       await fetchOrder()
-      toast.success('Đã hủy đơn hàng')
+      toast.success(json.message || 'Đã hủy đơn hàng')
     } else {
       toast.error(json.message || 'Có lỗi xảy ra')
     }
   } catch (e) {
     toast.error('Có lỗi xảy ra')
+  } finally {
+    cancelling.value = false
   }
 }
 

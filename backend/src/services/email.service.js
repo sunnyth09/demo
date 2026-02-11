@@ -201,3 +201,153 @@ export const sendOrderConfirmationEmail = async (to, order) => {
 
   return await sendEmail(to, `Xác nhận đơn hàng #${orderIdDisplay} - Ocean Books`, htmlContent);
 };
+
+export const sendOrderCancelledEmail = async (to, order, cancelReason, needsRefund = false) => {
+  const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  const orderIdDisplay = String(order.order_code || order.id).slice(0, 8).toUpperCase();
+
+  const itemsHtml = order.items.map(item => `
+    <tr style="border-bottom: 1px solid #efefef;">
+      <td style="padding: 10px; text-align: left;">
+        <div style="font-weight: 500;">${item.product_name || 'Sản phẩm'}</div>
+        <div style="font-size: 12px; color: #888;">x${item.quantity}</div>
+      </td>
+      <td style="padding: 10px; text-align: right;">${formatCurrency(item.price)}</td>
+    </tr>
+  `).join('');
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        .container { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
+        .header { background-color: #DC2626; padding: 30px 20px; text-align: center; color: white; }
+        .logo { font-size: 24px; font-weight: bold; margin: 0; }
+        .content { padding: 30px 20px; color: #374151; }
+        .info-box { background-color: #FEF2F2; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; border: 1px solid #FECACA; }
+        .reason-box { background-color: #FFF7ED; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; border: 1px solid #FED7AA; }
+        .refund-box { background-color: #EFF6FF; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; border: 1px solid #BFDBFE; }
+        .table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+        .footer { background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb; }
+        .btn { display: inline-block; background-color: #4F46E5; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-weight: 500; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div class="logo">Ocean Books</div>
+          <p style="margin: 5px 0 0; opacity: 0.9;">Đơn hàng đã bị hủy</p>
+        </div>
+        
+        <div class="content">
+          <p>Xin chào <strong>${order.customer_name}</strong>,</p>
+          <p>Đơn hàng <strong>#${orderIdDisplay}</strong> của bạn đã được hủy theo yêu cầu.</p>
+          
+          <div class="info-box">
+            <strong>Mã đơn hàng:</strong> #${orderIdDisplay}<br>
+            <strong>Ngày đặt:</strong> ${new Date(order.createdAt || new Date()).toLocaleDateString('vi-VN')}<br>
+            <strong>Ngày hủy:</strong> ${new Date().toLocaleDateString('vi-VN')}<br>
+            <strong>Tổng giá trị:</strong> ${formatCurrency(order.total_amount)}
+          </div>
+
+          ${cancelReason ? `
+          <div class="reason-box">
+            <strong>Lý do hủy:</strong><br>
+            ${cancelReason}
+          </div>
+          ` : ''}
+
+          ${needsRefund ? `
+          <div class="refund-box">
+            <strong>Thông tin hoàn tiền:</strong><br>
+            Đơn hàng này đã được thanh toán. Chúng tôi sẽ xử lý hoàn tiền cho bạn trong vòng 3-5 ngày làm việc. 
+            Nếu cần hỗ trợ, vui lòng liên hệ hotline 1900 xxxx.
+          </div>
+          ` : ''}
+
+          <h3 style="font-size: 16px; margin-bottom: 10px;">Sản phẩm đã hủy</h3>
+          <table class="table">
+            <thead>
+              <tr style="background-color: #f3f4f6; text-align: left;">
+                <th style="padding: 10px;">Sản phẩm</th>
+                <th style="padding: 10px; text-align: right;">Giá</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+              <tr style="font-weight: bold; border-top: 2px solid #e5e7eb;">
+                <td style="padding: 10px; text-align: right;">Tổng cộng:</td>
+                <td style="padding: 10px; text-align: right; color: #DC2626;">${formatCurrency(order.total_amount)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p style="text-align: center;">
+            <a href="http://localhost:3001/" class="btn">Tiếp tục mua sắm</a>
+          </p>
+        </div>
+        
+        <div class="footer">
+          <p>Nếu bạn có bất kỳ câu hỏi nào, vui lòng trả lời email này hoặc liên hệ hotline 1900 xxxx.</p>
+          <p>© 2026 Ocean Books. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return await sendEmail(to, `Đơn hàng #${orderIdDisplay} đã bị hủy - Ocean Books`, htmlContent);
+};
+
+export const sendOrderCancelRequestEmail = async (to, order, cancelReason) => {
+  const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  const orderIdDisplay = String(order.order_code || order.id).slice(0, 8).toUpperCase();
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        .container { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
+        .header { background-color: #EA580C; padding: 30px 20px; text-align: center; color: white; }
+        .logo { font-size: 24px; font-weight: bold; margin: 0; }
+        .content { padding: 30px 20px; color: #374151; }
+        .reason-box { background-color: #FFF7ED; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; border: 1px solid #FED7AA; }
+        .footer { background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div class="logo">Ocean Books</div>
+          <p style="margin: 5px 0 0; opacity: 0.9;">Đã tiếp nhận yêu cầu hủy đơn</p>
+        </div>
+        
+        <div class="content">
+          <p>Xin chào <strong>${order.customer_name}</strong>,</p>
+          <p>Chúng tôi đã nhận được yêu cầu hủy đơn hàng <strong>#${orderIdDisplay}</strong> của bạn.</p>
+          
+          ${cancelReason ? `
+          <div class="reason-box">
+            <strong>Lý do hủy:</strong><br>
+            ${cancelReason}
+          </div>
+          ` : ''}
+
+          <p>Yêu cầu của bạn đang được Ban quản trị xem xét (thời gian xử lý 1-24h).</p>
+          <p>Bạn sẽ nhận được email xác nhận khi yêu cầu được duyệt.</p>
+        </div>
+        
+        <div class="footer">
+          <p>© 2026 Ocean Books. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+  
+  return await sendEmail(to, `Đã nhận yêu cầu hủy đơn #${orderIdDisplay} - Ocean Books`, htmlContent);
+};

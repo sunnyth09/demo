@@ -74,20 +74,7 @@
   </div>
 
 
-  <AlertDialog :open="!!itemToRemove" @update:open="itemToRemove = null">
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Xác nhận xoá</AlertDialogTitle>
-        <AlertDialogDescription>
-          Bạn có chắc muốn bỏ sản phẩm này khỏi danh sách yêu thích?
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel>Hủy</AlertDialogCancel>
-        <AlertDialogAction @click="confirmRemove" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">Xóa</AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
+
 </template>
 
 <script setup>
@@ -95,21 +82,13 @@ import { onMounted, ref } from 'vue';
 import { useFavoriteStore } from '../stores/favorite';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
 const router = useRouter();
 const favoriteStore = useFavoriteStore();
 const { favorites } = storeToRefs(favoriteStore);
 const loading = ref(false);
+const { confirm } = useConfirmDialog()
 
 const formatCurrency = (value) => {
   return new Intl.NumberFormat("vi-VN", {
@@ -123,17 +102,9 @@ const goToDetail = (id) => {
   router.push(`/products/${id}`);
 };
 
-const itemToRemove = ref(null)
-
-const removeFavorite = (product) => {
-    itemToRemove.value = product
-};
-
-const confirmRemove = async () => {
-    if (itemToRemove.value) {
-        await favoriteStore.toggleFavorite(itemToRemove.value);
-        itemToRemove.value = null
-    }
+const removeFavorite = async (product) => {
+  const ok = await confirm('Xác nhận xoá', 'Bạn có chắc muốn bỏ sản phẩm này khỏi danh sách yêu thích?')
+  if (ok) await favoriteStore.toggleFavorite(product)
 }
 
 onMounted(async () => {

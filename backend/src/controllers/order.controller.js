@@ -127,6 +127,16 @@ export const updateStatus = async (req, res) => {
 
     const order = await OrderService.updateStatus(req.params.id, status);
     
+    // Send "Cancellation Confirmed" email if status changed to cancelled
+    if (status === 'cancelled' && order.customer_email) {
+      const { sendOrderCancelledEmail } = await import("../services/email.service.js");
+      // Check if refund needed (paid orders)
+      const needsRefund = order.payment_status === 'paid';
+      sendOrderCancelledEmail(order.customer_email, order, order.cancel_reason, needsRefund).catch(err => {
+         console.error('Failed to send cancellation confirmed email:', err);
+      });
+    }
+
     res.status(200).json({
       status: true,
       message: "Cập nhật trạng thái thành công",
@@ -186,6 +196,7 @@ export const getMyOrderById = async (req, res) => {
 export const cancelMyOrder = async (req, res) => {
   try {
     const userId = req.user.id;
+    const { cancel_reason } = req.body;
     const order = await OrderService.getOrderById(req.params.id);
     
     // Check if order belongs to user
@@ -205,11 +216,24 @@ export const cancelMyOrder = async (req, res) => {
       });
     }
 
-    const updatedOrder = await OrderService.updateStatus(req.params.id, 'cancelled');
+    const updatedOrder = await OrderService.updateStatus(req.params.id, 'request_cancel', {
+      cancel_reason: cancel_reason || null
+    });
+
+    // Check if order was already paid -> add refund warning logic if needed later
+    // For request, we just notify user request is sent
     
+    // Send cancellation request email (async - don't wait)
+    if (order.customer_email) {
+      const { sendOrderCancelRequestEmail } = await import("../services/email.service.js");
+      sendOrderCancelRequestEmail(order.customer_email, order, cancel_reason).catch(err => {
+         console.error('Failed to send cancellation request email:', err);
+      });
+    }
+
     res.status(200).json({
       status: true,
-      message: "Đã hủy đơn hàng",
+      message: "Đã gửi yêu cầu hủy đơn hàng. Vui lòng chờ admin duyệt.",
       data: updatedOrder
     });
   } catch (error) {
@@ -219,3 +243,4 @@ export const cancelMyOrder = async (req, res) => {
     });
   }
 };
+
