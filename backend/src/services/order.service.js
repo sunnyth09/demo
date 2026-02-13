@@ -1,4 +1,4 @@
-import { Order, OrderItem, Product, User, Coupon, CouponUsage, UserCoupon, Category, sequelize } from "../models/sequelize/index.js";
+import { Order, OrderItem, Product, User, Coupon, CouponUsage, UserCoupon, Category, Cart, CartItem, sequelize } from "../models/sequelize/index.js";
 import { Op } from "sequelize";
 import { validateCoupon } from "./coupon.service.js";
 
@@ -257,9 +257,24 @@ export const createOrder = async (orderData, items) => {
       }, { transaction });
     }
 
+    // 3. Clear Cart Items (if user_id provided)
+    if (orderData.user_id) {
+       const cart = await Cart.findOne({ where: { user_id: orderData.user_id }, transaction });
+       if (cart) {
+          const productIds = enrichedItems.map(item => item.product.id);
+          await CartItem.destroy({
+             where: {
+                cart_id: cart.id,
+                product_id: productIds
+             },
+             transaction
+          });
+       }
+    }
+
     // Commit
     await transaction.commit();
-    
+
     // Return full order with items for email/frontend
     // NOTE: Query này PHẢI nằm ngoài try-catch vì transaction đã commit
     // Nếu fail ở đây mà vẫn gọi rollback() → crash

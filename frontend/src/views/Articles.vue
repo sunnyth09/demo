@@ -7,7 +7,7 @@
         <img src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&q=80&w=2000" alt="Blog Banner" class="w-full h-full object-cover mix-blend-overlay opacity-20">
       </div>
       
-      <div class="container mx-auto px-4 relative z-10">
+      <div class="container max-w-7xl mx-auto px-4 relative z-10">
         <div class="max-w-3xl">
           <div class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium mb-4">
             <span>📚</span>
@@ -25,7 +25,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="container mx-auto px-4 py-8 md:py-12">
+    <div class="container max-w-7xl mx-auto px-4 py-8 md:py-12">
       <!-- Search & Filter Bar -->
       <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 bg-card p-4 rounded-xl border shadow-sm">
         <!-- Search -->

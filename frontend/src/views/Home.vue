@@ -17,7 +17,7 @@
         <div class="absolute top-1/3 right-1/4 w-[300px] h-[300px] bg-sky-100/50 rounded-full blur-3xl"></div>
       </div>
 
-      <div class="container relative z-10 mx-auto px-4 py-12 md:py-16">
+      <div class="container max-w-7xl relative z-10 mx-auto px-4 py-12 md:py-16">
         <div class="grid md:grid-cols-2 gap-8 lg:gap-16 items-center">
           <!-- Left Content -->
           <div class="space-y-6 md:space-y-8">
@@ -183,7 +183,7 @@
 
     <!-- 2. Services / USP -->
     <section class="py-16 bg-primary">
-      <div class="container mx-auto px-4">
+      <div class="container max-w-7xl mx-auto px-4">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           <div v-for="(feature, index) in features" :key="index" class="flex flex-col items-center text-center p-5 md:p-6 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/15 transition-all duration-300 group">
             <div class="w-12 h-12 rounded-xl bg-white/90 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300 shadow-sm">
@@ -198,7 +198,7 @@
 
     <!-- 3. Featured Categories -->
     <section class="py-16 md:py-20 bg-muted/30">
-      <div class="container mx-auto px-4">
+      <div class="container max-w-7xl mx-auto px-4">
         <!-- Section Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
           <div>
@@ -230,7 +230,7 @@
 
     <!-- 4. Best Sellers -->
     <section class="py-16 md:py-20 bg-background">
-      <div class="container mx-auto px-4">
+      <div class="container max-w-7xl mx-auto px-4">
         <!-- Section Header -->
         <div class="text-center mb-10">
           <div class="inline-flex items-center gap-2 bg-destructive/10 rounded-full px-3 py-1.5 mb-3">
@@ -259,7 +259,7 @@
 
     <!-- 5. Break Banner (Promo) -->
     <section class="py-12 md:py-16">
-      <div class="container mx-auto px-4">
+      <div class="container max-w-7xl mx-auto px-4">
         <div class="relative rounded-2xl overflow-hidden bg-primary text-primary-foreground">
           <!-- Background image -->
           <div class="absolute inset-0">
@@ -318,7 +318,7 @@
 
     <!-- 6. New Arrivals & On Sale Tabs -->
     <section class="py-16 md:py-20 bg-muted/30">
-      <div class="container mx-auto px-4">
+      <div class="container max-w-7xl mx-auto px-4">
         <!-- Section Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
@@ -374,7 +374,7 @@
 
     <!-- 7. Testimonials -->
     <section class="py-16 md:py-20 bg-background">
-      <div class="container mx-auto px-4">
+      <div class="container max-w-7xl mx-auto px-4">
         <!-- Section Header -->
         <div class="text-center mb-10">
           <h2 class="text-2xl md:text-3xl font-bold text-foreground">Khách hàng nói gì về chúng tôi?</h2>
@@ -432,7 +432,7 @@
 
     <!-- 8. Blog / News -->
     <section class="py-16 md:py-20 bg-muted/30">
-      <div class="container mx-auto px-4">
+      <div class="container max-w-7xl mx-auto px-4">
         <!-- Section Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
           <div>
@@ -482,7 +482,7 @@
 
     <!-- 9. Newsletter -->
     <section class="py-16 md:py-20">
-      <div class="container mx-auto px-4">
+      <div class="container max-w-7xl mx-auto px-4">
         <div class="relative bg-primary rounded-2xl p-8 md:p-12 text-primary-foreground overflow-hidden">
           <div class="relative z-10 max-w-lg mx-auto text-center">
             <h2 class="text-xl md:text-2xl font-bold mb-3">Đăng ký nhận thông tin</h2>
@@ -679,13 +679,17 @@ const goToCategory = (id) => {
 const showToast = ref(false);
 const toastMessage = ref('');
 
-const addToCart = (product) => {
-  cartStore.addToCart(product);
-  toastMessage.value = `Đã thêm "${product.name}" vào giỏ hàng`;
-  showToast.value = true;
-  setTimeout(() => {
-    showToast.value = false;
-  }, 3000);
+const addToCart = async (product) => {
+  const success = await cartStore.addToCart(product);
+  if (success) {
+    toastMessage.value = `Đã thêm "${product.name}" vào giỏ hàng`;
+    showToast.value = true;
+    setTimeout(() => {
+      showToast.value = false;
+    }, 3000);
+  } else {
+    toast.error('Không thể thêm số lượng sản phẩm này (đã đạt giới hạn tồn kho)');
+  }
 };
 
 // Newsletter handler

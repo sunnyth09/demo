@@ -68,7 +68,7 @@
               <input 
                 v-model="form.password"
                 :type="showPassword ? 'text' : 'password'" 
-                placeholder="Tối thiểu 6 ký tự"
+                placeholder="6+ ký tự, Hoa, Số, Đb"
                 class="w-full h-11 px-4 pr-10 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                 :class="errors.password ? 'border-destructive' : 'border-input'"
                 :disabled="loading"
@@ -263,6 +263,8 @@ const validatePassword = () => {
     errors.password = 'Vui lòng nhập mật khẩu'
   } else if (form.password.length < 6) {
     errors.password = 'Mật khẩu phải có ít nhất 6 ký tự'
+  } else if (!/(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])/.test(form.password)) {
+    errors.password = 'Mật khẩu phải có chữ hoa, số và ký tự đặc biệt'
   } else {
     errors.password = ''
   }

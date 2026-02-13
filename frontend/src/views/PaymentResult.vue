@@ -1,6 +1,6 @@
 
 <template>
-  <div class="container mx-auto px-4 py-20 flex flex-col items-center justify-center min-h-[60vh]">
+  <div class="container max-w-7xl mx-auto px-4 py-20 flex flex-col items-center justify-center min-h-[60vh]">
     <div v-if="loading" class="flex flex-col items-center">
        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
        <p class="mt-4 text-gray-500">Đang xác thực giao dịch...</p>

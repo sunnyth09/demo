@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-6 bg-background min-h-screen">
+  <div class="container max-w-7xl mx-auto px-4 py-6 bg-background min-h-screen">
     <div class="mb-6">
       <h1 class="text-2xl font-bold text-foreground">Sản phẩm yêu thích</h1>
       <p class="text-muted-foreground">Danh sách các sản phẩm bạn đã lưu</p>

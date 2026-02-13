@@ -22,7 +22,7 @@ import favoriteRoute from "./routes/favorite.route.js";
 import reviewRoute from "./routes/review.route.js";
 import paymentRoute from "./routes/payment.route.js";
 import contactRoute from "./routes/contact.route.js";
-
+import cartRoute from "./routes/cart.route.js";
 
 
 import { initBucket } from "./services/minio.service.js";
@@ -72,6 +72,7 @@ app.use("/api/favorites", favoriteRoute);
 app.use("/api/reviews", reviewRoute);
 app.use("/api/payment", paymentRoute);
 app.use("/api/contacts", contactRoute);
+app.use("/api/cart", cartRoute);
 
 app.use((req,res)=>{
   res.status(404).json({

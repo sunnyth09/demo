@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-6 bg-background min-h-screen">
+  <div class="container max-w-7xl mx-auto px-4 py-6 bg-background min-h-screen">
     <div class="flex flex-col md:flex-row gap-6">
       <!-- Sidebar (Categories Tree) - Hidden on mobile -->
       <div class="hidden md:block w-full md:w-1/4 lg:w-1/5">

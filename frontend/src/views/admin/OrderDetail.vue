@@ -272,7 +272,7 @@
                 v-model="newStatus"
                 class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 :disabled="
-                  order.status === 'delivered' || order.status === 'cancelled'
+                order.status === 'cancelled'
                 "
               >
                 <option value="request_cancel" disabled>Đang yêu cầu hủy</option>
@@ -280,8 +280,9 @@
                   v-for="opt in statusOptions"
                   :key="opt.value"
                   :value="opt.value"
+                  :disabled="isStatusDisabled(opt.value)"
                 >
-                  {{ opt.label }}
+                  {{ opt.label }} {{ isStatusDisabled(opt.value) ? '(Không thể quay lại)' : '' }}
                 </option>
               </select>
             </div>
@@ -290,19 +291,14 @@
               :disabled="
                 updating ||
                 newStatus === order.status ||
-                order.status === 'delivered'
+                isStatusDisabled(newStatus)
               "
               class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {{ updating ? "Đang cập nhật..." : "Xác nhận" }}
             </button>
           </div>
-          <p
-            v-if="order.status === 'delivered'"
-            class="text-sm text-green-600 mt-3"
-          >
-            Đơn hàng đã hoàn thành, không thể thay đổi trạng thái.
-          </p>
+
           <p
             v-if="order.status === 'cancelled'"
             class="text-sm text-red-600 mt-3"
@@ -480,6 +476,29 @@ const order = ref(null);
 const loading = ref(true);
 const updating = ref(false);
 const newStatus = ref("");
+
+const statusFlow = [
+  'pending', 'confirmed', 'packing', 'picked_up', 
+  'in_transit', 'arrived_hub', 'out_for_delivery', 'delivered'
+];
+
+const isStatusDisabled = (optionValue) => {
+  if (!order.value) return false;
+  
+  // Always allow moving to cancelled (unless already delivered/cancelled)
+  if (optionValue === 'cancelled') return false; 
+  if (optionValue === 'request_cancel') return true; // Cannot manually select this
+  
+  // If current status is not in flow (e.g. cancelled), lock everything except maybe specific flows (future feature)
+  // For now, if cancelled, everything is disabled by the parent select disabled logic
+  
+  const currentIndex = statusFlow.indexOf(order.value.status);
+  const optionIndex = statusFlow.indexOf(optionValue);
+  
+  if (currentIndex === -1 || optionIndex === -1) return false;
+  
+  return optionIndex < currentIndex;
+}
 
 const statusOptions = [
   { value: "pending", label: "Chờ xác nhận" },

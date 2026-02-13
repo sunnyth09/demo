@@ -133,6 +133,10 @@ const props = defineProps({
   reviews: {
     type: Array,
     default: () => []
+  },
+  loading: {
+    type: Boolean,
+    default: false
   }
 });
 

@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8">
-    <div class="max-w-6xl mx-auto px-4">
+    <div class="container max-w-7xl mx-auto px-4">
       <!-- Header -->
       <div class="text-center mb-10">
         <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-3 flex items-center justify-center gap-3">
@@ -335,6 +335,7 @@ onMounted(async () => {
 .line-clamp-1 {
   display: -webkit-box;
   -webkit-line-clamp: 1;
+  line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

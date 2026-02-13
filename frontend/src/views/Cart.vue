@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-12">
+  <div class="container max-w-7xl mx-auto px-4 py-12">
     <h1 class="text-xl font-bold mb-8">Giỏ hàng</h1>
 
     <div class="grid lg:grid-cols-3 gap-8">
@@ -31,7 +31,11 @@
           <div 
             v-for="item in cartItems" 
             :key="item.id"
-            class="bg-card rounded-xl border p-3 flex gap-3 items-start"
+            class="bg-card rounded-xl border p-3 flex gap-3 items-start transition-all duration-300"
+            :class="{ 
+               'border-border': !item.stock || item.quantity <= item.stock,
+               'border-red-500 bg-red-50/10': item.stock && item.quantity > item.stock 
+            }"
           >
             <!-- Checkbox (Centered vertically relative to image approx) -->
             <div class="flex-shrink-0 pt-10 sm:pt-0 sm:self-center">
@@ -82,8 +86,10 @@
                       {{ item.quantity }}
                     </div>
                     <button 
-                      @click="updateQuantity(item.id, 1)" 
-                      class="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors rounded-r-lg"
+                      @click="item.quantity < (item.stock || 9999) && updateQuantity(item.id, 1)" 
+                      class="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors rounded-r-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      :disabled="item.quantity >= (item.stock || 9999)"
+                      :title="item.stock ? `Còn ${item.stock} sản phẩm` : ''"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                     </button>
@@ -130,16 +136,20 @@
           </p>
         </div>
 
-        <div class="mt-6 space-y-3">
-          <!-- Coupon Removed -->
+          <!-- Warning for invalid items -->
+          <div v-if="hasInvalidItems" class="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+             <svg class="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+             <span class="text-xs text-red-600 font-medium">Một số sản phẩm vượt quá số lượng tồn kho. Vui lòng điều chỉnh trước khi thanh toán.</span>
+          </div>
+
           <button 
             @click="goToCheckout"
-            :disabled="subtotal === 0" 
+            :disabled="subtotal === 0 || hasInvalidItems" 
             class="w-full h-11 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Thanh toán
           </button>
-        </div>
+
       </div>
     </div>
     </div>
@@ -168,13 +178,20 @@ const discount = ref(0) // Tạm thời để 0
 const total = computed(() => subtotal.value - discount.value)
 
 const isAllSelected = computed(() => {
-return cartItems.value.length > 0 && cartItems.value.every(item => item.selected !== false)
+  return cartItems.value.length > 0 && cartItems.value.every(item => item.selected !== false)
+})
+
+const hasInvalidItems = computed(() => {
+  return cartItems.value.some(item => item.stock !== undefined && item.quantity > item.stock)
 })
 
 const formatCurrency = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value)
 
-const updateQuantity = (id, delta) => {
-cartStore.updateQuantity(id, delta)
+const updateQuantity = async (id, delta) => {
+const success = await cartStore.updateQuantity(id, delta)
+if (!success) {
+  toast.error('Không thể cập nhật số lượng (đã đạt giới hạn tồn kho hoặc lỗi)')
+}
 }
 
 const removeItem = async (item) => {

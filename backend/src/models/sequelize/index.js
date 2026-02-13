@@ -14,6 +14,8 @@ import ReviewReport from './ReviewReport.js';
 import UserCoupon from './UserCoupon.js';
 import CouponUsage from './CouponUsage.js';
 import Contact from './Contact.js';
+import Cart from './Cart.js';
+import CartItem from './CartItem.js';
 
 // ========== ĐỊNH NGHĨA QUAN HỆ GIỮA CÁC MODELS ==========
 
@@ -202,6 +204,37 @@ CouponUsage.belongsTo(Order, {
   as: 'order'
 });
 
+// ========== CART ASSOCIATIONS ==========
+User.hasOne(Cart, {
+  foreignKey: 'user_id',
+  as: 'cart'
+});
+
+Cart.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+Cart.hasMany(CartItem, {
+  foreignKey: 'cart_id',
+  as: 'items'
+});
+
+CartItem.belongsTo(Cart, {
+  foreignKey: 'cart_id',
+  as: 'cart'
+});
+
+CartItem.belongsTo(Product, {
+  foreignKey: 'product_id',
+  as: 'product'
+});
+
+Product.hasMany(CartItem, {
+  foreignKey: 'product_id',
+  as: 'inCarts'
+});
+
 // ========== HÀM ĐỒNG BỘ DATABASE ==========
 
 /**
@@ -230,5 +263,5 @@ export const syncDatabase = async (options = {}) => {
 };
 
 // Export tất cả models
-export { sequelize, Category, Product, User, Address, Order, OrderItem, ShippingZone, Coupon, Article, Favorite, Review, ReviewReport, UserCoupon, CouponUsage, Contact };
+export { sequelize, Category, Product, User, Address, Order, OrderItem, ShippingZone, Coupon, Article, Favorite, Review, ReviewReport, UserCoupon, CouponUsage, Contact, Cart, CartItem };
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <div class="container max-w-7xl mx-auto px-4 py-8">
     <!-- Back Button -->
     <router-link 
       to="/orders"

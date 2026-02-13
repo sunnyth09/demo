@@ -121,8 +121,25 @@ export const updateStatus = async (req, res) => {
       return res.status(404).json({ status: false, message: "Đơn hàng không tồn tại" });
     }
 
-    if (currentOrder.status === 'delivered') {
-      return res.status(400).json({ status: false, message: "Đơn hàng đã hoàn thành, không thể thay đổi trạng thái" });
+    // Check removed to allow flow validation logic to handle it (or strict flow will block it anyway)
+    // if (currentOrder.status === 'delivered') { ... }
+
+    const statusFlow = [
+      'pending', 'confirmed', 'packing', 'picked_up', 
+      'in_transit', 'arrived_hub', 'out_for_delivery', 'delivered'
+    ];
+
+    const currentStatusIndex = statusFlow.indexOf(currentOrder.status);
+    const newStatusIndex = statusFlow.indexOf(status);
+
+    // STRICT FLOW CHECK:
+    if (currentStatusIndex !== -1 && newStatusIndex !== -1) {
+       if (newStatusIndex < currentStatusIndex) {
+          return res.status(400).json({ 
+            status: false, 
+            message: "Không thể cập nhật ngược trạng thái đơn hàng (Quy trình một chiều)." 
+          });
+       }
     }
 
     const order = await OrderService.updateStatus(req.params.id, status);

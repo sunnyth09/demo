@@ -26,16 +26,17 @@
         <!-- Main Info -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Name -->
+          <!-- Name -->
           <div class="col-span-2">
             <label class="block text-sm font-medium mb-2">Tên sản phẩm <span class="text-destructive">*</span></label>
             <input 
               v-model="form.name" 
               type="text" 
-              required
-              class="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
+              :class="['w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent', errors.name ? 'border-destructive' : '']"
               placeholder="Nhập tên sản phẩm"
               @input="autoGenerateSlug"
             />
+            <p v-if="errors.name" class="text-xs text-destructive mt-1">{{ errors.name }}</p>
           </div>
 
           <div class="col-span-1">
@@ -62,17 +63,30 @@
             />
           </div>
           
-          <!-- Price -->
+          <!-- Original Price (List Price) -->
           <div>
-            <label class="block text-sm font-medium mb-2">Giá bán (VNĐ) <span class="text-destructive">*</span></label>
+            <label class="block text-sm font-medium mb-2">Giá niêm yết (Gốc)</label>
+            <input 
+              v-model.number="form.original_price" 
+              type="number" 
+              min="0"
+              :class="['w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent no-spinner', errors.original_price ? 'border-destructive' : '']"
+              placeholder="Nhập giá gốc nếu có"
+            />
+            <p v-if="errors.original_price" class="text-xs text-destructive mt-1">{{ errors.original_price }}</p>
+          </div>
+
+          <!-- Price (Selling Price) -->
+          <div>
+            <label class="block text-sm font-medium mb-2">Giá bán thực tế <span class="text-destructive">*</span></label>
             <input 
               v-model.number="form.price" 
               type="number" 
               min="0"
-              required
-              class="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="0"
+              :class="['w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent no-spinner', errors.price ? 'border-destructive' : '']"
+              placeholder="Giá khách phải trả"
             />
+            <p v-if="errors.price" class="text-xs text-destructive mt-1">{{ errors.price }}</p>
           </div>
 
           <!-- Quantity -->
@@ -82,24 +96,28 @@
               v-model.number="form.quantity" 
               type="number" 
               min="0"
-              class="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
+              :class="['w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent no-spinner', errors.quantity ? 'border-destructive' : '']"
               placeholder="0"
             />
+            <p v-if="errors.quantity" class="text-xs text-destructive mt-1">{{ errors.quantity }}</p>
           </div>
           
+          <!-- Category -->
           <!-- Category -->
           <div>
             <label class="block text-sm font-medium mb-2">Danh mục <span class="text-destructive">*</span></label>
             <select 
               v-model="form.category_id"
-              class="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
+              :class="['w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent', errors.category_id ? 'border-destructive' : '']"
             >
               <option :value="null">Chọn danh mục</option>
               <option v-for="cat in categories" :key="cat.id" :value="cat.id">
                 {{ cat.name }}
               </option>
             </select>
+            <p v-if="errors.category_id" class="text-xs text-destructive mt-1">{{ errors.category_id }}</p>
           </div>
+
 
           <!-- Status (Only Show When Editing) -->
           <div v-if="isEditing">
@@ -146,9 +164,10 @@
                 v-model.number="form.publication_year" 
                 type="number" 
                 min="1900"
-                class="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
+                :class="['w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent no-spinner', errors.publication_year ? 'border-destructive' : '']"
                 placeholder="Năm XB"
               />
+              <p v-if="errors.publication_year" class="text-xs text-destructive mt-1">{{ errors.publication_year }}</p>
             </div>
           </div>
         </div>
@@ -157,29 +176,15 @@
         <div class="border-t pt-6">
           <h3 class="text-lg font-semibold mb-4">Thông tin khuyến mãi</h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Original Price -->
-            <div>
-              <label class="block text-sm font-medium mb-2">Giá gốc (trước giảm)</label>
-              <input 
-                v-model.number="form.original_price" 
-                type="number" 
-                min="0"
-                class="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Nhập giá gốc nếu có"
-              />
-              <p class="text-xs text-muted-foreground mt-1">
-                Nếu nhập, giá bán sẽ hiển thị là giá khuyến mãi.
-              </p>
-            </div>
-
             <!-- Discount Start -->
             <div>
               <label class="block text-sm font-medium mb-2">Bắt đầu giảm giá</label>
               <input 
                 v-model="form.discount_start" 
                 type="datetime-local" 
-                class="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
+                :class="['w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent', errors.discount_start ? 'border-destructive' : '']"
               />
+              <p v-if="errors.discount_start" class="text-xs text-destructive mt-1">{{ errors.discount_start }}</p>
             </div>
 
             <!-- Discount End -->
@@ -188,8 +193,9 @@
               <input 
                 v-model="form.discount_end" 
                 type="datetime-local" 
-                class="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
+                :class="['w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent', errors.discount_end ? 'border-destructive' : '']"
               />
+              <p v-if="errors.discount_end" class="text-xs text-destructive mt-1">{{ errors.discount_end }}</p>
             </div>
           </div>
         </div>
@@ -451,6 +457,8 @@ const toast = ref({
   type: 'success'
 })
 
+const errors = ref({})
+
 // Auto generate slug from name
 const autoGenerateSlug = () => {
   if (!isEditing.value || !form.value.slug) {
@@ -576,14 +584,84 @@ const clearNewImages = () => {
 
 // Save product
 const saveProduct = async () => {
-  if (!form.value.name || !form.value.price) {
-    showToast('Vui lòng nhập tên và giá sản phẩm', 'error')
-    return
+  // Reset errors
+  errors.value = {}
+  let isValid = true
+
+  if (!form.value.name) {
+    errors.value.name = 'Tên sản phẩm là bắt buộc'
+    isValid = false
+  }
+
+  if (!form.value.price) {
+    errors.value.price = 'Giá bán là bắt buộc'
+    isValid = false
+  } else if (form.value.price < 0) {
+    errors.value.price = 'Giá bán không được nhỏ hơn 0'
+    isValid = false
+  }
+
+  if (form.value.quantity < 0) {
+    errors.value.quantity = 'Số lượng không được nhỏ hơn 0'
+    isValid = false
+  }
+  
+  if (form.value.original_price && form.value.original_price < 0) {
+    errors.value.original_price = 'Giá gốc không được nhỏ hơn 0'
+    isValid = false
+  }
+
+  if (form.value.original_price && form.value.price && form.value.original_price <= form.value.price) {
+    errors.value.original_price = 'Giá gốc phải lớn hơn giá bán khuyến mãi'
+    isValid = false
   }
 
   // Validate category
   if (!form.value.category_id) {
-    showToast('Vui lòng chọn danh mục', 'error')
+    errors.value.category_id = 'Vui lòng chọn danh mục'
+    isValid = false
+  }
+
+  // Validate Publication Year
+  const currentYear = new Date().getFullYear()
+  if (form.value.publication_year && form.value.publication_year > currentYear) {
+    errors.value.publication_year = `Năm xuất bản không được lớn hơn năm hiện tại (${currentYear})`
+    isValid = false
+  }
+
+  // Validate Discount Dates
+  if (form.value.discount_start && form.value.discount_end) {
+    const startDate = new Date(form.value.discount_start)
+    const endDate = new Date(form.value.discount_end)
+    const now = new Date()
+    now.setSeconds(0, 0)
+    
+    if (startDate < now) {
+         errors.value.discount_start = 'Ngày bắt đầu không được nhỏ hơn thời điểm hiện tại'
+         isValid = false
+    }
+
+    if (startDate >= endDate) {
+      errors.value.discount_end = 'Ngày kết thúc phải sau ngày bắt đầu'
+      isValid = false
+    }
+
+    // Check duration <= 6 months
+    const sixMonthsLater = new Date(startDate)
+    sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6)
+    
+    if (endDate > sixMonthsLater) {
+      errors.value.discount_end = 'Thời gian giảm giá không được quá 6 tháng'
+      isValid = false
+    }
+  } else if ((form.value.discount_start && !form.value.discount_end) || (!form.value.discount_start && form.value.discount_end)) {
+     if (!form.value.discount_start) errors.value.discount_start = 'Vui lòng chọn ngày bắt đầu'
+     if (!form.value.discount_end) errors.value.discount_end = 'Vui lòng chọn ngày kết thúc'
+     isValid = false
+  }
+
+  if (!isValid) {
+    showToast('Vui lòng kiểm tra lại thông tin', 'error')
     return
   }
 
@@ -684,10 +762,6 @@ onMounted(async () => {
       script.src = 'https://cdn.quilljs.com/1.3.6/quill.min.js'
       script.onload = resolve
       document.head.appendChild(script)
-      
-      const link = document.createElement('link')
-      link.rel = 'stylesheet'
-      link.href = 'https://cdn.quilljs.com/1.3.6/quill.snow.css'
       document.head.appendChild(link)
     })
   }
@@ -711,7 +785,6 @@ onMounted(async () => {
     
     // Set initial content
     if (form.value.description) {
-      // Use clipboard to properly parse HTML or just innerHTML
       quill.root.innerHTML = form.value.description
     }
     
@@ -722,3 +795,19 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+/* Hide spin buttons for number inputs */
+/* Chrome, Safari, Edge, Opera */
+input.no-spinner::-webkit-outer-spin-button,
+input.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input.no-spinner {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+</style>

@@ -121,7 +121,11 @@ const Product = sequelize.define('Product', {
   }
 }, {
   tableName: 'products',
-  timestamps: false
+  timestamps: true,
+  paranoid: true, // Enable soft delete
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
+  deletedAt: 'deleted_at'
 });
 
 export default Product;

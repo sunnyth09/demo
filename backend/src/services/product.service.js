@@ -276,20 +276,10 @@ export const update = async (id, data, files) => {
  * Xóa sản phẩm
  */
 export const remove = async (id) => {
-  // Lấy sản phẩm để xóa ảnh
-  const product = await getProductDetail(id);
-
-  // Xóa thumbnail
-  if (product.thumbnail) {
-    await deleteFile(product.thumbnail);
-  }
-
-  // Xóa images
-  if (product.images && product.images.length > 0) {
-    await Promise.all(product.images.map(url => deleteFile(url)));
-  }
-
-  // Xóa sản phẩm
+  // Với Soft Delete, chúng ta KHÔNG xóa file ảnh ngay lập tức
+  // Vì có thể khôi phục lại sản phẩm sau này.
+  
+  // Thực hiện Soft Delete trong DB (cập nhật deleted_at)
   await Product.destroy({
     where: { id }
   });

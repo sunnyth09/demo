@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-background pb-12">
     <!-- Breadcrumb -->
     <div class="bg-muted/30 border-b">
-      <div class="container mx-auto px-4 py-3">
+      <div class="container max-w-7xl mx-auto px-4 py-3">
         <nav class="flex text-sm text-muted-foreground">
           <router-link to="/" class="hover:text-primary transition-colors">Trang chủ</router-link>
           <span class="mx-2">/</span>

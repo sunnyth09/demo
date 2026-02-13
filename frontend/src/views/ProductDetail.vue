@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-8 bg-gray-50 min-h-screen">
+  <div class="container max-w-7xl mx-auto px-4 py-8 bg-gray-50 min-h-screen pb-24 md:pb-8">
     <div v-if="loading" class="flex justify-center py-20">
       <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
     </div>
@@ -109,15 +109,25 @@
                   <button @click="quantity > 1 && quantity--" class="p-2.5 hover:text-primary transition-colors disabled:opacity-50" :disabled="quantity <= 1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
                   </button>
-                  <input type="number" v-model="quantity" class="w-12 text-center border-none focus:ring-0 p-0 text-gray-900 font-medium bg-transparent" min="1" />
-                  <button @click="quantity++" class="p-2.5 hover:text-primary transition-colors">
+                  <input 
+                    type="text" 
+                    v-model.number="quantity" 
+                    @input="validateQuantity"
+                    @blur="onBlurQuantity"
+                    class="w-12 text-center border-none focus:ring-0 p-0 text-gray-900 font-medium bg-transparent" 
+                  />
+                  <button 
+                    @click="quantity < product.quantity && quantity++" 
+                    class="p-2.5 hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    :disabled="!product || quantity >= product.quantity"
+                  >
                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                   </button>
                 </div>
                 <span class="text-sm text-gray-500">{{ product.quantity }} sản phẩm có sẵn</span>
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="hidden lg:grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button @click="addToCart" class="h-11 flex items-center justify-center rounded-lg border-2 border-primary text-primary font-bold hover:bg-primary/5 transition-colors">
                   <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                   Thêm vào giỏ hàng
@@ -189,6 +199,7 @@
              <ReviewList 
                 :product-id="product.id" 
                 :reviews="reviews"
+                :loading="loading"
                 @refresh="onReviewListRefresh" 
              />
            </div>
@@ -201,6 +212,19 @@
       <h2 class="text-xl font-bold text-gray-900">Không tìm thấy sản phẩm</h2>
       <router-link to="/products" class="text-primary hover:underline mt-4 inline-block text-sm">Quay lại danh sách</router-link>
     </div>
+    <!-- Sticky Bottom Actions (Mobile) -->
+    <!-- Sticky Bottom Actions (Mobile) -->
+    <Teleport to="body">
+      <div v-if="product" class="fixed bottom-0 left-0 right-0 bg-white border-t p-3 z-[2147483647] lg:hidden flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+          <button @click="addToCart" class="flex-1 h-11 flex items-center justify-center rounded-lg border-2 border-primary text-primary font-bold active:bg-primary/5 transition-colors text-sm">
+            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            Thêm vào giỏ
+          </button>
+          <button @click="buyNow" class="flex-1 h-11 flex items-center justify-center rounded-lg bg-primary text-white font-bold shadow-lg shadow-primary/30 active:bg-primary/90 transition-all text-sm">
+            Mua ngay
+          </button>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -225,6 +249,11 @@ const API_URL = import.meta.env.VITE_API_URL
 const product = ref(null)
 const reviews = ref([]) // Centralized reviews state
 const currentTab = ref('description') // 'description' or 'reviews'
+const loading = ref(true)
+const quantity = ref(1)
+const activeImage = ref('')
+const galleryImages = ref([])
+const isExpanded = ref(false)
 
 const fetchReviews = async () => {
   try {
@@ -253,10 +282,14 @@ const onReviewListRefresh = () => {
 
 // ... existing refs ...
 
-const addToCart = () => {
+const addToCart = async () => {
   if (product.value) {
-    cartStore.addToCart(product.value, quantity.value)
-    toast.success('Đã thêm vào giỏ hàng')
+    const success = await cartStore.addToCart(product.value, quantity.value)
+    if (success) {
+      toast.success('Đã thêm vào giỏ hàng')
+    } else {
+      toast.error('Không thể thêm số lượng sản phẩm này (đã đạt giới hạn tồn kho)')
+    }
   }
 }
 
@@ -266,12 +299,41 @@ const buyNow = () => {
     router.push('/checkout')
   }
 }
-const loading = ref(true)
-const quantity = ref(1)
-const activeImage = ref('')
-const galleryImages = ref([])
-const isExpanded = ref(false)
+const validateQuantity = (event) => {
+  // Chỉ cho phép nhập số
+  let value = event.target.value.replace(/[^0-9]/g, '')
+  
+  // Nếu số bắt đầu bằng 0 (ví dụ 05), bỏ số 0 đi
+  if (value.length > 1 && value.startsWith('0')) {
+    value = value.replace(/^0+/, '')
+  }
 
+  let numValue = parseInt(value)
+  if (!isNaN(numValue)) {
+      if (product.value && numValue > product.value.quantity) {
+          numValue = product.value.quantity
+      }
+      quantity.value = numValue
+  } else {
+      quantity.value = ''
+  }
+  
+  // Cập nhật lại giá trị hiển thị nếu khác
+  if (event.target.value !== String(quantity.value)) {
+      event.target.value = quantity.value
+  }
+}
+
+const onBlurQuantity = () => {
+  // Nếu để trống hoặc < 1 thì reset về 1
+  if (!quantity.value || quantity.value < 1) {
+    quantity.value = 1
+  }
+  // Double check max quantity on blur just in case
+  if (product.value && quantity.value > product.value.quantity) {
+    quantity.value = product.value.quantity
+  }
+}
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',

@@ -17,6 +17,13 @@ export const registerService = async (data) => {
     throw new Error("Email đã tồn tại");
   }
 
+  // Validate Password Strength
+  // At least 6 chars, 1 uppercase, 1 number, 1 special char
+  const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{6,}$/;
+  if (!passwordRegex.test(data.password)) {
+    throw new Error("Mật khẩu phải có ít nhất 6 ký tự, bao gồm chữ hoa, số và ký tự đặc biệt.");
+  }
+
   // Hash password
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(data.password, salt);

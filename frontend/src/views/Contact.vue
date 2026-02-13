@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-background">
     <!-- Header / Banner -->
     <div class="bg-primary/5 py-16">
-      <div class="container mx-auto px-4 text-center">
+      <div class="container max-w-7xl mx-auto px-4 text-center">
         <h1 class="text-4xl font-bold text-foreground mb-4">Liên hệ với chúng tôi</h1>
         <p class="text-muted-foreground text-lg max-w-2xl mx-auto">
           Chúng tôi luôn lắng nghe và sẵn sàng hỗ trợ bạn. Hãy để lại thông tin, chúng tôi sẽ phản hồi sớm nhất có thể.
@@ -10,7 +10,7 @@
       </div>
     </div>
 
-    <div class="container mx-auto px-4 py-12">
+    <div class="container max-w-7xl mx-auto px-4 py-12">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
         <!-- Contact Info -->
         <div class="space-y-8">

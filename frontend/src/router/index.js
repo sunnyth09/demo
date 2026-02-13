@@ -53,6 +53,16 @@ const routes = [
       { path: 'vouchers', name: 'vouchers', component: () => import('@/views/Vouchers.vue'), meta: { title: 'Săn Voucher', description: 'Săn voucher giảm giá hấp dẫn từ Ocean Books' } },
 
       { path: 'contact', name: 'contact', component: () => import('@/views/Contact.vue'), meta: { title: 'Liên hệ', description: 'Liên hệ Ocean Books - Hỗ trợ khách hàng 24/7' } },
+      
+      // Policy pages
+      { path: 'faq', name: 'faq', component: () => import('@/views/FAQ.vue'), meta: { title: 'FAQ - Câu hỏi thường gặp' } },
+      { path: 'return-policy', name: 'return-policy', component: () => import('@/views/ReturnPolicy.vue'), meta: { title: 'Chính sách đổi trả' } },
+      { path: 'terms-of-service', name: 'terms-of-service', component: () => import('@/views/TermsOfService.vue'), meta: { title: 'Điều khoản dịch vụ' } },
+      { path: 'privacy-policy', name: 'privacy-policy', component: () => import('@/views/PrivacyPolicy.vue'), meta: { title: 'Chính sách bảo mật' } },
+      { path: 'shopping-guide', name: 'shopping-guide', component: () => import('@/views/ShoppingGuide.vue'), meta: { title: 'Hướng dẫn mua hàng' } },
+      { path: 'recruitment', name: 'recruitment', component: () => import('@/views/Recruitment.vue'), meta: { title: 'Tuyển dụng - Cơ hội nghề nghiệp' } },
+      { path: 'cookies', redirect: '/privacy-policy' }, // Redirect cookies to privacy policy for now
+      
       { path: 'payment/result', name: 'payment-result', component: () => import('@/views/PaymentResult.vue'), meta: { title: 'Kết quả thanh toán' } },
     ]
   },
