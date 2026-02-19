@@ -17,7 +17,7 @@
         <div class="absolute top-1/3 right-1/4 w-[300px] h-[300px] bg-sky-100/50 rounded-full blur-3xl"></div>
       </div>
 
-      <div class="container max-w-7xl relative z-10 mx-auto px-4 py-12 md:py-16">
+      <div class="container max-w-7xl relative z-10 mx-auto px-4 py-10 md:py-16">
         <div class="grid md:grid-cols-2 gap-8 lg:gap-16 items-center">
           <!-- Left Content -->
           <div class="space-y-6 md:space-y-8">
@@ -483,7 +483,7 @@
     <!-- 9. Newsletter -->
     <section class="py-16 md:py-20">
       <div class="container max-w-7xl mx-auto px-4">
-        <div class="relative bg-primary rounded-2xl p-8 md:p-12 text-primary-foreground overflow-hidden">
+        <div class="relative bg-primary rounded-2xl p-6 md:p-12 text-primary-foreground overflow-hidden">
           <div class="relative z-10 max-w-lg mx-auto text-center">
             <h2 class="text-xl md:text-2xl font-bold mb-3">Đăng ký nhận thông tin</h2>
             <p class="text-sm text-white/80 mb-6">
@@ -495,7 +495,7 @@
                 v-model="newsletterEmail"
                 type="email" 
                 placeholder="Nhập email của bạn..." 
-                class="flex-1 bg-white/15 border border-white/20 text-white placeholder-white/50 focus:ring-2 focus:ring-white/30 focus:border-transparent rounded-lg px-4 h-12 text-sm"
+                class="flex-1 min-w-0 bg-white/15 border border-white/20 text-white placeholder-white/50 focus:ring-2 focus:ring-white/30 focus:border-transparent rounded-lg px-4 h-12 text-sm"
                 @keydown.enter="handleNewsletter"
               />
               <button @click="handleNewsletter" :disabled="newsletterLoading" class="h-12 px-6 rounded-lg bg-white text-primary font-semibold hover:bg-white/90 transition-all shadow-md flex items-center justify-center gap-2 text-sm disabled:opacity-50">

@@ -15,8 +15,8 @@
           <div class="space-y-3">
              <h4 class="font-semibold text-foreground">Đăng ký nhận tin</h4>
              <div class="flex gap-2">
-                <input type="email" placeholder="Email của bạn..." class="bg-background border border-input text-foreground placeholder-muted-foreground rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-primary outline-none" />
-                <button class="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg transition-colors font-medium">
+                <input type="email" placeholder="Email của bạn..." class="bg-background border border-input text-foreground placeholder-muted-foreground rounded-lg px-4 py-2 flex-1 min-w-0 focus:ring-2 focus:ring-primary outline-none" />
+                <button class="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg transition-colors font-medium whitespace-nowrap">
                    Gửi
                 </button>
              </div>

@@ -1,5 +1,6 @@
 <template>
-  <div class="container max-w-7xl mx-auto px-4 py-12">
+  <div class="bg-muted/30 min-h-screen">
+    <div class="container max-w-7xl mx-auto px-4 py-12">
     <h1 class="text-xl font-bold mb-8">Giỏ hàng</h1>
 
     <div class="grid lg:grid-cols-3 gap-8">
@@ -77,21 +78,21 @@
                  <div class="flex items-center border border-gray-200 rounded-lg bg-background">
                     <button 
                       @click="updateQuantity(item.id, -1)" 
-                      class="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors disabled:opacity-50 rounded-l-lg"
+                      class="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors disabled:opacity-50 rounded-l-lg"
                       :disabled="item.quantity <= 1"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
                     </button>
-                    <div class="w-10 h-8 flex items-center justify-center text-sm font-semibold border-x border-gray-200 bg-gray-50/50">
+                    <div class="w-10 h-9 flex items-center justify-center text-sm font-semibold border-x border-gray-200 bg-gray-50/50">
                       {{ item.quantity }}
                     </div>
                     <button 
                       @click="item.quantity < (item.stock || 9999) && updateQuantity(item.id, 1)" 
-                      class="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors rounded-r-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      class="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-primary transition-colors rounded-r-lg disabled:opacity-50 disabled:cursor-not-allowed"
                       :disabled="item.quantity >= (item.stock || 9999)"
                       :title="item.stock ? `Còn ${item.stock} sản phẩm` : ''"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                     </button>
                  </div>
 
@@ -152,10 +153,9 @@
 
       </div>
     </div>
+  </div>
     </div>
   </div>
-
-
 </template>
 
 <script setup>

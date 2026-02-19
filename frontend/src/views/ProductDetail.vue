@@ -1,5 +1,6 @@
 <template>
-  <div class="container max-w-7xl mx-auto px-4 py-8 bg-gray-50 min-h-screen pb-24 md:pb-8">
+  <div class="bg-muted/30 min-h-screen pb-24 md:pb-8">
+    <div class="container max-w-7xl mx-auto px-4 py-8">
     <div v-if="loading" class="flex justify-center py-20">
       <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
     </div>
@@ -225,6 +226,7 @@
           </button>
       </div>
     </Teleport>
+  </div>
   </div>
 </template>
 
