@@ -11,7 +11,7 @@
       <nav class="flex text-sm text-gray-500">
         <router-link to="/" class="hover:text-primary transition-colors">Trang chủ</router-link>
         <span class="mx-2">/</span>
-        <router-link to="/products" class="hover:text-primary transition-colors">Sản phẩm</router-link>
+        <router-link to="/san-pham" class="hover:text-primary transition-colors">Sản phẩm</router-link>
         <span class="mx-2">/</span>
         <span class="text-gray-900 font-medium truncate max-w-xs">{{ product.name }}</span>
       </nav>
@@ -211,12 +211,12 @@
     <!-- Not Found -->
     <div v-else class="text-center py-20">
       <h2 class="text-xl font-bold text-gray-900">Không tìm thấy sản phẩm</h2>
-      <router-link to="/products" class="text-primary hover:underline mt-4 inline-block text-sm">Quay lại danh sách</router-link>
+      <router-link to="/san-pham" class="text-primary hover:underline mt-4 inline-block text-sm">Quay lại danh sách</router-link>
     </div>
     <!-- Sticky Bottom Actions (Mobile) -->
     <!-- Sticky Bottom Actions (Mobile) -->
     <Teleport to="body">
-      <div v-if="product" class="fixed bottom-0 left-0 right-0 bg-white border-t p-3 z-[2147483647] lg:hidden flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+      <div v-if="product" class="fixed bottom-14 left-0 right-0 bg-white border-t p-3 z-[2147483647] lg:hidden flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
           <button @click="addToCart" class="flex-1 h-11 flex items-center justify-center rounded-lg border-2 border-primary text-primary font-bold active:bg-primary/5 transition-colors text-sm">
             <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
             Thêm vào giỏ
@@ -484,12 +484,12 @@ onMounted(() => {
   color: #4b5563;
 }
 
-/* Hình ảnh */
+/* Hình ảnh trong mô tả */
 .product-content :deep(img) {
-  max-width: 100%;
+  max-width: 30%;
   height: auto;
   border-radius: 0.5rem;
-  margin: 1rem 0;
+  margin: 1rem auto;
   display: block;
 }
 </style>

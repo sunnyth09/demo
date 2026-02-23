@@ -186,13 +186,16 @@
             </div>
           </div>
 
-          <!-- Vertical Timeline (Detail History) -->
+          <!-- Vertical Timeline (Audit Log from API) -->
           <div class="border-t pt-6">
-            <h4 class="font-medium mb-4">Lịch sử cập nhật</h4>
+            <h4 class="font-medium mb-4">Lịch sử thay đổi trạng thái</h4>
+            <div v-if="statusLogs.length === 0" class="text-sm text-muted-foreground">
+              Chưa có lịch sử.
+            </div>
             <div class="space-y-0">
               <div
-                v-for="(event, index) in statusHistory"
-                :key="index"
+                v-for="(log, index) in statusLogs"
+                :key="log.id"
                 class="flex gap-4"
               >
                 <div class="flex flex-col items-center">
@@ -201,23 +204,31 @@
                     :class="index === 0 ? 'bg-primary' : 'bg-gray-300'"
                   ></div>
                   <div
-                    v-if="index < statusHistory.length - 1"
-                    class="w-0.5 h-12 bg-gray-200"
+                    v-if="index < statusLogs.length - 1"
+                    class="w-0.5 h-16 bg-gray-200"
                   ></div>
                 </div>
-                <div class="pb-6">
+                <div class="pb-6 min-w-0">
                   <p
                     class="text-sm font-medium"
                     :class="index === 0 ? 'text-primary' : 'text-gray-700'"
                   >
-                    {{ event.label }}
+                    <span v-if="log.from_status">{{ getStatusLabel(log.from_status) }}</span>
+                    <span v-else>Tạo mới</span>
+                    → {{ getStatusLabel(log.to_status) }}
                   </p>
-                  <p class="text-xs text-muted-foreground">{{ event.time }}</p>
+                  <p class="text-xs text-muted-foreground">{{ formatDateTime(log.createdAt) }}</p>
+                  <p class="text-xs text-gray-500 mt-1">
+                    Bởi: <strong>{{ log.changed_by_name || 'Hệ thống' }}</strong>
+                    <span v-if="log.changedByUser" class="ml-1 px-1.5 py-0.5 text-[10px] rounded-full"
+                      :class="log.changedByUser.role === 'admin' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'"
+                    >{{ log.changedByUser.role === 'admin' ? 'Admin' : 'User' }}</span>
+                  </p>
                   <p
-                    v-if="event.description"
-                    class="text-xs text-gray-500 mt-1"
+                    v-if="log.note"
+                    class="text-xs text-gray-400 mt-1 italic"
                   >
-                    {{ event.description }}
+                    {{ log.note }}
                   </p>
                 </div>
               </div>
@@ -282,7 +293,7 @@
                   :value="opt.value"
                   :disabled="isStatusDisabled(opt.value)"
                 >
-                  {{ opt.label }} {{ isStatusDisabled(opt.value) ? '(Không thể quay lại)' : '' }}
+                  {{ opt.label }} 
                 </option>
               </select>
             </div>
@@ -476,6 +487,7 @@ const order = ref(null);
 const loading = ref(true);
 const updating = ref(false);
 const newStatus = ref("");
+const statusLogs = ref([]);
 
 const statusFlow = [
   'pending', 'confirmed', 'packing', 'picked_up', 
@@ -664,6 +676,37 @@ const fetchOrder = async () => {
   }
 };
 
+const fetchStatusLogs = async () => {
+  try {
+    const res = await fetch(`${API_URL}/orders/admin/${route.params.id}/status-logs`, {
+      headers: { Authorization: `Bearer ${authStore.accessToken}` },
+    });
+    const json = await res.json();
+    if (json.status) {
+      // Reverse to show newest first
+      statusLogs.value = [...json.data].reverse();
+    }
+  } catch (e) {
+    console.error('Failed to fetch status logs:', e);
+  }
+};
+
+const getStatusLabel = (status) => {
+  const map = {
+    pending: 'Chờ xác nhận',
+    confirmed: 'Đã xác nhận',
+    packing: 'Đang đóng gói',
+    picked_up: 'Đã giao ĐVVC',
+    in_transit: 'Đang vận chuyển',
+    arrived_hub: 'Đã đến kho',
+    out_for_delivery: 'Đang giao hàng',
+    delivered: 'Giao thành công',
+    request_cancel: 'Yêu cầu hủy',
+    cancelled: 'Đã hủy',
+  };
+  return map[status] || status;
+};
+
 const updateOrderStatus = async () => {
   if (!newStatus.value || newStatus.value === order.value.status) return;
 
@@ -683,6 +726,7 @@ const updateOrderStatus = async () => {
     const json = await res.json();
     if (json.status) {
       await fetchOrder(); // Refresh
+      await fetchStatusLogs(); // Refresh logs
       toast.success("Cập nhật trạng thái thành công!");
     } else {
       toast.error(json.message || "Có lỗi xảy ra");
@@ -740,5 +784,8 @@ const formatDateTime = (dateStr) => {
   return `${d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} ${d.toLocaleDateString("vi-VN")}`;
 };
 
-onMounted(fetchOrder);
+onMounted(() => {
+  fetchOrder();
+  fetchStatusLogs();
+});
 </script>

@@ -7,6 +7,7 @@ import {
   deleteReview, 
   reportReview,
   getAllReviewsAdmin,
+  getReportedReviews,
   toggleReviewVisibility
 } from "../controllers/review.controller.js";
 import { checkToken, checkAdmin } from "../middlewares/auth.middleware.js";
@@ -24,6 +25,7 @@ router.post("/:id/report", checkToken, reportReview);
 
 // Admin
 router.get("/admin/all", checkToken, checkAdmin, getAllReviewsAdmin);
+router.get("/admin/reported", checkToken, checkAdmin, getReportedReviews);
 router.put("/:id/visibility", checkToken, checkAdmin, toggleReviewVisibility);
 
 export default router;

@@ -4,6 +4,17 @@ import { Op } from "sequelize";
 import { getAllChildIds } from "./category.service.js";
 
 /**
+ * Kiểm tra khuyến mãi có đang hoạt động không
+ * - Nếu không có discount_start/discount_end → giảm giá vĩnh viễn (true)
+ * - Nếu có → kiểm tra hiện tại nằm trong khoảng [start, end]
+ */
+const isDiscountActive = (discount_start, discount_end) => {
+  if (!discount_start || !discount_end) return true;
+  const now = new Date();
+  return now >= new Date(discount_start) && now <= new Date(discount_end);
+};
+
+/**
  * Tạo slug từ tên sản phẩm
  */
 const generateSlug = (name) => {
@@ -54,20 +65,24 @@ export const getProducts = async ({ limit = 10, offset = 0, category_id = null, 
   });
 
   // Transform để có category_name thay vì object
-  return products.map(p => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    sku: p.sku,
-    price: p.price,
-    original_price: p.original_price,
-    discount_start: p.discount_start,
-    discount_end: p.discount_end,
-    quantity: p.quantity,
-    thumbnail: p.thumbnail,
-    status: p.status,
-    category_name: p.category?.name || null
-  }));
+  return products.map(p => {
+    const discountActive = isDiscountActive(p.discount_start, p.discount_end);
+    return {
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      sku: p.sku,
+      // Nếu hết hạn khuyến mãi → hiển thị giá gốc, ẩn giá giảm
+      price: (!discountActive && p.original_price) ? p.original_price : p.price,
+      original_price: discountActive ? p.original_price : null,
+      discount_start: p.discount_start,
+      discount_end: p.discount_end,
+      quantity: p.quantity,
+      thumbnail: p.thumbnail,
+      status: p.status,
+      category_name: p.category?.name || null
+    };
+  });
 };
 
 /**
@@ -125,6 +140,14 @@ export const getProductDetail = async (idOrSlug) => {
   // Thêm category_name
   result.category_name = result.category?.name || null;
 
+  // Ẩn giá giảm nếu khuyến mãi đã hết hạn, quay về giá gốc
+  if (!isDiscountActive(result.discount_start, result.discount_end)) {
+    if (result.original_price) {
+      result.price = result.original_price;
+    }
+    result.original_price = null;
+  }
+
   // Count Reviews
   const reviewCount = await Review.count({
     where: { product_id: product.id }
@@ -143,6 +166,14 @@ export const getProductDetail = async (idOrSlug) => {
 export const create = async (data, files) => {
   if (!data.name || !data.price) {
     throw new Error("Tên và giá sản phẩm là bắt buộc");
+  }
+
+  // Validate category_id exists if provided
+  if (data.category_id) {
+    const category = await Category.findByPk(data.category_id);
+    if (!category) {
+      throw new Error("Danh mục không tồn tại");
+    }
   }
 
   // Tạo slug từ tên hoặc dùng slug được cung cấp
@@ -236,15 +267,38 @@ export const update = async (id, data, files) => {
     thumbnailUrl = await uploadFile(files.thumbnail[0]);
   }
 
-  // Nếu có images mới
-  if (files?.images && files.images.length > 0) {
-    // Xóa các ảnh cũ
-    if (existingProduct.images && existingProduct.images.length > 0) {
-      await Promise.all(existingProduct.images.map(url => deleteFile(url)));
+  // Xử lý images gallery
+  const hasNewImages = files?.images && files.images.length > 0;
+  const hasExistingImages = data.existing_images !== undefined;
+
+  if (hasNewImages || hasExistingImages) {
+    // Danh sách ảnh cũ cần giữ lại (gửi từ frontend)
+    let keepImages = [];
+    if (hasExistingImages) {
+      keepImages = Array.isArray(data.existing_images)
+        ? data.existing_images.filter(url => url && url.trim() !== '')
+        : (data.existing_images && data.existing_images.trim() !== '' ? [data.existing_images] : []);
+    } else if (!hasNewImages) {
+      // Không gửi gì → giữ nguyên
+      keepImages = existingProduct.images || [];
     }
-    // Upload ảnh mới
-    const newUrls = await Promise.all(files.images.map(file => uploadFile(file)));
-    imageUrls = JSON.stringify(newUrls);
+
+    // Xóa những ảnh cũ bị loại bỏ
+    const oldImages = existingProduct.images || [];
+    const removedImages = oldImages.filter(url => !keepImages.includes(url));
+    if (removedImages.length > 0) {
+      await Promise.all(removedImages.map(url => deleteFile(url)));
+    }
+
+    // Upload ảnh mới (nếu có)
+    let newUploadedUrls = [];
+    if (hasNewImages) {
+      newUploadedUrls = await Promise.all(files.images.map(file => uploadFile(file)));
+    }
+
+    // Kết hợp: ảnh cũ giữ lại + ảnh mới upload
+    const finalImages = [...keepImages, ...newUploadedUrls];
+    imageUrls = JSON.stringify(finalImages);
   }
 
   // Tìm và cập nhật product
@@ -285,4 +339,25 @@ export const remove = async (id) => {
   });
 
   return true;
+};
+
+/**
+ * Khôi phục sản phẩm đã xóa mềm
+ */
+export const restore = async (id) => {
+  const product = await Product.findOne({
+    where: { id },
+    paranoid: false // Include soft-deleted records
+  });
+
+  if (!product) {
+    throw new Error("Không tìm thấy sản phẩm");
+  }
+
+  if (!product.deletedAt) {
+    throw new Error("Sản phẩm chưa bị xóa, không cần khôi phục");
+  }
+
+  await product.restore();
+  return product;
 };

@@ -68,7 +68,7 @@
               <input 
                 v-model="form.password"
                 :type="showPassword ? 'text' : 'password'" 
-                placeholder="6+ ký tự, Hoa, Số, Đb"
+                placeholder="Mật khẩu"
                 class="w-full h-11 px-4 pr-10 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                 :class="errors.password ? 'border-destructive' : 'border-input'"
                 :disabled="loading"
@@ -142,11 +142,15 @@
                 @change="clearError('agreeTerms')" 
               />
               <label for="agreeTerms" class="text-sm text-muted-foreground cursor-pointer">
-                Tôi đồng ý với <a href="#" class="text-primary hover:underline">Điều khoản dịch vụ</a> và <a href="#" class="text-primary hover:underline">Chính sách bảo mật</a>
+                Tôi đồng ý với <a href="/terms-of-service" target="_blank" class="text-primary hover:underline">Điều khoản dịch vụ</a> và <a href="/privacy-policy" target="_blank" class="text-primary hover:underline">Chính sách bảo mật</a>
               </label>
             </div>
             <p v-if="errors.agreeTerms" class="mt-1 text-sm text-destructive">{{ errors.agreeTerms }}</p>
           </div>
+
+          <!-- Cloudflare Turnstile -->
+          <div id="turnstile-register" class="flex justify-center"></div>
+          <p v-if="errors.turnstile" class="text-sm text-destructive text-center -mt-2">{{ errors.turnstile }}</p>
 
           <!-- Submit Button -->
           <button 
@@ -179,6 +183,7 @@ import { reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { useTurnstile } from '@/composables/useTurnstile'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -196,8 +201,12 @@ const errors = reactive({
   email: '',
   password: '',
   confirmPassword: '',
-  agreeTerms: ''
+  agreeTerms: '',
+  turnstile: ''
 })
+
+// Cloudflare Turnstile
+const { turnstileToken, resetTurnstile, getToken } = useTurnstile('turnstile-register')
 
 const loading = ref(false)
 const errorMessage = ref('')
@@ -314,6 +323,14 @@ const handleRegister = async () => {
   if (!validateAll()) {
     return
   }
+
+  // Validate Turnstile token
+  const token = getToken()
+  if (!token) {
+    errors.turnstile = 'Vui lòng xác minh bạn không phải robot.'
+    return
+  }
+  errors.turnstile = ''
   
   loading.value = true
   errorMessage.value = ''
@@ -323,7 +340,8 @@ const handleRegister = async () => {
     await authStore.register({
       name: form.name,
       email: form.email,
-      password: form.password
+      password: form.password,
+      turnstileToken: token
     })
     
     successMessage.value = 'Đăng ký thành công! Đang chuyển đến trang đăng nhập...'
@@ -334,6 +352,7 @@ const handleRegister = async () => {
     }, 2000)
   } catch (err) {
     errorMessage.value = err.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.'
+    resetTurnstile()
   } finally {
     loading.value = false
   }

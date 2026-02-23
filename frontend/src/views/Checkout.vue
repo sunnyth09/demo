@@ -1,8 +1,28 @@
 <template>
   <div class="container max-w-7xl mx-auto px-4 py-12">
-    <h1 class="text-3xl font-bold mb-8">Thanh toán</h1>
+    <h1 class="text-3xl font-bold mb-2">Thanh toán</h1>
 
-    <div class="grid lg:grid-cols-3 gap-8">
+    <!-- Step Indicator -->
+    <div class="flex items-center gap-3 mb-8">
+      <div class="flex items-center gap-2">
+        <span 
+          class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors"
+          :class="currentStep >= 1 ? 'bg-primary text-primary-foreground' : 'bg-gray-200 text-gray-500'"
+        >1</span>
+        <span class="text-sm font-medium" :class="currentStep >= 1 ? 'text-foreground' : 'text-muted-foreground'">Thông tin</span>
+      </div>
+      <div class="w-12 h-0.5 rounded-full transition-colors" :class="currentStep >= 2 ? 'bg-primary' : 'bg-gray-200'"></div>
+      <div class="flex items-center gap-2">
+        <span 
+          class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors"
+          :class="currentStep >= 2 ? 'bg-primary text-primary-foreground' : 'bg-gray-200 text-gray-500'"
+        >2</span>
+        <span class="text-sm font-medium" :class="currentStep >= 2 ? 'text-foreground' : 'text-muted-foreground'">Xác nhận</span>
+      </div>
+    </div>
+
+    <!-- ============ STEP 1: FORM ============ -->
+    <div v-if="currentStep === 1" class="grid lg:grid-cols-3 gap-8">
       <!-- Checkout Form -->
       <div class="lg:col-span-2 space-y-8">
         <!-- Shipping Info -->
@@ -180,7 +200,7 @@
         </div>
       </div>
 
-      <!-- Order Summary -->
+      <!-- Order Summary (Step 1) -->
       <div class="lg:col-span-1">
         <div class="bg-card rounded-xl border p-6 sticky top-24">
           <h3 class="font-semibold text-lg mb-4">Đơn hàng của bạn</h3>
@@ -345,13 +365,179 @@
             </div>
           </div>
 
-          <button @click="handleCheckout" class="w-full mt-6 h-12 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
-            Đặt hàng ({{ formatCurrency(total) }})
+          <button @click="goToReview" class="w-full mt-6 h-12 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
+            Đặt hàng
           </button>
 
           <p class="text-xs text-center text-muted-foreground mt-4">
             Bằng việc đặt hàng, bạn đồng ý với <a href="#" class="underline hover:text-foreground">Điều khoản dịch vụ</a> của chúng tôi.
           </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ STEP 2: REVIEW ============ -->
+    <div v-else-if="currentStep === 2" class="max-w-4xl mx-auto space-y-6">
+      <!-- Review Header -->
+      <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+        <div>
+          <h3 class="font-bold text-blue-800">Vui lòng kiểm tra lại đơn hàng</h3>
+          <p class="text-sm text-blue-600 mt-0.5">Xác nhận thông tin bên dưới trước khi đặt hàng. Bạn có thể quay lại chỉnh sửa nếu cần.</p>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Left: Info Review -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Shipping Info Review -->
+          <div class="bg-card rounded-xl border p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                Thông tin giao hàng
+              </h3>
+              <!-- <button @click="currentStep = 1" class="text-sm text-primary hover:underline font-medium">Chỉnh sửa</button> -->
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span class="text-muted-foreground">Họ và tên</span>
+                <p class="font-medium mt-0.5">{{ form.name }}</p>
+              </div>
+              <div>
+                <span class="text-muted-foreground">Số điện thoại</span>
+                <p class="font-medium mt-0.5">{{ form.phone }}</p>
+              </div>
+              <div v-if="form.email" class="sm:col-span-2">
+                <span class="text-muted-foreground">Email</span>
+                <p class="font-medium mt-0.5">{{ form.email }}</p>
+              </div>
+              <div class="sm:col-span-2">
+                <span class="text-muted-foreground">Địa chỉ giao hàng</span>
+                <p class="font-medium mt-0.5">{{ fullAddress }}</p>
+              </div>
+              <div v-if="form.note" class="sm:col-span-2">
+                <span class="text-muted-foreground">Ghi chú</span>
+                <p class="font-medium mt-0.5 text-yellow-700 bg-yellow-50 px-2 py-1 rounded">{{ form.note }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Method Review -->
+          <div class="bg-card rounded-xl border p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect width="20" height="14" x="2" y="5" rx="2"/>
+                  <line x1="2" x2="22" y1="10" y2="10"/>
+                </svg>
+                Phương thức thanh toán
+              </h3>
+              <!-- <button @click="currentStep = 1" class="text-sm text-primary hover:underline font-medium">Chỉnh sửa</button> -->
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg" :class="paymentMethodStyle.bg">
+                {{ paymentMethodStyle.icon }}
+              </div>
+              <div>
+                <p class="font-medium">{{ paymentMethodStyle.label }}</p>
+                <p class="text-xs text-muted-foreground">{{ paymentMethodStyle.desc }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Items Review -->
+          <div class="bg-card rounded-xl border p-6">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+                <path d="m3.3 7 8.7 5 8.7-5"/>
+                <path d="M12 22V12"/>
+              </svg>
+              Sản phẩm ({{ checkoutItems.length }})
+            </h3>
+            <div class="space-y-3">
+              <div
+                v-for="item in checkoutItems"
+                :key="item.id"
+                class="flex items-center gap-4 p-3 bg-muted/50 rounded-lg"
+              >
+                <div class="w-16 h-16 bg-gray-100 rounded-md shrink-0 overflow-hidden border">
+                  <img v-if="item.thumbnail" :src="item.thumbnail" :alt="item.name" class="w-full h-full object-cover" />
+                  <div v-else class="w-full h-full flex items-center justify-center text-gray-400 text-xl">📦</div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-medium text-sm truncate">{{ item.name }}</p>
+                  <p class="text-xs text-muted-foreground mt-0.5">SL: {{ item.quantity }} × {{ formatCurrency(item.price) }}</p>
+                </div>
+                <p class="font-bold text-primary text-sm whitespace-nowrap">{{ formatCurrency(item.price * item.quantity) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Price Summary + Actions -->
+        <div class="lg:col-span-1">
+          <div class="bg-card rounded-xl border p-6 sticky top-24">
+            <h3 class="font-semibold text-lg mb-4">Tóm tắt thanh toán</h3>
+
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between">
+                <span class="text-muted-foreground">Tạm tính ({{ checkoutItems.length }} sản phẩm)</span>
+                <span>{{ formatCurrency(subtotal) }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-muted-foreground">Phí vận chuyển</span>
+                <span>{{ shippingFee === 0 ? 'Miễn phí' : formatCurrency(shippingFee) }}</span>
+              </div>
+              <div v-if="appliedDiscount > 0" class="flex justify-between">
+                <span class="text-muted-foreground">Giảm giá</span>
+                <span class="text-green-600">-{{ formatCurrency(appliedDiscount) }}</span>
+              </div>
+              <div v-if="appliedCoupon" class="flex justify-between">
+                <span class="text-muted-foreground">Voucher</span>
+                <span class="text-green-600 font-medium">{{ appliedCoupon }}</span>
+              </div>
+              <div class="border-t border-border pt-3 flex justify-between font-bold text-xl">
+                <span>Tổng cộng</span>
+                <span class="text-primary">{{ formatCurrency(total) }}</span>
+              </div>
+            </div>
+
+            <button
+              @click="handleCheckout"
+              :disabled="isOrdering"
+              class="w-full mt-6 h-12 rounded-md bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <svg v-if="!isOrdering" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m9 12 2 2 4-4"/>
+                <circle cx="12" cy="12" r="10"/>
+              </svg>
+              <span v-if="isOrdering">Đang xử lý...</span>
+              <span v-else>Xác nhận đặt hàng</span>
+            </button>
+
+            <button
+              @click="currentStep = 1"
+              class="w-full mt-3 h-10 rounded-md border border-border text-foreground font-medium hover:bg-muted/50 transition-colors flex items-center justify-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5"/>
+                <path d="M12 19l-7-7 7-7"/>
+              </svg>
+              Quay lại
+            </button>
+
+            <p class="text-xs text-center text-muted-foreground mt-4">
+              Bằng việc đặt hàng, bạn đồng ý với <a href="#" class="underline hover:text-foreground">Điều khoản dịch vụ</a> của chúng tôi.
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -392,6 +578,7 @@ const userAddresses = ref([])
 const selectedAddressId = ref(null)
 const isOrdering = ref(false)
 const saveAddress = ref(false)
+const currentStep = ref(1)
 const isManualAddress = ref(false)
 
 // Location Data
@@ -643,19 +830,41 @@ watch(showVoucherModal, (val) => {
     if (val) fetchAvailableCoupons()
 })
 
-const handleCheckout = async () => {
+// Full address computed for review step
+const fullAddress = computed(() => {
+  const parts = [form.value.address, form.value.ward, form.value.district, form.value.city].filter(Boolean)
+  return parts.join(', ')
+})
+
+// Payment method display info for review step
+const paymentMethodStyle = computed(() => {
+  const map = {
+    cod: { label: 'Thanh toán khi nhận hàng (COD)', desc: 'Thanh toán bằng tiền mặt khi nhận hàng', icon: '💵', bg: 'bg-green-100' },
+    banking: { label: 'Chuyển khoản ngân hàng', desc: 'Hỗ trợ QR Code / Tất cả ngân hàng', icon: '🏦', bg: 'bg-blue-100' },
+    momo: { label: 'Ví điện tử MoMo', desc: 'Thanh toán nhanh qua ứng dụng MoMo', icon: '📱', bg: 'bg-pink-100' },
+    vnpay: { label: 'VNPay QR / Thẻ ATM', desc: 'Quét mã QR hoặc dùng thẻ nội địa/quốc tế', icon: '💳', bg: 'bg-blue-50' },
+  }
+  return map[form.value.paymentMethod] || map.cod
+})
+
+// Validate and go to review step
+const goToReview = () => {
   if (checkoutItems.value.length === 0) {
     toast.warning('Vui lòng chọn sản phẩm để thanh toán')
     router.push('/cart')
     return
   }
 
-  // Validate
   if (!form.value.name || !form.value.phone || !form.value.address || !form.value.city || !form.value.district) {
     toast.warning('Vui lòng điền đầy đủ thông tin giao hàng')
     return
   }
 
+  currentStep.value = 2
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+const handleCheckout = async () => {
   isOrdering.value = true
   try {
     // 1. Save address if requested
@@ -739,7 +948,7 @@ const handleCheckout = async () => {
 
       toast.success('Đặt hàng thành công!')
       cartStore.removePurchasedItems()
-      router.push('/')
+      router.push(`/orders/${json.data.id}`)
     } else {
       toast.error(json.message || 'Đặt hàng thất bại')
     }

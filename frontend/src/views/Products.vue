@@ -159,11 +159,19 @@
           </div>
         </div>
 
-        <!-- Product Grid -->
-        <div v-if="loading" class="flex justify-center py-20">
-          <div
-            class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"
-          ></div>
+        <!-- Skeleton Loading -->
+        <div v-if="loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div v-for="n in 8" :key="n" class="bg-card rounded-xl border overflow-hidden animate-pulse">
+            <div class="aspect-[3/4] bg-gray-200"></div>
+            <div class="p-3 space-y-3">
+              <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div class="h-5 bg-gray-200 rounded w-1/3"></div>
+              <div class="flex gap-1">
+                <div v-for="s in 5" :key="s" class="h-3 w-3 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div
@@ -196,7 +204,7 @@
             <!-- Image -->
             <div 
               class="relative aspect-[3/4] overflow-hidden p-[2px] bg-transparent cursor-pointer"
-              @click="goToDetail(product.id)"
+              @click="goToDetail(product.slug || product.id)"
             >
               <img 
                 :src="product.thumbnail || 'https://via.placeholder.com/300x400?text=No+Image'" 
@@ -221,7 +229,7 @@
               <h3 
                 class="text-sm font-medium text-card-foreground line-clamp-2 mb-1 group-hover:text-primary transition-colors cursor-pointer leading-snug"
                 :title="product.name"
-                @click="goToDetail(product.id)"
+                @click="goToDetail(product.slug || product.id)"
               >
                 {{ product.name }}
               </h3>
@@ -454,7 +462,7 @@ const toggleFavorite = (product) => {
 };
 
 const goToDetail = (id) => {
-  router.push(`/products/${id}`);
+  router.push(`/san-pham/${id}`);
 };
 
 const products = ref([]);

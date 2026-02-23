@@ -148,3 +148,20 @@ export const createUser = async (req, res) => {
     });
   }
 };
+
+export const adminResetPassword = async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    const result = await userService.adminResetPassword(req.params.id, newPassword);
+    
+    res.status(200).json({
+      status: true,
+      message: result.message
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: false,
+      message: err.message
+    });
+  }
+};

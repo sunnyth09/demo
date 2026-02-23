@@ -12,7 +12,7 @@ export const getRevenueAnalytics = async (startDate, endDate, type = 'daily') =>
   // 1. Overall Stats in Range
   const totalRevenue = await Order.sum('total_amount', {
     where: {
-      status: 'completed',
+      status: 'delivered',
       createdAt: { [Op.between]: [start, end] }
     }
   }) || 0;
@@ -26,7 +26,7 @@ export const getRevenueAnalytics = async (startDate, endDate, type = 'daily') =>
 
   const completedOrders = await Order.count({
     where: {
-      status: 'completed',
+      status: 'delivered',
       createdAt: { [Op.between]: [start, end] }
     }
   });

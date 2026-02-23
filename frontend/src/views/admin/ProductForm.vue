@@ -57,6 +57,7 @@
             </label>
             <input 
               v-model="form.slug" 
+              @input="slugManuallyEdited = true"
               type="text" 
               class="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent font-mono text-sm"
               placeholder="vd: sach-dac-nhan-tam"
@@ -266,23 +267,30 @@
         <div class="border-t pt-6">
           <label class="block text-sm font-medium mb-2">Thư viện ảnh (Gallery)</label>
           <div class="space-y-4">
-            <!-- Existing Images (View Only) -->
-            <div v-if="existingImages.length > 0 && imageFiles.length === 0" class="space-y-2">
+            <!-- Existing Images -->
+            <div v-if="existingImages.length > 0" class="space-y-2">
               <p class="text-sm text-muted-foreground">Ảnh hiện tại:</p>
               <div class="flex flex-wrap gap-4">
                 <div v-for="(img, idx) in existingImages" :key="idx" class="w-24 h-24 rounded-lg border overflow-hidden relative group bg-muted">
                   <img :src="img" class="w-full h-full object-cover" />
+                  <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <button 
+                      type="button"
+                      @click="removeExistingImage(idx)"
+                      class="p-2 bg-destructive text-white rounded-full hover:bg-destructive/90"
+                      title="Xóa ảnh"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Warning if replacing -->
-            <div v-if="existingImages.length > 0 && imageFiles.length > 0" class="p-3 rounded-md bg-yellow-50 text-yellow-800 text-sm flex items-start gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-              <span>Lưu ý: Các ảnh cũ sẽ bị thay thế bởi danh sách ảnh mới này.</span>
-            </div>
+
+
 
             <!-- New Images Preview -->
             <div v-if="imagePreviews.length > 0" class="space-y-2">
@@ -432,6 +440,7 @@ const thumbnailPreview = ref('')
 const imageFiles = ref([])
 const imagePreviews = ref([])
 const existingImages = ref([]) // Ảnh cũ từ server
+const removedExistingImages = ref(false) // Đánh dấu đã xóa ảnh cũ
 
 const form = ref({
   name: '',
@@ -460,8 +469,9 @@ const toast = ref({
 const errors = ref({})
 
 // Auto generate slug from name
+const slugManuallyEdited = ref(false)
 const autoGenerateSlug = () => {
-  if (!isEditing.value || !form.value.slug) {
+  if (!slugManuallyEdited.value) {
     form.value.slug = form.value.name
       .toLowerCase()
       .normalize('NFD')
@@ -575,6 +585,12 @@ const removeImage = (index) => {
   imageFiles.value.splice(index, 1)
 }
 
+// Remove existing image
+const removeExistingImage = (index) => {
+  existingImages.value.splice(index, 1)
+  removedExistingImages.value = true
+}
+
 // Clear all new images
 const clearNewImages = () => {
   imagePreviews.value.forEach(img => URL.revokeObjectURL(img.url))
@@ -624,9 +640,14 @@ const saveProduct = async () => {
 
   // Validate Publication Year
   const currentYear = new Date().getFullYear()
-  if (form.value.publication_year && form.value.publication_year > currentYear) {
-    errors.value.publication_year = `Năm xuất bản không được lớn hơn năm hiện tại (${currentYear})`
-    isValid = false
+  if (form.value.publication_year) {
+    if (form.value.publication_year < 1800) {
+      errors.value.publication_year = 'Năm xuất bản không được nhỏ hơn 1800'
+      isValid = false
+    } else if (form.value.publication_year > currentYear) {
+      errors.value.publication_year = `Năm xuất bản không được lớn hơn năm hiện tại (${currentYear})`
+      isValid = false
+    }
   }
 
   // Validate Discount Dates
@@ -714,6 +735,17 @@ const saveProduct = async () => {
         formData.append('images', file)
       })
     }
+
+    // Gửi danh sách ảnh cũ cần giữ lại (nếu có xóa ảnh cũ)
+    if (isEditing.value && removedExistingImages.value) {
+      existingImages.value.forEach(url => {
+        formData.append('existing_images', url)
+      })
+      // Nếu đã xóa hết ảnh cũ, gửi mảng rỗng
+      if (existingImages.value.length === 0) {
+        formData.append('existing_images', '')
+      }
+    }
     
     const url = isEditing.value 
       ? `${API_URL}/products/${productId.value}` 
@@ -778,7 +810,7 @@ onMounted(async () => {
           ['bold', 'italic', 'underline', 'strike'],
           [{ 'list': 'ordered'}, { 'list': 'bullet' }],
           [{ 'color': [] }, { 'background': [] }], 
-          ['link', 'clean']
+          ['link', 'image', 'clean']
         ]
       }
     })
@@ -791,6 +823,51 @@ onMounted(async () => {
     // Sync change
     quill.on('text-change', () => {
       form.value.description = quill.root.innerHTML
+    })
+
+    // Custom image handler: upload lên server thay vì embed base64
+    quill.getModule('toolbar').addHandler('image', () => {
+      const input = document.createElement('input')
+      input.setAttribute('type', 'file')
+      input.setAttribute('accept', 'image/*')
+      input.click()
+
+      input.onchange = async () => {
+        const file = input.files[0]
+        if (!file) return
+
+        // Validate size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('Ảnh không được vượt quá 5MB', 'error')
+          return
+        }
+
+        try {
+          const formData = new FormData()
+          formData.append('image', file)
+
+          const res = await fetch(`${API_URL}/upload/editor-image`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${authStore.accessToken}`
+            },
+            body: formData
+          })
+
+          const json = await res.json()
+
+          if (json.status && json.url) {
+            const range = quill.getSelection(true)
+            quill.insertEmbed(range.index, 'image', json.url)
+            quill.setSelection(range.index + 1)
+          } else {
+            showToast(json.message || 'Lỗi khi upload ảnh', 'error')
+          }
+        } catch (err) {
+          console.error('Editor image upload error:', err)
+          showToast('Lỗi khi upload ảnh vào mô tả', 'error')
+        }
+      }
     })
   }
 })
@@ -809,5 +886,14 @@ input.no-spinner::-webkit-inner-spin-button {
 input.no-spinner {
   -moz-appearance: textfield;
   appearance: textfield;
+}
+
+/* Giới hạn kích thước ảnh trong Quill editor */
+#editor-container :deep(img) {
+  max-width: 30%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 0.5rem auto;
+  display: block;
 }
 </style>

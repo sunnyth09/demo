@@ -77,7 +77,7 @@
       
       <!-- CTA -->
       <div class="text-center pt-8">
-        <router-link to="/products" class="inline-block bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-xl font-bold text-lg transition-transform hover:scale-105 shadow-lg">
+        <router-link to="/san-pham" class="inline-block bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-xl font-bold text-lg transition-transform hover:scale-105 shadow-lg">
           Bắt đầu mua sắm ngay
         </router-link>
       </div>

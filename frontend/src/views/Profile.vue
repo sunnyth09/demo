@@ -1,5 +1,5 @@
 <template>
-  <div class="container max-w-7xl mx-auto px-4 py-12">
+  <div class="container max-w-7xl mx-auto px-4 py-12 overflow-hidden">
     <div class="grid md:grid-cols-4 gap-8">
       <!-- Sidebar -->
       <div class="md:col-span-1">
@@ -80,7 +80,7 @@
       </div>
 
       <!-- Main Content -->
-      <div class="md:col-span-3 space-y-6">
+      <div class="md:col-span-3 space-y-6 min-w-0">
         <!-- Profile Info -->
         <div v-if="activeTab === 'profile'" class="bg-card rounded-xl border p-6">
           <div class="flex items-center justify-between mb-6">
@@ -118,16 +118,16 @@
         </div>
 
         <!-- Recent Orders -->
-        <div v-if="activeTab === 'profile' || activeTab === 'orders'" class="bg-card rounded-xl border p-6">
+        <div v-if="activeTab === 'profile' || activeTab === 'orders'" class="bg-card rounded-xl border p-6 overflow-hidden">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-bold">{{ activeTab === 'orders' ? 'Tất cả đơn hàng' : 'Đơn hàng gần đây' }}</h2>
             <a v-if="activeTab === 'profile'" href="#" @click.prevent="activeTab = 'orders'" class="text-sm text-primary hover:underline">Xem tất cả</a>
           </div>
           <div v-if="recentOrders.length > 0" class="space-y-4">
-            <router-link v-for="order in recentOrders" :key="order.id" :to="`/orders/${order.id}`" class="border rounded-lg p-4 md:p-5 hover:shadow-md transition-all cursor-pointer bg-white group block">
-              <div class="flex flex-col md:flex-row md:items-center gap-3 md:gap-6">
+            <router-link v-for="order in recentOrders" :key="order.id" :to="`/orders/${order.id}`" class="border rounded-lg p-4 md:p-5 hover:shadow-md transition-all cursor-pointer bg-white group block overflow-hidden">
+              <div class="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
                 <!-- Col 1: Basic Info -->
-                <div class="w-full md:w-[250px] md:shrink-0">
+                <div class="w-full md:w-[200px] md:shrink-0">
                    <div class="flex items-center gap-2 mb-1">
                       <span class="font-mono font-medium text-base md:text-lg text-gray-900 group-hover:text-primary transition-colors" :title="order.order_code">#{{ order.order_code ? order.order_code.slice(0, 8).toUpperCase() : order.id }}</span>
                       <span :class="['px-2 py-0.5 rounded-full text-xs font-medium md:hidden', getStatusClass(order.status)]">
@@ -139,7 +139,7 @@
                 </div>
 
                 <!-- Col 2: Status Message (Center) - Hidden on Mobile -->
-                <div class="hidden md:flex flex-1 px-4 justify-center">
+                <div class="hidden md:flex flex-1 min-w-0 px-4 justify-center">
                    <div class="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-full border border-gray-100 max-w-sm">
                       <component :is="getStatusIcon(order.status)" :class="['w-5 h-5', getStatusColor(order.status)]" />
                       <span class="text-sm font-medium text-gray-700 line-clamp-1 truncate" :title="getStatusMessage(order.status)">
@@ -149,7 +149,7 @@
                 </div>
 
                 <!-- Col 3: Status & Price & Action -->
-                <div class="flex items-center justify-between md:w-[250px] md:shrink-0 md:flex-col md:items-end gap-2">
+                <div class="flex items-center justify-between md:w-[180px] md:shrink-0 md:flex-col md:items-end gap-2">
                    <p class="font-medium text-primary text-lg md:text-xl">{{ formatCurrency(order.total_amount) }}</p>
                    <span :class="['px-3 py-1 rounded-full text-xs font-medium hidden md:inline-block', getStatusClass(order.status)]">
                      {{ getStatusLabel(order.status) }}
@@ -198,7 +198,7 @@
               <!-- Image Container -->
               <div 
                  class="relative aspect-[2/3] overflow-hidden rounded-lg bg-gray-100 cursor-pointer mb-3"
-                 @click="router.push(`/products/${fav.product.id}`)"
+                 @click="router.push(`/san-pham/${fav.product.slug || fav.product.id}`)"
               >
                 <img 
                   :src="fav.product.thumbnail || 'https://via.placeholder.com/300x400?text=No+Image'" 
@@ -222,7 +222,7 @@
               <div class="flex flex-col">
                   <!-- Title -->
                   <h3 class="font-medium text-gray-900 line-clamp-2 mb-2 min-h-[3rem] cursor-pointer hover:text-primary transition-colors leading-snug"
-                      @click="router.push(`/products/${fav.product.id}`)"
+                      @click="router.push(`/san-pham/${fav.product.slug || fav.product.id}`)"
                       :title="fav.product.name"
                   >
                       {{ fav.product.name }}

@@ -61,38 +61,46 @@ export const getOrderStats = async (days = 7) => {
     limit: 5
   });
 
-  // 4. Revenue Chart
-  const revenueChart = [];
+  // 4. Revenue Chart - Single batch query instead of N+1
   const today = new Date();
-  
+  const startDate = new Date(today);
+  startDate.setDate(startDate.getDate() - (days - 1));
+  startDate.setHours(0, 0, 0, 0);
+
+  const endDate = new Date(today);
+  endDate.setHours(23, 59, 59, 999);
+
+  const deliveredOrders = await Order.findAll({
+    attributes: ['total_amount', 'createdAt'],
+    where: {
+      status: 'delivered',
+      createdAt: { [Op.between]: [startDate, endDate] }
+    },
+    raw: true
+  });
+
+  // Build date map with empty days pre-filled
+  const revenueMap = new Map();
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
     const dateString = date.toISOString().split('T')[0];
-    
-    // Start of day
-    const startOfDay = new Date(dateString);
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    // End of day
-    const endOfDay = new Date(dateString);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const dailyRevenue = await Order.sum('total_amount', {
-      where: {
-        status: 'delivered',
-        createdAt: {
-          [Op.between]: [startOfDay, endOfDay]
-        }
-      }
-    }) || 0;
-
-    revenueChart.push({
+    revenueMap.set(dateString, {
       date: dateString,
       day: `${date.getDate()}/${date.getMonth() + 1}`,
-      revenue: dailyRevenue
+      revenue: 0
     });
   }
+
+  // Aggregate revenue from batch query
+  deliveredOrders.forEach(order => {
+    const dateKey = new Date(order.createdAt).toISOString().split('T')[0];
+    if (revenueMap.has(dateKey)) {
+      revenueMap.get(dateKey).revenue += parseFloat(order.total_amount) || 0;
+    }
+  });
+
+  const revenueChart = Array.from(revenueMap.values());
 
   return {
     counts: {

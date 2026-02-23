@@ -16,6 +16,7 @@ import CouponUsage from './CouponUsage.js';
 import Contact from './Contact.js';
 import Cart from './Cart.js';
 import CartItem from './CartItem.js';
+import OrderStatusLog from './OrderStatusLog.js';
 
 // ========== ĐỊNH NGHĨA QUAN HỆ GIỮA CÁC MODELS ==========
 
@@ -235,6 +236,27 @@ Product.hasMany(CartItem, {
   as: 'inCarts'
 });
 
+// ========== ORDER STATUS LOG ASSOCIATIONS ==========
+Order.hasMany(OrderStatusLog, {
+  foreignKey: 'order_id',
+  as: 'statusLogs'
+});
+
+OrderStatusLog.belongsTo(Order, {
+  foreignKey: 'order_id',
+  as: 'order'
+});
+
+User.hasMany(OrderStatusLog, {
+  foreignKey: 'changed_by',
+  as: 'statusChanges'
+});
+
+OrderStatusLog.belongsTo(User, {
+  foreignKey: 'changed_by',
+  as: 'changedByUser'
+});
+
 // ========== HÀM ĐỒNG BỘ DATABASE ==========
 
 /**
@@ -263,5 +285,5 @@ export const syncDatabase = async (options = {}) => {
 };
 
 // Export tất cả models
-export { sequelize, Category, Product, User, Address, Order, OrderItem, ShippingZone, Coupon, Article, Favorite, Review, ReviewReport, UserCoupon, CouponUsage, Contact, Cart, CartItem };
+export { sequelize, Category, Product, User, Address, Order, OrderItem, OrderStatusLog, ShippingZone, Coupon, Article, Favorite, Review, ReviewReport, UserCoupon, CouponUsage, Contact, Cart, CartItem };
 

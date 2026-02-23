@@ -109,4 +109,11 @@ router.delete(
   userController.deleteUser
 );
 
+router.put(
+  "/admin/users/:id/reset-password",
+  checkToken,
+  checkAdmin,
+  userController.adminResetPassword
+);
+
 export default router;

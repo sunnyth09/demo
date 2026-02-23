@@ -6,6 +6,41 @@ import { sendCouponEmail } from "./email.service.js";
  * Create a new coupon
  */
 export const createCoupon = async (data) => {
+  // === INPUT VALIDATION ===
+  if (!data.code || typeof data.code !== 'string' || data.code.trim().length === 0) {
+    throw new Error("Mã giảm giá (code) là bắt buộc");
+  }
+
+  const validTypes = ['fixed', 'percentage', 'free_shipping'];
+  if (!data.type || !validTypes.includes(data.type)) {
+    throw new Error(`Loại mã phải là một trong: ${validTypes.join(', ')}`);
+  }
+
+  if (data.type !== 'free_shipping') {
+    if (data.value === undefined || data.value === null || isNaN(data.value) || Number(data.value) <= 0) {
+      throw new Error("Giá trị giảm giá phải là số dương");
+    }
+    if (data.type === 'percentage' && Number(data.value) > 100) {
+      throw new Error("Giảm giá phần trăm không được vượt quá 100%");
+    }
+  }
+
+  if (data.quantity !== undefined && (isNaN(data.quantity) || Number(data.quantity) < 0)) {
+    throw new Error("Số lượng phải là số không âm");
+  }
+
+  if (data.start_date && data.end_date && new Date(data.start_date) > new Date(data.end_date)) {
+    throw new Error("Ngày bắt đầu phải trước ngày kết thúc");
+  }
+
+  if (data.min_order_amount !== undefined && (isNaN(data.min_order_amount) || Number(data.min_order_amount) < 0)) {
+    throw new Error("Giá trị đơn hàng tối thiểu phải là số không âm");
+  }
+
+  if (data.max_discount_amount !== undefined && (isNaN(data.max_discount_amount) || Number(data.max_discount_amount) < 0)) {
+    throw new Error("Giảm giá tối đa phải là số không âm");
+  }
+
   // Check if code exists
   const existing = await Coupon.findOne({ where: { code: data.code } });
   if (existing) {
@@ -453,7 +488,41 @@ export const updateCoupon = async (id, data) => {
   if (!coupon) {
     throw new Error("Mã giảm giá không tồn tại");
   }
-  await coupon.update(data);
+
+  // Filter allowed fields to prevent manipulation of internal fields
+  const allowedFields = [
+    'code', 'description', 'type', 'value', 'quantity',
+    'min_order_amount', 'max_discount_amount', 'max_uses_per_user',
+    'start_date', 'end_date', 'is_active', 'is_public',
+    'for_first_order_only', 'category_id'
+  ];
+  const filteredData = {};
+  for (const key of allowedFields) {
+    if (data[key] !== undefined) {
+      filteredData[key] = data[key];
+    }
+  }
+
+  // Validate type if changing
+  if (filteredData.type) {
+    const validTypes = ['fixed', 'percentage', 'free_shipping'];
+    if (!validTypes.includes(filteredData.type)) {
+      throw new Error(`Loại mã phải là một trong: ${validTypes.join(', ')}`);
+    }
+  }
+
+  // Validate value if changing
+  if (filteredData.value !== undefined) {
+    if (isNaN(filteredData.value) || Number(filteredData.value) <= 0) {
+      throw new Error("Giá trị giảm giá phải là số dương");
+    }
+    const effectiveType = filteredData.type || coupon.type;
+    if (effectiveType === 'percentage' && Number(filteredData.value) > 100) {
+      throw new Error("Giảm giá phần trăm không được vượt quá 100%");
+    }
+  }
+
+  await coupon.update(filteredData);
 
   // Gửi email thông báo cho tất cả user nếu được yêu cầu (ngay cả khi update)
   if (data.notifyUsers && coupon.is_public && coupon.is_active) {

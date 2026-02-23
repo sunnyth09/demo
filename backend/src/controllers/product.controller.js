@@ -83,3 +83,20 @@ export const remove = async (req, res) => {
     });
   }
 };
+
+export const restore = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await ProductService.restore(id);
+    res.status(200).json({
+      status: true,
+      message: "Khôi phục sản phẩm thành công",
+      data: product
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: false,
+      message: error.message,
+    });
+  }
+};

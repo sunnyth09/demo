@@ -36,8 +36,8 @@ const routes = [
     children: [
       { path: '', name: 'home', component: Home, meta: { title: 'Trang chủ', description: 'Ocean Books - Đại dương tri thức, nơi cung cấp sách hay nhất Việt Nam' } },
       { path: 'about', name: 'about', component: About, meta: { title: 'Giới thiệu', description: 'Tìm hiểu về Ocean Books - Sứ mệnh mang tri thức đến mọi người' } },
-      { path: 'products', name: 'products', component: Products, meta: { title: 'Sản phẩm', description: 'Khám phá hàng ngàn đầu sách từ Ocean Books với giá ưu đãi' } },
-      { path: 'products/:id', name: 'product-detail', component: () => import('@/views/ProductDetail.vue'), meta: { title: 'Chi tiết sản phẩm' } },
+      { path: 'san-pham', name: 'products', component: Products, meta: { title: 'Sản phẩm', description: 'Khám phá hàng ngàn đầu sách từ Ocean Books với giá ưu đãi' } },
+      { path: 'san-pham/:id', name: 'product-detail', component: () => import('@/views/ProductDetail.vue'), meta: { title: 'Chi tiết sản phẩm' } },
       { path: 'login', name: 'login', component: Login, meta: { title: 'Đăng nhập', description: 'Đăng nhập tài khoản Ocean Books để mua sắm và quản lý đơn hàng' } },
       { path: 'auth/callback', name: 'auth-callback', component: () => import('@/views/AuthCallback.vue'), meta: { title: 'Đang xử lý đăng nhập...' } },
       { path: 'register', name: 'register', component: Register, meta: { title: 'Đăng ký', description: 'Tạo tài khoản Ocean Books miễn phí để nhận ưu đãi hấp dẫn' } },
@@ -47,6 +47,7 @@ const routes = [
       { path: 'profile', name: 'profile', component: () => import('@/views/Profile.vue'), meta: { title: 'Tài khoản' } },
       { path: 'orders', name: 'orders', component: () => import('@/views/Profile.vue'), meta: { title: 'Đơn hàng của tôi' } },
       { path: 'orders/:id', name: 'order-detail', component: () => import('@/views/OrderDetail.vue'), meta: { title: 'Chi tiết đơn hàng' } },
+
       { path: 'articles', name: 'articles', component: () => import('@/views/Articles.vue'), meta: { title: 'Góc đọc sách', description: 'Góc đọc sách - Chia sẻ kiến thức và review sách hay từ cộng đồng' } },
       { path: 'articles/:id', name: 'article-detail', component: () => import('@/views/ArticleDetail.vue'), meta: { title: 'Chi tiết bài viết' } },
       { path: 'favorites', name: 'favorites', component: () => import('@/views/Favorites.vue'), meta: { title: 'Sản phẩm yêu thích' } },
@@ -116,20 +117,44 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  document.title = to.meta.title ? `${to.meta.title} | Ocean Books` : 'Ocean Books'
+  const pageTitle = to.meta.title ? `${to.meta.title} | Ocean Books` : 'Ocean Books'
+  document.title = pageTitle
 
-  // Update meta description for SEO
-  const descMeta = document.querySelector('meta[name="description"]')
-  if (to.meta.description) {
-    if (descMeta) {
-      descMeta.setAttribute('content', to.meta.description)
-    } else {
-      const meta = document.createElement('meta')
-      meta.name = 'description'
-      meta.content = to.meta.description
-      document.head.appendChild(meta)
+  // Helper to set meta tags
+  const setMeta = (name, content, isProperty = false) => {
+    const attr = isProperty ? 'property' : 'name'
+    let el = document.querySelector(`meta[${attr}="${name}"]`)
+    if (content) {
+      if (el) {
+        el.setAttribute('content', content)
+      } else {
+        el = document.createElement('meta')
+        el.setAttribute(attr, name)
+        el.content = content
+        document.head.appendChild(el)
+      }
+    } else if (el) {
+      el.remove()
     }
   }
+
+  const desc = to.meta.description || 'Ocean Books - Đại dương tri thức, nơi cung cấp sách hay nhất Việt Nam'
+  const fullUrl = `${window.location.origin}${to.fullPath}`
+
+  // Standard meta
+  setMeta('description', desc)
+
+  // Open Graph
+  setMeta('og:title', pageTitle, true)
+  setMeta('og:description', desc, true)
+  setMeta('og:url', fullUrl, true)
+  setMeta('og:type', 'website', true)
+  setMeta('og:site_name', 'Ocean Books', true)
+
+  // Twitter Card
+  setMeta('twitter:card', 'summary_large_image')
+  setMeta('twitter:title', pageTitle)
+  setMeta('twitter:description', desc)
 
   // Kiểm tra phân quyền admin
   if (to.matched.some(record => record.meta.requiresAdmin)) {

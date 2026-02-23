@@ -181,6 +181,19 @@ export const deleteUser = async (userId, currentUserId) => {
   if (!user) {
     throw new Error("Không tìm thấy người dùng");
   }
+
+  // Check for active orders (prevent orphan orders)
+  const { Order } = await import("../models/sequelize/index.js");
+  const activeOrderCount = await Order.count({
+    where: {
+      user_id: userId,
+      status: { [Op.notIn]: ['delivered', 'cancelled'] }
+    }
+  });
+
+  if (activeOrderCount > 0) {
+    throw new Error(`Không thể xóa: Người dùng có ${activeOrderCount} đơn hàng đang xử lý. Hãy hoàn tất hoặc hủy đơn hàng trước.`);
+  }
   
   await user.destroy();
 };
@@ -209,4 +222,26 @@ export const createUser = async (data) => {
     role: data.role || 'user',
     phone: data.phone || null
   });
+};
+
+/**
+ * Admin reset password cho user
+ */
+export const adminResetPassword = async (userId, newPassword) => {
+  const user = await User.findByPk(userId);
+  
+  if (!user) {
+    throw new Error("Không tìm thấy người dùng");
+  }
+
+  if (!newPassword || newPassword.length < 6) {
+    throw new Error("Mật khẩu mới phải có ít nhất 6 ký tự");
+  }
+  
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(newPassword, salt);
+  
+  await user.update({ password: hashedPassword });
+  
+  return { message: "Đã reset mật khẩu thành công" };
 };

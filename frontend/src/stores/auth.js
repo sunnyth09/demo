@@ -118,7 +118,33 @@ export const useAuthStore = defineStore('auth', () => {
       }
       return false;
     } catch {
+      // Access token expired — try silent refresh
+      const refreshed = await silentRefresh();
+      if (refreshed) return true;
       logout();
+      return false;
+    }
+  }
+
+  // Silent refresh — get new access token using refresh token
+  async function silentRefresh() {
+    if (!refreshToken.value) return false;
+    try {
+      const result = await authApi.refreshToken(refreshToken.value);
+      if (result.status) {
+        accessToken.value = result.accessToken;
+        refreshToken.value = result.refreshToken;
+        user.value = result.user;
+
+        // Detect storage type and update
+        const storage = localStorage.getItem('accessToken') ? localStorage : sessionStorage;
+        storage.setItem('accessToken', result.accessToken);
+        storage.setItem('refreshToken', result.refreshToken);
+        storage.setItem('user', JSON.stringify(result.user));
+        return true;
+      }
+      return false;
+    } catch {
       return false;
     }
   }
@@ -136,6 +162,7 @@ export const useAuthStore = defineStore('auth', () => {
     forgotPassword,
     resetPassword,
     logout,
-    verifyAuth
+    verifyAuth,
+    silentRefresh
   };
 });

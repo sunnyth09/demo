@@ -10,7 +10,7 @@
           <div class="text-6xl mb-4">🛒</div>
           <h3 class="text-xl font-semibold mb-2">Giỏ hàng trống</h3>
           <p class="text-muted-foreground mb-6">Bạn chưa có sản phẩm nào trong giỏ hàng</p>
-          <router-link to="/products">
+          <router-link to="/san-pham">
             <button class="h-10 px-6 rounded-md bg-primary text-primary-foreground font-medium">
               Tiếp tục mua sắm
             </button>

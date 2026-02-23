@@ -129,7 +129,7 @@
          <div class="relative z-10 max-w-2xl mx-auto space-y-6">
             <h2 class="text-3xl md:text-4xl font-bold">Sẵn Sàng Khám Phá Tri Thức Mới?</h2>
             <p class="text-white/80 text-lg">Hàng ngàn cuốn sách thú vị đang chờ đợi bạn. Hãy bắt đầu hành trình ngay hôm nay!</p>
-            <router-link to="/products" class="inline-flex h-12 items-center justify-center rounded-full bg-background text-primary px-8 font-bold hover:bg-white/90 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+            <router-link to="/san-pham" class="inline-flex h-12 items-center justify-center rounded-full bg-background text-primary px-8 font-bold hover:bg-white/90 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                Khám Phá Ngay
             </router-link>
          </div>

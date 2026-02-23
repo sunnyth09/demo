@@ -123,6 +123,14 @@ export const replyContact = async (req, res) => {
       });
     }
 
+    // Sanitize HTML to prevent XSS
+    const sanitizedMessage = message
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+
     // Gửi email
     await sendEmail(
       contact.email,
@@ -133,7 +141,7 @@ export const replyContact = async (req, res) => {
         <p>Cảm ơn bạn đã liên hệ với chúng tôi.</p>
         <p><strong>Nội dung phản hồi:</strong></p>
         <blockquote style="background: #f9f9f9; border-left: 5px solid #ccc; margin: 1.5em 10px; padding: 0.5em 10px;">
-          ${message.replace(/\n/g, '<br>')}
+          ${sanitizedMessage.replace(/\n/g, '<br>')}
         </blockquote>
         <hr>
         <p style="font-size: 0.9em; color: #666;">

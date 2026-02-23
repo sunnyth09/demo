@@ -42,7 +42,21 @@ class ShippingService {
     const zone = await ShippingZone.findByPk(id);
     if (!zone) return null;
     
-    await zone.update(data);
+    // Filter allowed fields
+    const allowedFields = ['name', 'provinces', 'districts', 'shipping_fee', 'free_shipping_threshold', 'priority', 'estimated_days', 'is_active'];
+    const filteredData = {};
+    for (const key of allowedFields) {
+      if (data[key] !== undefined) {
+        filteredData[key] = data[key];
+      }
+    }
+
+    // Validate shipping_fee if provided
+    if (filteredData.shipping_fee !== undefined && (isNaN(filteredData.shipping_fee) || Number(filteredData.shipping_fee) < 0)) {
+      throw new Error("Phí vận chuyển phải là số không âm");
+    }
+
+    await zone.update(filteredData);
     return zone;
   }
 

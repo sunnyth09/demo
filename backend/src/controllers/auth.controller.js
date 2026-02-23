@@ -1,4 +1,4 @@
-import { registerService, loginService, forgotPasswordService, resetPasswordService, loginWithSocial } from "../services/auth.service.js";
+import { registerService, loginService, forgotPasswordService, resetPasswordService, loginWithSocial, refreshTokenService } from "../services/auth.service.js";
 
 export const register = async (req, res) => {
   try {
@@ -80,5 +80,21 @@ export const socialCallback = async (req, res) => {
   } catch (err) {
     console.error("Social login error:", err);
     res.redirect(`${process.env.CLIENT_URL}/login?error=server_error`);
+  }
+};
+
+/**
+ * Refresh access token
+ */
+export const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken: token } = req.body;
+    if (!token) {
+      return res.status(400).json({ status: false, message: 'Refresh token là bắt buộc' });
+    }
+    const result = await refreshTokenService(token);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(401).json({ status: false, message: err.message });
   }
 };

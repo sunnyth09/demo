@@ -17,7 +17,7 @@
       >
         <div 
            class="relative aspect-[2/3] overflow-hidden rounded-lg bg-gray-100 cursor-pointer mb-3"
-           @click="goToDetail(fav.product.id)"
+           @click="goToDetail(fav.product.slug || fav.product.id)"
         >
           <img 
             :src="fav.product.thumbnail || 'https://via.placeholder.com/300x400?text=No+Image'" 
@@ -38,7 +38,7 @@
         
         <div class="flex flex-col">
             <h3 class="font-medium text-gray-900 line-clamp-2 mb-2 min-h-[3rem] cursor-pointer hover:text-primary transition-colors leading-snug"
-                @click="goToDetail(fav.product.id)"
+                @click="goToDetail(fav.product.slug || fav.product.id)"
                 :title="fav.product.name"
             >
                 {{ fav.product.name }}
@@ -67,7 +67,7 @@
        </div>
        <h3 class="text-sm font-semibold text-foreground">Chưa có sản phẩm yêu thích</h3>
        <p class="mt-1 text-sm text-muted-foreground">Hãy thêm các sản phẩm bạn thích vào đây nhé!</p>
-       <button @click="router.push('/products')" class="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+       <button @click="router.push('/san-pham')" class="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
           Khám phá sản phẩm
        </button>
     </div>
@@ -98,8 +98,8 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
-const goToDetail = (id) => {
-  router.push(`/products/${id}`);
+const goToDetail = (idOrSlug) => {
+  router.push(`/san-pham/${idOrSlug}`);
 };
 
 const removeFavorite = async (product) => {

@@ -15,7 +15,7 @@
     <!-- Image -->
     <div 
       class="relative aspect-[3/4] overflow-hidden bg-muted cursor-pointer"
-      @click="$emit('click-product', product.id)"
+      @click="$emit('click-product', product.slug || product.id)"
     >
       <img 
         :src="product.thumbnail || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800'" 
@@ -51,7 +51,7 @@
       <h3 
         class="text-sm font-medium text-card-foreground line-clamp-2 mb-2 group-hover:text-primary transition-colors cursor-pointer"
         :title="product.name"
-        @click="$emit('click-product', product.id)"
+        @click="$emit('click-product', product.slug || product.id)"
       >
         {{ product.name }}
       </h3>

@@ -49,7 +49,7 @@
 
             <!-- Buttons -->
             <div class="flex flex-wrap gap-3">
-               <router-link to="/products" class="px-5 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-semibold text-sm shadow-lg shadow-primary/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30 flex items-center gap-2 group">
+               <router-link to="/san-pham" class="px-5 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-semibold text-sm shadow-lg shadow-primary/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30 flex items-center gap-2 group">
                   Khám phá ngay
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                </router-link>
@@ -205,7 +205,7 @@
             <h2 class="text-2xl md:text-3xl font-bold text-foreground">Danh mục nổi bật</h2>
             <p class="text-muted-foreground mt-1 text-sm md:text-base">Khám phá các thể loại được yêu thích nhất</p>
           </div>
-          <router-link to="/products" class="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1 group">
+          <router-link to="/san-pham" class="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1 group">
             Xem tất cả 
             <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
           </router-link>
@@ -287,7 +287,7 @@
               </p>
               
               <div class="flex flex-wrap gap-4 items-center">
-                <router-link to="/products" class="px-6 py-3 bg-white text-foreground rounded-xl font-semibold hover:bg-white/90 transition-all shadow-md hover:-translate-y-0.5 flex items-center gap-2 text-sm group">
+                <router-link to="/san-pham" class="px-6 py-3 bg-white text-foreground rounded-xl font-semibold hover:bg-white/90 transition-all shadow-md hover:-translate-y-0.5 flex items-center gap-2 text-sm group">
                   Mua ngay
                   <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </router-link>
@@ -325,7 +325,7 @@
             <h2 class="text-2xl md:text-3xl font-bold text-foreground">Khám phá sản phẩm</h2>
             <p class="text-muted-foreground mt-1 text-sm md:text-base">Tìm kiếm cuốn sách phù hợp với bạn</p>
           </div>
-          <router-link to="/products" class="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1 group">
+          <router-link to="/san-pham" class="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1 group">
             Xem tất cả
             <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
           </router-link>
@@ -667,12 +667,12 @@ const currentTabProducts = computed(() => {
 });
 
 // Actions
-const goToDetail = (id) => {
-  router.push(`/products/${id}`);
+const goToDetail = (idOrSlug) => {
+  router.push(`/san-pham/${idOrSlug}`);
 };
 
 const goToCategory = (id) => {
-  router.push({ path: '/products', query: { category_id: id } });
+  router.push({ path: '/san-pham', query: { category_id: id } });
 };
 
 // Toast notification state

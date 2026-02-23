@@ -38,4 +38,9 @@ export const validateProduct = [
       }
       return true;
     }),
+
+  body("publication_year")
+    .optional({ nullable: true })
+    .isInt({ min: 1800, max: new Date().getFullYear() })
+    .withMessage(`Năm xuất bản phải từ 1800 đến ${new Date().getFullYear()}`),
 ];

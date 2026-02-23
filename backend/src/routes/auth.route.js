@@ -1,14 +1,17 @@
 import express from "express";
 import passport from "passport";
-import { register, login, forgotPassword, resetPassword, socialCallback } from "../controllers/auth.controller.js";
+import { register, login, forgotPassword, resetPassword, socialCallback, refreshToken } from "../controllers/auth.controller.js";
 import { registerValidate, loginValidate, handleValidate, checkToken } from "../middlewares/auth.middleware.js";
+import { loginLimiter, registerLimiter, forgotPasswordLimiter } from "../middlewares/rateLimit.middleware.js";
+import { verifyTurnstile } from "../middlewares/turnstile.middleware.js";
 
 const router = express.Router();
 
-router.post("/register", registerValidate, handleValidate, register);
-router.post("/login", loginValidate, handleValidate, login);
-router.post("/forgot-password", forgotPassword);
+router.post("/register", registerLimiter, verifyTurnstile, registerValidate, handleValidate, register);
+router.post("/login", loginLimiter, verifyTurnstile, loginValidate, handleValidate, login);
+router.post("/forgot-password", forgotPasswordLimiter, forgotPassword);
 router.post("/reset-password", resetPassword);
+router.post("/refresh-token", refreshToken);
 
 
 // Google Auth

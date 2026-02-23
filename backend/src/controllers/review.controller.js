@@ -215,7 +215,11 @@ export const getProductReviews = async (req, res) => {
 
 export const getAllReviewsAdmin = async (req, res) => {
   try {
-    const reviews = await Review.findAll({
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Review.findAndCountAll({
       include: [
         {
           model: User,
@@ -228,15 +232,66 @@ export const getAllReviewsAdmin = async (req, res) => {
           attributes: ["id", "name"]
         }
       ],
-      order: [["created_at", "DESC"]]
+      order: [["created_at", "DESC"]],
+      limit,
+      offset
     });
 
     return res.status(200).json({
       status: true,
-      data: reviews
+      data: rows,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil(count / limit)
+      }
     });
   } catch (error) {
     console.error("Get admin reviews error:", error);
+    return res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+export const getReportedReviews = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await ReviewReport.findAndCountAll({
+      include: [
+        {
+          model: Review,
+          as: "review",
+          include: [
+            { model: User, as: "user", attributes: ["id", "name"] },
+            { model: Product, as: "product", attributes: ["id", "name"] }
+          ]
+        },
+        {
+          model: User,
+          as: "reporter",
+          attributes: ["id", "name", "email"]
+        }
+      ],
+      order: [["created_at", "DESC"]],
+      limit,
+      offset
+    });
+
+    return res.status(200).json({
+      status: true,
+      data: rows,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil(count / limit)
+      }
+    });
+  } catch (error) {
+    console.error("Get reported reviews error:", error);
     return res.status(500).json({ message: "Lỗi server" });
   }
 };

@@ -138,17 +138,30 @@ export const bulkUpdate = async (ids, data) => {
     throw new Error("Vui lòng nhập danh sách ID");
   }
   
-  if (!data.name) {
-    throw new Error("Vui lòng nhập tên cần sửa");
+  if (!data || Object.keys(data).length === 0) {
+    throw new Error("Vui lòng nhập dữ liệu cần cập nhật");
   }
 
-  await Category.update(data, {
+  // Filter allowed fields
+  const allowedFields = ['name', 'parent_id', 'description', 'image', 'status'];
+  const filteredData = {};
+  for (const key of allowedFields) {
+    if (data[key] !== undefined) {
+      filteredData[key] = data[key];
+    }
+  }
+
+  if (Object.keys(filteredData).length === 0) {
+    throw new Error("Không có trường hợp lệ để cập nhật");
+  }
+
+  await Category.update(filteredData, {
     where: {
       id: { [Op.in]: ids }
     }
   });
 
-  return { ids, data };
+  return { ids, data: filteredData };
 };
 
 /**
@@ -158,6 +171,18 @@ export const remove = async (id) => {
   const existing = await Category.findByPk(id);
   if (!existing) {
     throw new Error("Không tìm thấy danh mục");
+  }
+
+  // Check for child categories
+  const childCount = await Category.count({ where: { parent_id: id } });
+  if (childCount > 0) {
+    throw new Error(`Không thể xóa: Danh mục có ${childCount} danh mục con. Hãy xóa hoặc chuyển danh mục con trước.`);
+  }
+
+  // Check for products in this category
+  const productCount = await Product.count({ where: { category_id: id } });
+  if (productCount > 0) {
+    throw new Error(`Không thể xóa: Danh mục có ${productCount} sản phẩm. Hãy chuyển sản phẩm sang danh mục khác trước.`);
   }
   
   await existing.destroy();
@@ -169,6 +194,22 @@ export const remove = async (id) => {
  */
 export const bulkRemove = async (ids) => {
   if (!ids || !ids.length) return;
+
+  // Check for products in any of these categories
+  const productCount = await Product.count({
+    where: { category_id: { [Op.in]: ids } }
+  });
+  if (productCount > 0) {
+    throw new Error(`Không thể xóa: Có ${productCount} sản phẩm thuộc các danh mục đã chọn.`);
+  }
+
+  // Check for child categories
+  const childCount = await Category.count({
+    where: { parent_id: { [Op.in]: ids } }
+  });
+  if (childCount > 0) {
+    throw new Error(`Không thể xóa: Có ${childCount} danh mục con thuộc các danh mục đã chọn.`);
+  }
   
   await Category.destroy({
     where: {
@@ -183,6 +224,14 @@ export const bulkRemove = async (ids) => {
  * Xóa tất cả danh mục
  */
 export const removeAll = async () => {
+  // Check for products referencing any category
+  const productCount = await Product.count({
+    where: { category_id: { [Op.ne]: null } }
+  });
+  if (productCount > 0) {
+    throw new Error(`Không thể xóa tất cả: Có ${productCount} sản phẩm đang thuộc các danh mục. Hãy xóa hoặc gỡ danh mục khỏi sản phẩm trước.`);
+  }
+
   await Category.destroy({
     where: {},
     truncate: true

@@ -23,9 +23,11 @@ import reviewRoute from "./routes/review.route.js";
 import paymentRoute from "./routes/payment.route.js";
 import contactRoute from "./routes/contact.route.js";
 import cartRoute from "./routes/cart.route.js";
+import uploadRoute from "./routes/upload.route.js";
 
 
 import { initBucket } from "./services/minio.service.js";
+import { apiLimiter } from "./middlewares/rateLimit.middleware.js";
 
 initBucket().catch(console.error);
 
@@ -35,6 +37,9 @@ app.use(helmet());
 app.use(morgan("dev"));
 app.use(cors());
 app.use(express.json());
+
+// Global rate limit: 100 requests / phút / IP
+app.use("/api", apiLimiter);
 
 // Session middleware for Passport OAuth
 app.use(session({
@@ -73,6 +78,7 @@ app.use("/api/reviews", reviewRoute);
 app.use("/api/payment", paymentRoute);
 app.use("/api/contacts", contactRoute);
 app.use("/api/cart", cartRoute);
+app.use("/api/upload", uploadRoute);
 
 app.use((req,res)=>{
   res.status(404).json({

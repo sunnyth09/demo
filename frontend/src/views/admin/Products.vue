@@ -150,9 +150,9 @@
               <td class="p-4">
                 <div class="flex items-center justify-center gap-2">
                   <button 
+                    @click="openPreview(product)"
                     class="p-2 rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all" 
-                    title="Xem chi tiết"
-                    disabled
+                    title="Xem nhanh"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
@@ -279,6 +279,95 @@
       </div>
     </div>
 
+    <!-- Product Preview Modal -->
+    <div v-if="showPreviewModal" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showPreviewModal = false"></div>
+      <div class="relative bg-card rounded-xl border shadow-xl w-full max-w-2xl max-h-[85vh] overflow-y-auto m-4 animate-in fade-in zoom-in-95 duration-200">
+        <!-- Close Button -->
+        <button @click="showPreviewModal = false" class="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors z-10">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+
+        <div v-if="previewProduct" class="p-6">
+          <!-- Header -->
+          <div class="flex gap-5 mb-6">
+            <div class="w-32 h-44 rounded-lg border overflow-hidden flex-shrink-0 bg-muted">
+              <img 
+                v-if="previewProduct.thumbnail" 
+                :src="previewProduct.thumbnail" 
+                :alt="previewProduct.name"
+                class="w-full h-full object-cover"
+              />
+              <div v-else class="w-full h-full flex items-center justify-center text-muted-foreground">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                </svg>
+              </div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="text-xl font-bold text-foreground mb-2 pr-8">{{ previewProduct.name }}</h3>
+              <p class="text-sm text-muted-foreground mb-3">SKU: {{ previewProduct.sku || '---' }}</p>
+              <div class="flex items-baseline gap-2">
+                <span class="text-2xl font-bold text-primary">{{ formatCurrency(previewProduct.price) }}</span>
+                <span v-if="previewProduct.original_price && previewProduct.original_price > previewProduct.price" class="text-sm text-muted-foreground line-through">
+                  {{ formatCurrency(previewProduct.original_price) }}
+                </span>
+              </div>
+              <div class="flex items-center gap-3 mt-3">
+                <span :class="['inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border', previewProduct.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200']">
+                  {{ previewProduct.status === 'active' ? 'Đang bán' : 'Ngừng bán' }}
+                </span>
+                <span class="text-sm text-muted-foreground">Tồn kho: <strong>{{ previewProduct.quantity || 0 }}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info Grid -->
+          <div class="grid grid-cols-2 gap-3 text-sm border-t pt-4 mb-4">
+            <div class="flex gap-2">
+              <span class="text-muted-foreground">Danh mục:</span>
+              <span class="font-medium">{{ previewProduct.category_name || '---' }}</span>
+            </div>
+            <div v-if="previewProduct.author" class="flex gap-2">
+              <span class="text-muted-foreground">Tác giả:</span>
+              <span class="font-medium">{{ previewProduct.author }}</span>
+            </div>
+            <div v-if="previewProduct.publisher" class="flex gap-2">
+              <span class="text-muted-foreground">NXB:</span>
+              <span class="font-medium">{{ previewProduct.publisher }}</span>
+            </div>
+            <div v-if="previewProduct.publication_year" class="flex gap-2">
+              <span class="text-muted-foreground">Năm XB:</span>
+              <span class="font-medium">{{ previewProduct.publication_year }}</span>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div v-if="previewProduct.description" class="border-t pt-4">
+            <h4 class="text-sm font-semibold mb-2 text-muted-foreground uppercase">Mô tả sản phẩm</h4>
+            <div class="product-preview-content text-sm text-foreground/80 max-h-[200px] overflow-y-auto" v-html="previewProduct.description"></div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-3 mt-6 pt-4 border-t">
+            <button @click="showPreviewModal = false" class="flex-1 px-4 py-2.5 border rounded-lg hover:bg-accent transition-colors font-medium text-sm">
+              Đóng
+            </button>
+            <button @click="showPreviewModal = false; navigateToEdit(previewProduct.id)" class="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm">
+              Chỉnh sửa
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading -->
+        <div v-else class="p-12 flex justify-center">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast -->
     <Transition
       enter-active-class="transition ease-out duration-300"
@@ -378,6 +467,25 @@ const navigateToEdit = (id) => {
     path: `/admin/products/edit/${id}`,
     query: { page: currentPage.value }
   })
+}
+
+// Preview sản phẩm
+const showPreviewModal = ref(false)
+const previewProduct = ref(null)
+
+const openPreview = async (product) => {
+  showPreviewModal.value = true
+  previewProduct.value = null
+  try {
+    const res = await fetch(`${API_URL}/products/${product.slug || product.id}`)
+    const json = await res.json()
+    if (json.status) {
+      previewProduct.value = json.data
+    }
+  } catch (err) {
+    console.error('Error fetching preview:', err)
+    showPreviewModal.value = false
+  }
 }
 
 // Fetch products
@@ -504,3 +612,13 @@ onMounted(() => {
   fetchProducts()
 })
 </script>
+
+<style scoped>
+.product-preview-content :deep(img) {
+  max-width: 30%;
+  height: auto;
+  border-radius: 0.375rem;
+  margin: 0.5rem auto;
+  display: block;
+}
+</style>

@@ -38,7 +38,7 @@
               <div class="text-xs text-gray-500">{{ review.user?.email }}</div>
             </td>
             <td class="p-4 border-b text-blue-600">
-              <router-link :to="`/products/${review.product?.id}`" target="_blank">
+              <router-link :to="`/san-pham/${review.product?.slug || review.product?.id}`" target="_blank">
                 {{ review.product?.name || 'Sản phẩm đã xóa' }}
               </router-link>
             </td>

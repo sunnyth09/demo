@@ -66,20 +66,23 @@ export const loginService = async (data) => {
   }
 
   // Determine expiration based on rememberMe
-  const expiresIn = data.rememberMe ? "30d" : "1d";
+  const accessExpiresIn = data.rememberMe ? "7d" : "1d";
+  const refreshExpiresIn = data.rememberMe ? "30d" : "7d";
+
+  const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET + '_refresh';
 
   // Tạo access token
   const accessToken = jwt.sign(
     { id: user.id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn }
+    { expiresIn: accessExpiresIn }
   );
 
-  // Tạo refresh token
+  // Tạo refresh token (separate secret, longer expiry)
   const refreshToken = jwt.sign(
-    { id: user.id },
-    process.env.JWT_SECRET,
-    { expiresIn }
+    { id: user.id, type: 'refresh' },
+    REFRESH_SECRET,
+    { expiresIn: refreshExpiresIn }
   );
 
   // Trả về thông tin user (không bao gồm password)
@@ -99,17 +102,19 @@ export const loginService = async (data) => {
  * Đăng nhập bằng Social (Google, Facebook)
  */
 export const loginWithSocial = async (user) => {
+  const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET + '_refresh';
+
   // Tạo access token
   const accessToken = jwt.sign(
     { id: user.id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "30d" } 
+    { expiresIn: "7d" } 
   );
 
-  // Tạo refresh token
+  // Tạo refresh token (separate secret)
   const refreshToken = jwt.sign(
-    { id: user.id },
-    process.env.JWT_SECRET,
+    { id: user.id, type: 'refresh' },
+    REFRESH_SECRET,
     { expiresIn: "30d" }
   );
 
@@ -198,4 +203,56 @@ export const resetPasswordService = async ({ email, otp, newPassword }) => {
   await user.save();
 
   return { message: "Đặt lại mật khẩu thành công" };
+};
+
+/**
+ * Refresh Token — tạo access token mới từ refresh token
+ */
+export const refreshTokenService = async (token) => {
+  const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET + '_refresh';
+
+  // Verify refresh token
+  let decoded;
+  try {
+    decoded = jwt.verify(token, REFRESH_SECRET);
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      throw new Error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+    }
+    throw new Error('Token không hợp lệ');
+  }
+
+  if (decoded.type !== 'refresh') {
+    throw new Error('Token không hợp lệ');
+  }
+
+  // Check user still exists
+  const user = await User.findByPk(decoded.id);
+  if (!user) {
+    throw new Error('Tài khoản không tồn tại');
+  }
+
+  // Issue new tokens
+  const accessToken = jwt.sign(
+    { id: user.id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: '1d' }
+  );
+
+  const newRefreshToken = jwt.sign(
+    { id: user.id, type: 'refresh' },
+    REFRESH_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  const userData = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    phone: user.phone,
+    created_at: user.created_at
+  };
+
+  return { status: true, accessToken, refreshToken: newRefreshToken, user: userData };
 };

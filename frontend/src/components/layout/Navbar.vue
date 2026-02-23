@@ -1,5 +1,5 @@
 <template>
-  <nav class="sticky top-0 z-50 w-full bg-background border-b border-border shadow-sm">
+  <nav class="sticky top-0 z-50 w-full bg-white border-b border-border shadow-sm">
     <div class="container max-w-7xl mx-auto flex h-14 md:h-20 items-center justify-between px-3 md:px-4">
       
       <!-- Mobile: Left Section (Hamburger Menu) -->
@@ -43,7 +43,7 @@
                 v-for="(cat, index) in categories" 
                 :key="cat.id"
                 @mouseenter="activeCategory = index"
-                @click="router.push(`/products?category_id=${cat.id}`)"
+                @click="router.push(`/san-pham?category_id=${cat.id}`)"
                 :class="['flex items-center justify-between px-4 py-3 rounded-lg cursor-pointer transition-colors', activeCategory === index ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted text-muted-foreground']"
               >
                 <span>{{ cat.name }}</span>
@@ -78,14 +78,14 @@
                 <div v-for="subGroup in categories[activeCategory].subcategories" :key="subGroup.id" class="space-y-3">
                   <h4 
                     class="font-bold text-foreground cursor-pointer hover:text-primary transition-colors"
-                    @click="router.push(`/products?category_id=${subGroup.id}`)"
+                    @click="router.push(`/san-pham?category_id=${subGroup.id}`)"
                   >
                     {{ subGroup.name }}
                   </h4>
                   <ul class="space-y-2">
                     <li v-for="item in subGroup.subcategories" :key="item.id">
                       <a 
-                        @click.prevent="router.push(`/products?category_id=${item.id}`)"
+                        @click.prevent="router.push(`/san-pham?category_id=${item.id}`)"
                         href="#" 
                         class="text-sm text-muted-foreground hover:text-primary transition-colors block"
                       >
@@ -94,7 +94,7 @@
                     </li>
                   </ul>
                   <a 
-                    @click.prevent="router.push(`/products?category_id=${subGroup.id}`)"
+                    @click.prevent="router.push(`/san-pham?category_id=${subGroup.id}`)"
                     href="#" 
                     class="text-xs text-primary font-medium hover:underline flex items-center gap-1"
                   >
@@ -136,7 +136,7 @@
             <span 
               v-for="tag in suggestions.keywords" 
               :key="tag" 
-              @click="router.push(`/products?search=${encodeURIComponent(tag)}`)"
+              @click="router.push(`/san-pham?search=${encodeURIComponent(tag)}`)"
               class="px-3 py-1 bg-muted rounded-full text-sm hover:bg-muted/80 cursor-pointer"
             >
               {{ tag }}
@@ -148,7 +148,7 @@
             <div 
               v-for="prod in suggestions.products" 
               :key="prod.id" 
-              @click="goToProduct(prod.id)"
+              @click="goToProduct(prod.slug || prod.id)"
               class="flex items-center gap-3 p-2 hover:bg-muted/30 rounded-lg cursor-pointer"
             >
               <div class="w-10 h-12 bg-muted rounded overflow-hidden flex-shrink-0">
@@ -266,13 +266,13 @@
     <!-- Mobile Search Overlay -->
     <div 
       v-if="showMobileSearch" 
-      class="md:hidden absolute top-full left-0 right-0 bg-background border-b border-border p-3 shadow-lg"
+      class="md:hidden absolute top-full left-0 right-0 bg-white border-b border-border p-3 shadow-lg"
     >
       <div class="relative flex items-center">
         <input 
           type="text" 
           placeholder="Tìm kiếm sách..." 
-          class="w-full h-10 pl-4 pr-12 rounded-lg border-2 border-border bg-background focus:border-primary focus:outline-none"
+          class="w-full h-10 pl-4 pr-12 rounded-lg border-2 border-border bg-white focus:border-primary focus:outline-none"
           v-model="searchQuery"
           @keydown.enter="handleMobileSearch"
           ref="mobileSearchInput"
@@ -303,7 +303,7 @@
     <Transition name="slide">
       <div 
         v-if="showMobileMenu"
-        class="fixed top-0 left-0 bottom-0 w-[280px] bg-background z-[101] shadow-2xl md:hidden overflow-y-auto"
+        class="fixed top-0 left-0 bottom-0 w-[280px] bg-white z-[101] shadow-2xl md:hidden overflow-y-auto"
       >
         <!-- Header -->
         <div class="flex items-center justify-between p-4 border-b border-border">
@@ -334,7 +334,7 @@
           </router-link>
 
           <router-link 
-            to="/products" 
+            to="/san-pham" 
             @click="showMobileMenu = false"
             class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors"
           >
@@ -548,24 +548,24 @@ const handleSearchBlur = () => {
 const handleSearch = () => {
   if (!searchQuery.value.trim()) return
   showSuggestions.value = false
-  router.push(`/products?search=${encodeURIComponent(searchQuery.value.trim())}`)
+  router.push(`/san-pham?search=${encodeURIComponent(searchQuery.value.trim())}`)
 }
 
 const handleMobileSearch = () => {
   if (!searchQuery.value.trim()) return
   showMobileSearch.value = false
-  router.push(`/products?search=${encodeURIComponent(searchQuery.value.trim())}`)
+  router.push(`/san-pham?search=${encodeURIComponent(searchQuery.value.trim())}`)
 }
 
 const goToProduct = (id) => {
   showSuggestions.value = false
-  router.push(`/products/${id}`)
+  router.push(`/san-pham/${id}`)
 }
 
 // Go to category and close mobile menu
 const goToCategory = (categoryId) => {
   showMobileMenu.value = false
-  router.push(`/products?category_id=${categoryId}`)
+  router.push(`/san-pham?category_id=${categoryId}`)
 }
 
 // Toggle expandable category in mobile menu

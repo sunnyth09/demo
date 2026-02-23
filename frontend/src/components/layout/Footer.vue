@@ -1,5 +1,5 @@
 <template>
-  <footer class="border-t border-border bg-muted/50 pt-16 pb-8">
+  <footer class="border-t border-border bg-white pt-16 pb-8">
     <div class="container max-w-7xl mx-auto px-4">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-12">
         <!-- Brand Column -->
@@ -28,8 +28,8 @@
           <h4 class="font-bold text-lg mb-6 text-foreground border-b-2 border-primary inline-block pb-1">Về Ocean Books</h4>
           <ul class="space-y-3">
             <li><router-link to="/about" class="text-muted-foreground hover:text-primary transition-colors hover:translate-x-1 inline-block">Câu chuyện thương hiệu</router-link></li>
-            <li><router-link to="/about" class="text-muted-foreground hover:text-primary transition-colors hover:translate-x-1 inline-block">Tuyển dụng</router-link></li>
-            <li><router-link to="/terms-of-service" class="text-muted-foreground hover:text-primary transition-colors hover:translate-x-1 inline-block">Điều khoản sử dụng</router-link></li>
+            <li><router-link to="/recruitment" class="text-muted-foreground hover:text-primary transition-colors hover:translate-x-1 inline-block">Tuyển dụng</router-link></li>
+            <li><router-link to="/terms-of-service" class="text-muted-foreground hover:text-primary transition-colors hover:translate-x-1 inline-block">Điều khoản dịch vụ</router-link></li>
             <li><router-link to="/privacy-policy" class="text-muted-foreground hover:text-primary transition-colors hover:translate-x-1 inline-block">Chính sách bảo mật</router-link></li>
           </ul>
         </div>
@@ -65,13 +65,13 @@
 
           <!-- Social Icons -->
           <div class="flex gap-4">
-            <a href="#" class="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300 group shadow-sm">
+            <a href="#" class="w-10 h-10 rounded-full bg-white border border-border flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300 group shadow-sm">
                <FacebookIcon class="w-5 h-5 text-muted-foreground group-hover:text-white transition-colors" />
             </a>
-            <a href="#" class="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-pink-600 hover:text-white transition-all duration-300 group shadow-sm">
+            <a href="#" class="w-10 h-10 rounded-full bg-white border border-border flex items-center justify-center hover:bg-pink-600 hover:text-white transition-all duration-300 group shadow-sm">
                <InstagramIcon class="w-5 h-5 text-muted-foreground group-hover:text-white transition-colors" />
             </a>
-            <a href="#" class="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-600 hover:text-white transition-all duration-300 group shadow-sm">
+            <a href="#" class="w-10 h-10 rounded-full bg-white border border-border flex items-center justify-center hover:bg-red-600 hover:text-white transition-all duration-300 group shadow-sm">
                <YoutubeIcon class="w-5 h-5 text-muted-foreground group-hover:text-white transition-colors" />
             </a>
           </div>

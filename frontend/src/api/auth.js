@@ -8,7 +8,8 @@ export const authApi = {
     const response = await axios.post(`${API_URL}/register`, {
       name: data.name,
       email: data.email,
-      password: data.password
+      password: data.password,
+      turnstileToken: data.turnstileToken
     });
     return response.data;
   },
@@ -18,7 +19,8 @@ export const authApi = {
     const response = await axios.post(`${API_URL}/login`, {
       email: data.email,
       password: data.password,
-      rememberMe: data.rememberMe
+      rememberMe: data.rememberMe,
+      turnstileToken: data.turnstileToken
     });
     return response.data;
   },
@@ -46,6 +48,12 @@ export const authApi = {
         Authorization: `Bearer ${token}`
       }
     });
+    return response.data;
+  },
+
+  // Refresh token
+  async refreshToken(refreshToken) {
+    const response = await axios.post(`${API_URL}/refresh-token`, { refreshToken });
     return response.data;
   }
 };

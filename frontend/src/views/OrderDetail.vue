@@ -73,7 +73,7 @@
             
             <!-- Hủy đơn button -->
             <button 
-              v-if="order.status !== 'delivered' && order.status !== 'cancelled' && order.status !== 'request_cancel'"
+              v-if="order.status === 'pending'"
               @click="cancelOrder"
               :disabled="cancelling"
               class="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-2"
@@ -238,7 +238,7 @@
           <router-link 
             v-for="item in order.items" 
             :key="item.id" 
-            :to="`/products/${item.product_id}`"
+            :to="`/san-pham/${item.product?.slug || item.product_id}`"
             class="flex items-center gap-4 p-3 border rounded-lg hover:border-primary hover:shadow-sm transition-all cursor-pointer group"
           >
             <div class="w-20 h-20 bg-gray-100 rounded-md shrink-0 overflow-hidden">
@@ -308,8 +308,7 @@ const cancelling = ref(false)
 // Check if order can be cancelled
 const canCancel = computed(() => {
   if (!order.value) return false
-  const cancellableStatuses = ['pending', 'confirmed']
-  return cancellableStatuses.includes(order.value.status)
+  return order.value.status === 'pending'
 })
 
 // Payment breakdown
