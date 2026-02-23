@@ -43,7 +43,7 @@
                 v-for="(cat, index) in categories" 
                 :key="cat.id"
                 @mouseenter="activeCategory = index"
-                @click="router.push(`/san-pham?category_id=${cat.id}`)"
+                @click="router.push(`/san-pham/danh-muc/${cat.slug}`)"
                 :class="['flex items-center justify-between px-4 py-3 rounded-lg cursor-pointer transition-colors', activeCategory === index ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted text-muted-foreground']"
               >
                 <span>{{ cat.name }}</span>
@@ -78,14 +78,14 @@
                 <div v-for="subGroup in categories[activeCategory].subcategories" :key="subGroup.id" class="space-y-3">
                   <h4 
                     class="font-bold text-foreground cursor-pointer hover:text-primary transition-colors"
-                    @click="router.push(`/san-pham?category_id=${subGroup.id}`)"
+                    @click="router.push(`/san-pham/danh-muc/${subGroup.slug}`)"
                   >
                     {{ subGroup.name }}
                   </h4>
                   <ul class="space-y-2">
                     <li v-for="item in subGroup.subcategories" :key="item.id">
                       <a 
-                        @click.prevent="router.push(`/san-pham?category_id=${item.id}`)"
+                        @click.prevent="router.push(`/san-pham/danh-muc/${item.slug}`)"
                         href="#" 
                         class="text-sm text-muted-foreground hover:text-primary transition-colors block"
                       >
@@ -94,7 +94,7 @@
                     </li>
                   </ul>
                   <a 
-                    @click.prevent="router.push(`/san-pham?category_id=${subGroup.id}`)"
+                    @click.prevent="router.push(`/san-pham/danh-muc/${subGroup.slug}`)"
                     href="#" 
                     class="text-xs text-primary font-medium hover:underline flex items-center gap-1"
                   >
@@ -381,7 +381,7 @@
               <!-- Parent Category -->
               <div class="flex items-center">
                 <button 
-                  @click="goToCategory(cat.id)"
+                  @click="goToCategory(cat.slug)"
                   class="flex-1 flex items-center px-4 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
                 >
                   <span class="text-sm">{{ cat.name }}</span>
@@ -563,9 +563,9 @@ const goToProduct = (id) => {
 }
 
 // Go to category and close mobile menu
-const goToCategory = (categoryId) => {
+const goToCategory = (categorySlug) => {
   showMobileMenu.value = false
-  router.push(`/san-pham?category_id=${categoryId}`)
+  router.push(`/san-pham/danh-muc/${categorySlug}`)
 }
 
 // Toggle expandable category in mobile menu
@@ -621,12 +621,15 @@ const fetchCategories = async () => {
       categories.value = tree.map(root => ({
           id: root.id,
           name: root.name,
+          slug: root.slug,
           subcategories: root.children.map(child => ({
               id: child.id,
               name: child.name,
+              slug: child.slug,
               subcategories: child.children.map(grandChild => ({
                   id: grandChild.id,
-                  name: grandChild.name
+                  name: grandChild.name,
+                  slug: grandChild.slug
               }))
           }))
       }));

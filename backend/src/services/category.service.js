@@ -1,6 +1,20 @@
 import { Category, Product } from "../models/sequelize/index.js";
 import { Op, fn, col, literal } from "sequelize";
 
+// Hàm tạo slug từ tên tiếng Việt
+const generateSlug = (name) => {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+};
+
 /**
  * Lấy danh sách tất cả danh mục
  * Bao gồm số lượng sản phẩm trong mỗi danh mục
@@ -89,8 +103,18 @@ export const create = async (data) => {
     throw new Error("Vui lòng nhập tên danh mục");
   }
 
+  // Auto-generate slug nếu không có
+  let slug = data.slug?.trim() || generateSlug(data.name);
+  
+  // Đảm bảo slug unique
+  const existing = await Category.findOne({ where: { slug } });
+  if (existing) {
+    slug = `${slug}-${Date.now()}`;
+  }
+
   const category = await Category.create({
     name: data.name,
+    slug,
     description: data.description || '',
     icon: data.icon || '',
     status: data.status !== undefined ? data.status : true,
@@ -119,8 +143,21 @@ export const update = async (id, data) => {
     throw new Error("Không thể chọn chính mình làm cha");
   }
 
+  // Xử lý slug
+  let slug = data.slug !== undefined ? data.slug?.trim() : existing.slug;
+  if (!slug) {
+    slug = generateSlug(data.name);
+  }
+  
+  // Đảm bảo slug unique (trừ chính nó)
+  const slugExists = await Category.findOne({ where: { slug, id: { [Op.ne]: id } } });
+  if (slugExists) {
+    slug = `${slug}-${Date.now()}`;
+  }
+
   await existing.update({
     name: data.name,
+    slug,
     description: data.description !== undefined ? data.description : existing.description,
     icon: data.icon !== undefined ? data.icon : existing.icon,
     status: data.status !== undefined ? data.status : existing.status,

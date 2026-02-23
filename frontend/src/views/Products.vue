@@ -472,6 +472,7 @@ const expandedCats = ref(new Set()); // Track expanded categories
 
 const loading = ref(true);
 const selectedCategoryId = ref(null);
+const selectedCategorySlug = ref(null);
 const sortOption = ref("default");
 const limit = ref(24);
 const offset = ref(0);
@@ -550,7 +551,9 @@ const fetchProducts = async () => {
   try {
     let url = `${API_URL}/products?limit=${limit.value}&offset=${offset.value}`;
 
-    if (selectedCategoryId.value) {
+    if (selectedCategorySlug.value) {
+      url += `&category_slug=${selectedCategorySlug.value}`;
+    } else if (selectedCategoryId.value) {
       url += `&category_id=${selectedCategoryId.value}`;
     }
 
@@ -620,19 +623,25 @@ watch(
   }
 );
 
-// Watch route query for category changes
+// Watch route params for category changes (path-based)
 watch(
-  () => route.query.category_id,
-  (newId) => {
-    if (newId) {
-      const id = parseInt(newId);
-      selectedCategoryId.value = id;
-      expandedCats.value.add(id); // Auto expand selected (simple approach)
+  () => route.params.categorySlug,
+  (newSlug) => {
+    if (newSlug) {
+      selectedCategorySlug.value = newSlug;
+      // Resolve slug → id từ categories đã fetch
+      const cat = categories.value.find(c => c.slug === newSlug);
+      if (cat) {
+        selectedCategoryId.value = cat.id;
+        expandedCats.value.add(cat.id);
+        if (cat.parent_id) expandedCats.value.add(cat.parent_id);
+      }
       offset.value = 0;
       fetchProducts();
     } else {
-      // If query param is removed, show all
+      // If no category in path, show all
       selectedCategoryId.value = null;
+      selectedCategorySlug.value = null;
       offset.value = 0;
       fetchProducts();
     }
@@ -641,13 +650,15 @@ watch(
 
 // Actions
 const selectCategory = (id) => {
+  // Tìm slug từ id
+  const cat = categories.value.find(c => c.id === id);
+  const slug = cat?.slug;
+  
   // If clicking explicitly, update URL too to match state
-  if (id) {
-    router.push({ query: { ...route.query, category_id: id } });
+  if (id && slug) {
+    router.push(`/san-pham/danh-muc/${slug}`);
   } else {
-    const query = { ...route.query };
-    delete query.category_id;
-    router.push({ query });
+    router.push('/san-pham');
   }
 
   const isSameCategory = selectedCategoryId.value === id;
@@ -682,9 +693,22 @@ const goToPage = (page) => {
 
 const showMobileFilter = ref(false);
 
-onMounted(() => {
-  // Check URL params on mount
-  if (route.query.category_id) {
+onMounted(async () => {
+  // Fetch categories trước để có slug data
+  await fetchCategories();
+  
+  // Check route params on mount
+  if (route.params.categorySlug) {
+    const slug = route.params.categorySlug;
+    selectedCategorySlug.value = slug;
+    const cat = categories.value.find(c => c.slug === slug);
+    if (cat) {
+      selectedCategoryId.value = cat.id;
+      expandedCats.value.add(cat.id);
+      if (cat.parent_id) expandedCats.value.add(cat.parent_id);
+    }
+  } else if (route.query.category_id) {
+    // Backward compatibility
     const id = parseInt(route.query.category_id);
     selectedCategoryId.value = id;
     expandedCats.value.add(id);
@@ -694,7 +718,6 @@ onMounted(() => {
     searchQuery.value = route.query.search;
   }
   
-  fetchCategories();
   fetchProducts();
 });
 </script>

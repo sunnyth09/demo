@@ -37,6 +37,7 @@ const routes = [
       { path: '', name: 'home', component: Home, meta: { title: 'Trang chủ', description: 'Ocean Books - Đại dương tri thức, nơi cung cấp sách hay nhất Việt Nam' } },
       { path: 'about', name: 'about', component: About, meta: { title: 'Giới thiệu', description: 'Tìm hiểu về Ocean Books - Sứ mệnh mang tri thức đến mọi người' } },
       { path: 'san-pham', name: 'products', component: Products, meta: { title: 'Sản phẩm', description: 'Khám phá hàng ngàn đầu sách từ Ocean Books với giá ưu đãi' } },
+      { path: 'san-pham/danh-muc/:categorySlug', name: 'products-by-category', component: Products, meta: { title: 'Sản phẩm', description: 'Khám phá sách theo danh mục từ Ocean Books' } },
       { path: 'san-pham/:id', name: 'product-detail', component: () => import('@/views/ProductDetail.vue'), meta: { title: 'Chi tiết sản phẩm' } },
       { path: 'login', name: 'login', component: Login, meta: { title: 'Đăng nhập', description: 'Đăng nhập tài khoản Ocean Books để mua sắm và quản lý đơn hàng' } },
       { path: 'auth/callback', name: 'auth-callback', component: () => import('@/views/AuthCallback.vue'), meta: { title: 'Đang xử lý đăng nhập...' } },

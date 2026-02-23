@@ -219,7 +219,7 @@
           <div 
             v-for="cat in categories.slice(0, 6)" 
             :key="cat.id"
-            @click="goToCategory(cat.id)"
+            @click="goToCategory(cat.slug)"
             class="group cursor-pointer bg-card rounded-xl p-5 border border-border hover:border-primary shadow-sm hover:shadow-md transition-all duration-300 text-center hover:-translate-y-1"
           >
             <h3 class="font-semibold text-card-foreground group-hover:text-primary transition-colors text-sm md:text-base">{{ cat.name }}</h3>
@@ -671,8 +671,8 @@ const goToDetail = (idOrSlug) => {
   router.push(`/san-pham/${idOrSlug}`);
 };
 
-const goToCategory = (id) => {
-  router.push({ path: '/san-pham', query: { category_id: id } });
+const goToCategory = (slug) => {
+  router.push(`/san-pham/danh-muc/${slug}`);
 };
 
 // Toast notification state

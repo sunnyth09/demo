@@ -1,11 +1,19 @@
 import * as ProductService from "../services/product.service.js";
+import { Category } from "../models/sequelize/index.js";
 
 export const getAll = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
     const offset = parseInt(req.query.offset) || 0;
-    const category_id = req.query.category_id ? parseInt(req.query.category_id) : null;
+    let category_id = req.query.category_id ? parseInt(req.query.category_id) : null;
+    const category_slug = req.query.category_slug || null;
     const search = req.query.search || null;
+
+    // Nếu có category_slug, resolve thành category_id
+    if (!category_id && category_slug) {
+      const cat = await Category.findOne({ where: { slug: category_slug }, attributes: ['id'] });
+      if (cat) category_id = cat.id;
+    }
     
     const products = await ProductService.getProducts({ limit, offset, category_id, search });
     res.status(200).json({

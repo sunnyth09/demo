@@ -185,6 +185,17 @@
           </div>
           
           <div>
+            <label class="block text-sm font-medium mb-1">Slug URL</label>
+            <input 
+              v-model="form.slug" 
+              type="text" 
+              class="w-full px-3 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent font-mono text-sm"
+              placeholder="Tự động tạo từ tên"
+            />
+            <p class="text-xs text-muted-foreground mt-1">Tự sinh từ tên danh mục. Có thể chỉnh sửa thủ công.</p>
+          </div>
+          
+          <div>
             <label class="block text-sm font-medium mb-1">Mô tả</label>
             <textarea 
               v-model="form.description" 
@@ -313,7 +324,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
@@ -334,10 +345,41 @@ const categoryToDelete = ref(null)
 
 const form = ref({
   name: '',
+  slug: '',
   description: '',
   icon: '',
   parent_id: null,
   status: true
+})
+
+// Auto-generate slug từ tên
+const slugManuallyEdited = ref(false)
+
+const generateSlug = (name) => {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim()
+}
+
+watch(() => form.value.name, (newName) => {
+  if (!slugManuallyEdited.value && newName) {
+    form.value.slug = generateSlug(newName)
+  }
+})
+
+// Detect manual slug edit
+watch(() => form.value.slug, (newSlug) => {
+  const autoSlug = generateSlug(form.value.name)
+  if (newSlug !== autoSlug) {
+    slugManuallyEdited.value = true
+  }
 })
 
 const toast = ref({
@@ -493,8 +535,10 @@ const fetchCategories = async () => {
 const openAddModal = (parentId = null) => {
   isEditing.value = false
   editingId.value = null
+  slugManuallyEdited.value = false
   form.value = {
     name: '',
+    slug: '',
     description: '',
     icon: '',
     parent_id: parentId,
@@ -507,8 +551,10 @@ const openAddModal = (parentId = null) => {
 const openEditModal = (category) => {
   isEditing.value = true
   editingId.value = category.id
+  slugManuallyEdited.value = true // Khi edit, giữ slug hiện có
   form.value = {
     name: category.name,
+    slug: category.slug || '',
     description: category.description || '',
     icon: category.icon || '',
     parent_id: category.parent_id,

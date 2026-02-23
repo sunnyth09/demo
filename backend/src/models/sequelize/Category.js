@@ -24,6 +24,12 @@ const Category = sequelize.define('Category', {
     allowNull: false,
     comment: 'Tên danh mục'
   },
+  slug: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    unique: true,
+    comment: 'Slug URL'
+  },
   description: {
     type: DataTypes.TEXT,
     allowNull: true,
