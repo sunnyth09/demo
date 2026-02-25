@@ -17,7 +17,7 @@
       </div>
     </div>
 
-    <form @submit.prevent="saveArticle" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <form @submit.prevent="saveArticle" novalidate class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Left Column (Main Content) -->
       <div class="lg:col-span-2 space-y-6">
         <div class="bg-card p-6 rounded-xl border shadow-sm space-y-4">
@@ -209,6 +209,11 @@ const fetchArticle = async (id) => {
 }
 
 const saveArticle = async () => {
+  if (!form.value.title || !form.value.title.trim()) {
+    showToast('Vui lòng nhập tiêu đề bài viết', 'error')
+    return
+  }
+
   saving.value = true
   try {
     const formData = new FormData()

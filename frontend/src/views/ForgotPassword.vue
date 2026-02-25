@@ -21,7 +21,7 @@
             <p class="text-muted-foreground mt-2">Nhập email của bạn để nhận mã xác thực.</p>
           </div>
 
-          <form @submit.prevent="handleSendOtp" class="space-y-4">
+          <form @submit.prevent="handleSendOtp" novalidate class="space-y-4">
              <!-- Error Message -->
             <Alert v-if="errorMessage" variant="destructive">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -38,10 +38,12 @@
               <input 
                 v-model="email" 
                 type="email" 
-                required 
-                class="w-full h-11 px-4 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring transition-colors" 
+                class="w-full h-11 px-4 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
+                :class="errors.email ? 'border-destructive' : 'border-input'"
                 placeholder="your@gmail.com" 
+                @input="clearError('email')"
               />
+              <p v-if="errors.email" class="mt-1 text-sm text-destructive">{{ errors.email }}</p>
             </div>
 
             <button 
@@ -65,7 +67,7 @@
             <p class="text-muted-foreground mt-2">Mã OTP đã được gửi đến <span class="font-medium text-foreground">{{ email }}</span></p>
           </div>
 
-          <form @submit.prevent="handleResetPassword" class="space-y-4">
+          <form @submit.prevent="handleResetPassword" novalidate class="space-y-4">
              <!-- Error Message -->
             <Alert v-if="errorMessage" variant="destructive">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -82,11 +84,13 @@
               <input 
                 v-model="otp" 
                 type="text" 
-                required 
                 class="w-full h-11 px-4 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring transition-colors text-center tracking-widest text-lg" 
+                :class="errors.otp ? 'border-destructive' : 'border-input'"
                 placeholder="123456" 
                 maxlength="6"
+                @input="clearError('otp')"
               />
+              <p v-if="errors.otp" class="mt-1 text-sm text-destructive">{{ errors.otp }}</p>
             </div>
 
             <div>
@@ -94,10 +98,12 @@
               <input 
                 v-model="newPassword" 
                 type="password" 
-                required 
                 class="w-full h-11 px-4 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring transition-colors" 
+                :class="errors.newPassword ? 'border-destructive' : 'border-input'"
                 placeholder="••••••••" 
+                @input="clearError('newPassword')"
               />
+              <p v-if="errors.newPassword" class="mt-1 text-sm text-destructive">{{ errors.newPassword }}</p>
             </div>
 
              <div>
@@ -105,10 +111,12 @@
               <input 
                 v-model="confirmPassword" 
                 type="password" 
-                required 
                 class="w-full h-11 px-4 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring transition-colors" 
+                :class="errors.confirmPassword ? 'border-destructive' : 'border-input'"
                 placeholder="••••••••" 
+                @input="clearError('confirmPassword')"
               />
+              <p v-if="errors.confirmPassword" class="mt-1 text-sm text-destructive">{{ errors.confirmPassword }}</p>
             </div>
 
             <button 
@@ -133,7 +141,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { toast } from 'vue-sonner';
@@ -150,11 +158,68 @@ const confirmPassword = ref('');
 const loading = ref(false);
 const errorMessage = ref('');
 
+const errors = reactive({
+  email: '',
+  otp: '',
+  newPassword: '',
+  confirmPassword: ''
+});
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const clearError = (field) => {
+  errors[field] = '';
+  errorMessage.value = '';
+};
+
+const validateStep1 = () => {
+  let isValid = true;
+  if (!email.value.trim()) {
+    errors.email = 'Vui lòng nhập email';
+    isValid = false;
+  } else if (!emailRegex.test(email.value)) {
+    errors.email = 'Email không hợp lệ';
+    isValid = false;
+  }
+  return isValid;
+};
+
+const validateStep2 = () => {
+  let isValid = true;
+  
+  if (!otp.value.trim()) {
+    errors.otp = 'Vui lòng nhập mã OTP';
+    isValid = false;
+  } else if (otp.value.length < 6) {
+    errors.otp = 'Mã OTP phải có 6 ký tự';
+    isValid = false;
+  }
+
+  if (!newPassword.value) {
+    errors.newPassword = 'Vui lòng nhập mật khẩu mới';
+    isValid = false;
+  } else if (newPassword.value.length < 6) {
+    errors.newPassword = 'Mật khẩu phải lớn hơn 6 ký tự';
+    isValid = false;
+  }
+
+  if (!confirmPassword.value) {
+    errors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
+    isValid = false;
+  } else if (newPassword.value !== confirmPassword.value) {
+    errors.confirmPassword = 'Mật khẩu xác nhận không khớp';
+    isValid = false;
+  }
+
+  return isValid;
+};
+
 const handleSendOtp = async () => {
+  if (!validateStep1()) return;
+
   loading.value = true;
   errorMessage.value = '';
   try {
-    // console.log('Sending OTP to', email.value);
     await authStore.forgotPassword(email.value);
     step.value = 2;
   } catch (err) {
@@ -169,10 +234,7 @@ const handleSendOtp = async () => {
 };
 
 const handleResetPassword = async () => {
-    if (newPassword.value !== confirmPassword.value) {
-        errorMessage.value = 'Mật khẩu xác nhận không khớp';
-        return;
-    }
+  if (!validateStep2()) return;
 
   loading.value = true;
   errorMessage.value = '';

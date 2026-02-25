@@ -14,7 +14,7 @@
         </div>
 
         <!-- Form -->
-        <form @submit.prevent="handleRegister" class="space-y-4">
+        <form @submit.prevent="handleRegister" novalidate class="space-y-4">
           <!-- Error Message -->
           <Alert v-if="errorMessage" variant="destructive">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

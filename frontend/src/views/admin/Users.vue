@@ -87,52 +87,58 @@
       <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-200">
         <h3 class="text-xl font-bold mb-4">{{ isEditing ? 'Cập nhật người dùng' : 'Thêm người dùng mới' }}</h3>
         
-        <form @submit.prevent="saveUser" class="space-y-4">
+        <form @submit.prevent="saveUser" novalidate class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-1">Họ tên</label>
+            <label class="block text-sm font-medium mb-1">Họ tên <span class="text-red-500">*</span></label>
             <input 
               v-model="userForm.name" 
               type="text" 
-              required
-              class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              :class="errors.name ? 'border-red-500' : 'focus:border-primary'"
+              class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
               placeholder="Nhập họ tên"
+              @input="clearError('name')"
             />
+            <p v-if="errors.name" class="text-sm text-red-500 mt-1">{{ errors.name }}</p>
           </div>
           
           <div>
-            <label class="block text-sm font-medium mb-1">Email</label>
+            <label class="block text-sm font-medium mb-1">Email <span class="text-red-500">*</span></label>
             <input 
               v-model="userForm.email" 
               type="email" 
-              required
               :disabled="isEditing"
-              class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:bg-gray-100 disabled:text-gray-500"
+              :class="errors.email ? 'border-red-500' : 'focus:border-primary'"
+              class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:bg-gray-100 disabled:text-gray-500"
               placeholder="email@example.com"
+              @input="clearError('email')"
             />
+            <p v-if="errors.email" class="text-sm text-red-500 mt-1">{{ errors.email }}</p>
           </div>
 
           <div v-if="!isEditing" class="space-y-4">
              <div>
-              <label class="block text-sm font-medium mb-1">Mật khẩu</label>
+              <label class="block text-sm font-medium mb-1">Mật khẩu <span class="text-red-500">*</span></label>
               <input 
                 v-model="userForm.password" 
                 type="password" 
-                required
-                minlength="6"
-                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                :class="errors.password ? 'border-red-500' : 'focus:border-primary'"
+                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                 placeholder="********"
+                @input="clearError('password')"
               />
+              <p v-if="errors.password" class="text-sm text-red-500 mt-1">{{ errors.password }}</p>
             </div>
              <div>
-              <label class="block text-sm font-medium mb-1">Xác nhận mật khẩu</label>
+              <label class="block text-sm font-medium mb-1">Xác nhận mật khẩu <span class="text-red-500">*</span></label>
               <input 
                 v-model="userForm.confirmPassword" 
                 type="password" 
-                required
-                minlength="6"
-                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                :class="errors.confirmPassword ? 'border-red-500' : 'focus:border-primary'"
+                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                 placeholder="********"
+                @input="clearError('confirmPassword')"
               />
+              <p v-if="errors.confirmPassword" class="text-sm text-red-500 mt-1">{{ errors.confirmPassword }}</p>
             </div>
           </div>
 
@@ -252,9 +258,58 @@ const closeModal = () => {
   showModal.value = false
 }
 
+const errors = reactive({
+  name: '',
+  email: '',
+  password: '',
+  confirmPassword: ''
+})
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const clearError = (field) => {
+  errors[field] = ''
+}
+
+const validateUserForm = () => {
+  let isValid = true
+  
+  if (!userForm.name.trim()) {
+    errors.name = 'Vui lòng nhập họ tên'
+    isValid = false
+  }
+  
+  if (!userForm.email.trim()) {
+    errors.email = 'Vui lòng nhập email'
+    isValid = false
+  } else if (!emailRegex.test(userForm.email)) {
+    errors.email = 'Email không hợp lệ'
+    isValid = false
+  }
+
+  if (!isEditing.value) {
+    if (!userForm.password) {
+      errors.password = 'Vui lòng nhập mật khẩu'
+      isValid = false
+    } else if (userForm.password.length < 6) {
+      errors.password = 'Mật khẩu phải từ 6 ký tự'
+      isValid = false
+    }
+
+    if (!userForm.confirmPassword) {
+      errors.confirmPassword = 'Vui lòng xác nhận mật khẩu'
+      isValid = false
+    } else if (userForm.password !== userForm.confirmPassword) {
+      errors.confirmPassword = 'Mật khẩu xác nhận không khớp'
+      isValid = false
+    }
+  }
+
+  return isValid
+}
+
 const saveUser = async () => {
-  if (!isEditing.value && userForm.password !== userForm.confirmPassword) {
-    toast.warning('Mật khẩu nhập lại không khớp!')
+  if (!validateUserForm()) {
     return
   }
 

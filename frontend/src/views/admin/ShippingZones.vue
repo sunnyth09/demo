@@ -103,7 +103,7 @@
           <h2 class="text-xl font-bold">{{ isEditing ? 'Sửa khu vực' : 'Thêm khu vực mới' }}</h2>
         </div>
         
-        <form @submit.prevent="saveZone" class="p-6 space-y-4">
+        <form @submit.prevent="saveZone" novalidate class="p-6 space-y-4">
           <!-- Name -->
           <div>
             <label class="block text-sm font-medium mb-1">Tên khu vực *</label>
@@ -336,6 +336,15 @@ const openEditModal = (zone) => {
 }
 
 const saveZone = async () => {
+  if (!form.value.name || !form.value.name.trim()) {
+    toast.error('Vui lòng nhập tên khu vực')
+    return
+  }
+  if (form.value.shipping_fee === null || form.value.shipping_fee === undefined) {
+    toast.error('Vui lòng nhập phí ship')
+    return
+  }
+
   saving.value = true
   try {
     const url = isEditing.value 

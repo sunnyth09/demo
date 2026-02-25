@@ -22,7 +22,7 @@
 
     <!-- Form -->
     <div class="bg-card rounded-xl border shadow-sm p-6">
-      <form @submit.prevent="saveProduct" class="space-y-6 max-w-4xl">
+      <form @submit.prevent="saveProduct" novalidate class="space-y-6 max-w-4xl">
         <!-- Main Info -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Name -->

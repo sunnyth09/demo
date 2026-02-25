@@ -172,7 +172,7 @@
           {{ isEditing ? 'Sửa danh mục' : 'Thêm danh mục mới' }}
         </h3>
         
-        <form @submit.prevent="saveCategory" class="space-y-4">
+        <form @submit.prevent="saveCategory" novalidate class="space-y-4">
           <div>
             <label class="block text-sm font-medium mb-1">Tên danh mục *</label>
             <input 

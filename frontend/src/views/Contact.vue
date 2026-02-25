@@ -75,17 +75,19 @@
         <!-- Contact Form -->
         <div class="bg-card border border-border rounded-2xl p-8 shadow-sm">
           <h3 class="text-2xl font-semibold mb-6">Gửi tin nhắn cho chúng tôi</h3>
-          <form @submit.prevent="handleSubmit" class="space-y-6">
+          <form @submit.prevent="handleSubmit" novalidate class="space-y-6">
             <div class="space-y-2">
               <label for="name" class="text-sm font-medium">Họ và tên <span class="text-red-500">*</span></label>
               <input 
                 id="name"
                 v-model="form.name"
                 type="text" 
-                class="w-full h-10 px-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                required
+                class="w-full h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                :class="errors.name ? 'border-destructive' : 'border-input'"
                 placeholder="Nhập họ tên của bạn"
+                @input="clearError('name')"
               />
+              <p v-if="errors.name" class="mt-1 text-sm text-destructive">{{ errors.name }}</p>
             </div>
 
             <div class="space-y-2">
@@ -94,10 +96,12 @@
                 id="email"
                 v-model="form.email"
                 type="email" 
-                class="w-full h-10 px-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                required
+                class="w-full h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                :class="errors.email ? 'border-destructive' : 'border-input'"
                 placeholder="Nhập email của bạn"
+                @input="clearError('email')"
               />
+              <p v-if="errors.email" class="mt-1 text-sm text-destructive">{{ errors.email }}</p>
             </div>
 
             <div class="space-y-2">
@@ -106,10 +110,12 @@
                 id="subject"
                 v-model="form.subject"
                 type="text" 
-                class="w-full h-10 px-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                required
+                class="w-full h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                :class="errors.subject ? 'border-destructive' : 'border-input'"
                 placeholder="Bạn cần hỗ trợ vấn đề gì?"
+                @input="clearError('subject')"
               />
+              <p v-if="errors.subject" class="mt-1 text-sm text-destructive">{{ errors.subject }}</p>
             </div>
 
             <div class="space-y-2">
@@ -118,15 +124,17 @@
                 id="message"
                 v-model="form.message"
                 rows="5" 
-                class="w-full p-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                required
+                class="w-full p-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                :class="errors.message ? 'border-destructive' : 'border-input'"
                 placeholder="Nhập nội dung tin nhắn..."
+                @input="clearError('message')"
               ></textarea>
+              <p v-if="errors.message" class="mt-1 text-sm text-destructive">{{ errors.message }}</p>
             </div>
             
             <button 
               type="submit" 
-              class="w-full h-10 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+              class="w-full h-10 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               :disabled="loading"
             >
               <span v-if="loading" class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
@@ -152,7 +160,51 @@ const form = reactive({
   message: ''
 });
 
+const errors = reactive({
+  name: '',
+  email: '',
+  subject: '',
+  message: ''
+});
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const clearError = (field) => {
+  errors[field] = '';
+};
+
+const validateForm = () => {
+  let isValid = true;
+  
+  if (!form.name.trim()) {
+    errors.name = 'Vui lòng nhập họ và tên';
+    isValid = false;
+  }
+
+  if (!form.email.trim()) {
+    errors.email = 'Vui lòng nhập email';
+    isValid = false;
+  } else if (!emailRegex.test(form.email)) {
+    errors.email = 'Email không hợp lệ';
+    isValid = false;
+  }
+
+  if (!form.subject.trim()) {
+    errors.subject = 'Vui lòng nhập tiêu đề';
+    isValid = false;
+  }
+
+  if (!form.message.trim()) {
+    errors.message = 'Vui lòng nhập nội dung tin nhắn';
+    isValid = false;
+  }
+
+  return isValid;
+};
+
 const handleSubmit = async () => {
+  if (!validateForm()) return;
+
   try {
     loading.value = true;
     const res = await contactApi.submitContact(form);
