@@ -22,14 +22,17 @@
       <div class="lg:col-span-2 space-y-6">
         <div class="bg-card p-6 rounded-xl border shadow-sm space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-1.5">Tiêu đề bài viết <span class="text-red-500">*</span></label>
+            <label class="block text-sm font-medium mb-1.5" :class="{ 'text-red-500': errors.title }">Tiêu đề bài viết <span class="text-red-500">*</span></label>
             <input 
               v-model="form.title"
               type="text" 
               required
-              class="w-full px-4 py-2 rounded-lg border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all"
+              class="w-full px-4 py-2 rounded-lg border bg-background focus:outline-none transition-all"
+              :class="{ 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500': errors.title, 'focus:ring-2 focus:ring-primary/20 focus:border-primary': !errors.title }"
               placeholder="Nhập tiêu đề..."
+              @input="errors.title = ''"
             />
+            <p v-if="errors.title" class="text-sm text-red-500 mt-1.5">{{ errors.title }}</p>
           </div>
 
           <div>
@@ -165,6 +168,10 @@ const form = ref({
   status: 'draft'
 })
 
+const errors = ref({
+  title: ''
+})
+
 const toast = ref({ show: false, message: '', type: 'success' })
 
 const showToast = (message, type = 'success') => {
@@ -209,8 +216,9 @@ const fetchArticle = async (id) => {
 }
 
 const saveArticle = async () => {
+  errors.value = { title: '' }
   if (!form.value.title || !form.value.title.trim()) {
-    showToast('Vui lòng nhập tiêu đề bài viết', 'error')
+    errors.value.title = 'Vui lòng nhập tiêu đề bài viết'
     return
   }
 

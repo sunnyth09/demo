@@ -185,6 +185,8 @@ const hasInvalidItems = computed(() => {
   return cartItems.value.some(item => item.stock !== undefined && item.quantity > item.stock)
 })
 
+import { getImageUrl } from '@/utils/format'
+
 const formatCurrency = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value)
 
 const updateQuantity = async (id, delta) => {

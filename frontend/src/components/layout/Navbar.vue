@@ -152,7 +152,7 @@
               class="flex items-center gap-3 p-2 hover:bg-muted/30 rounded-lg cursor-pointer"
             >
               <div class="w-10 h-12 bg-muted rounded overflow-hidden flex-shrink-0">
-                <img :src="prod.thumbnail" class="w-full h-full object-cover" />
+                <img :src="getImageUrl(prod.thumbnail)" class="w-full h-full object-cover" />
               </div>
               <div>
                 <p class="text-sm font-medium line-clamp-1">{{ prod.name }}</p>
@@ -481,6 +481,7 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { getImageUrl } from '@/utils/format'
 import { useCartStore } from '@/stores/cart'
 import { useFavoriteStore } from '@/stores/favorite'
 import { storeToRefs } from 'pinia'

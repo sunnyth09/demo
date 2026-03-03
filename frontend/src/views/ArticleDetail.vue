@@ -152,5 +152,18 @@ watch(() => route.params.id, (newId) => {
 }
 .prose ul, .prose ol {
   color: var(--muted-foreground);
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  padding-left: 1.625em;
+}
+.prose ul {
+  list-style-type: disc;
+}
+.prose ol {
+  list-style-type: decimal;
+}
+.prose li {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
 }
 </style>

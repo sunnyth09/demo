@@ -1,5 +1,5 @@
 import { Article } from "../models/sequelize/index.js";
-import { uploadFile, deleteFile } from "./minio.service.js";
+import { uploadFile, deleteFile, getFullUrl } from "./minio.service.js";
 import { Op } from "sequelize";
 
 /**
@@ -25,11 +25,19 @@ export const getArticles = async ({ limit = 10, offset = 0, search = null }) => 
     whereClause.title = { [Op.like]: `%${search}%` };
   }
 
-  return await Article.findAll({
+  const articles = await Article.findAll({
     where: whereClause,
     order: [['createdAt', 'DESC']],
     limit,
     offset
+  });
+
+  return articles.map(article => {
+    const data = article.toJSON();
+    if (data.thumbnail) {
+      data.thumbnail = getFullUrl(data.thumbnail);
+    }
+    return data;
   });
 };
 
@@ -54,7 +62,12 @@ export const getArticleDetail = async (idOrSlug) => {
   // Increment views
   await article.increment('views');
 
-  return article;
+  const data = article.toJSON();
+  if (data.thumbnail) {
+    data.thumbnail = getFullUrl(data.thumbnail);
+  }
+
+  return data;
 };
 
 export const create = async (data, files) => {

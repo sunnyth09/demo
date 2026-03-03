@@ -140,18 +140,22 @@
         <div class="p-6 space-y-4">
           <div class="grid grid-cols-2 gap-4">
              <div>
-               <label class="block text-sm font-medium mb-1">Mã Voucher (Code)</label>
+               <label class="block text-sm font-medium mb-1" :class="{ 'text-red-500': errors.code }">Mã Voucher (Code) *</label>
                <input 
                   v-model="form.code" 
                   type="text" 
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 outline-none uppercase font-bold text-primary"
+                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 outline-none uppercase font-bold text-primary transition-colors"
+                  :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.code, 'focus:ring-primary/20': !errors.code }"
                   :disabled="isEditing"
                   placeholder="VD: SALE50"
+                  @input="errors.code = ''"
                />
+               <p v-if="errors.code" class="text-sm text-red-500 mt-1">{{ errors.code }}</p>
              </div>
              <div>
-               <label class="block text-sm font-medium mb-1">Mô tả ngắn</label>
-               <input v-model="form.description" type="text" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 outline-none" placeholder="Giảm giá mùa hè" />
+               <label class="block text-sm font-medium mb-1" :class="{ 'text-red-500': errors.description }">Mô tả ngắn</label>
+               <input v-model="form.description" type="text" class="w-full px-3 py-2 border rounded-lg focus:ring-2 outline-none transition-colors" :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.description, 'focus:ring-primary/20': !errors.description }" placeholder="Giảm giá mùa hè" @input="errors.description = ''" />
+               <p v-if="errors.description" class="text-sm text-red-500 mt-1">{{ errors.description }}</p>
              </div>
           </div>
 
@@ -165,20 +169,22 @@
                 </select>
              </div>
              <div v-if="form.type !== 'free_shipping'" class="col-span-2">
-                <label class="block text-sm font-medium mb-1">Giá trị giảm</label>
+                <label class="block text-sm font-medium mb-1" :class="{ 'text-red-500': errors.value }">Giá trị giảm <span class="text-red-500">*</span></label>
                 <div class="relative">
-                   <input v-model.number="form.value" type="number" min="0" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 outline-none" />
+                   <input v-model.number="form.value" type="number" min="0" class="w-full px-3 py-2 border rounded-lg focus:ring-2 outline-none transition-colors" :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.value, 'focus:ring-primary/20': !errors.value }" @input="errors.value = ''" />
                    <span class="absolute right-3 top-2 text-gray-500 font-bold">
                       {{ form.type === 'percentage' ? '%' : 'đ' }}
                    </span>
                 </div>
+                <p v-if="errors.value" class="text-sm text-red-500 mt-1">{{ errors.value }}</p>
              </div>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
              <div>
-                <label class="block text-sm font-medium mb-1">Đơn tối thiểu</label>
-                <input v-model.number="form.min_order_amount" type="number" min="0" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 outline-none" />
+                <label class="block text-sm font-medium mb-1" :class="{ 'text-red-500': errors.min_order_amount }">Đơn tối thiểu <span class="text-red-500">*</span></label>
+                <input v-model.number="form.min_order_amount" type="number" min="0" class="w-full px-3 py-2 border rounded-lg focus:ring-2 outline-none transition-colors" :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.min_order_amount, 'focus:ring-primary/20': !errors.min_order_amount }" @input="errors.min_order_amount = ''" />
+                <p v-if="errors.min_order_amount" class="text-sm text-red-500 mt-1">{{ errors.min_order_amount }}</p>
              </div>
              <div v-if="form.type === 'percentage'">
                 <label class="block text-sm font-medium mb-1">Giảm tối đa</label>
@@ -188,16 +194,19 @@
 
           <div class="grid grid-cols-3 gap-4">
              <div>
-                <label class="block text-sm font-medium mb-1">Số lượng phát hành</label>
-                <input v-model.number="form.quantity" type="number" min="0" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 outline-none" />
+                <label class="block text-sm font-medium mb-1" :class="{ 'text-red-500': errors.quantity }">Số lượng phát hành <span class="text-red-500">*</span></label>
+                <input v-model.number="form.quantity" type="number" min="1" class="w-full px-3 py-2 border rounded-lg focus:ring-2 outline-none transition-colors" :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.quantity, 'focus:ring-primary/20': !errors.quantity }" @input="errors.quantity = ''" />
+                <p v-if="errors.quantity" class="text-sm text-red-500 mt-1">{{ errors.quantity }}</p>
              </div>
              <div>
-                <label class="block text-sm font-medium mb-1">Bắt đầu</label>
-                <input v-model="form.start_date" type="date" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 outline-none" />
+                <label class="block text-sm font-medium mb-1" :class="{ 'text-red-500': errors.start_date }">Bắt đầu <span class="text-red-500">*</span></label>
+                <input v-model="form.start_date" type="date" class="w-full px-3 py-2 border rounded-lg focus:ring-2 outline-none transition-colors" :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.start_date, 'focus:ring-primary/20': !errors.start_date }" @input="errors.start_date = ''" />
+                <p v-if="errors.start_date" class="text-sm text-red-500 mt-1">{{ errors.start_date }}</p>
              </div>
              <div>
-                <label class="block text-sm font-medium mb-1">Kết thúc</label>
-                <input v-model="form.end_date" type="date" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 outline-none" />
+                <label class="block text-sm font-medium mb-1" :class="{ 'text-red-500': errors.end_date }">Kết thúc <span class="text-red-500">*</span></label>
+                <input v-model="form.end_date" type="date" class="w-full px-3 py-2 border rounded-lg focus:ring-2 outline-none transition-colors" :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.end_date, 'focus:ring-primary/20': !errors.end_date }" @input="errors.end_date = ''" />
+                <p v-if="errors.end_date" class="text-sm text-red-500 mt-1">{{ errors.end_date }}</p>
              </div>
           </div>
 
@@ -338,6 +347,16 @@ const form = ref({
   category_id: null
 })
 
+const errors = ref({
+  code: '',
+  description: '',
+  value: '',
+  min_order_amount: '',
+  quantity: '',
+  start_date: '',
+  end_date: ''
+})
+
 const formatCurrency = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value || 0)
 const formatDate = (dateStr) => {
    if (!dateStr) return '--'
@@ -365,6 +384,7 @@ const fetchCoupons = async () => {
 
 const openCreateModal = () => {
   isEditing.value = false
+  errors.value = { code: '', description: '', value: '', min_order_amount: '', quantity: '', start_date: '', end_date: '' }
   form.value = {
     code: '',
     description: '',
@@ -386,6 +406,7 @@ const openCreateModal = () => {
 
 const openEditModal = (coupon) => {
   isEditing.value = true
+  errors.value = { code: '', description: '', value: '', min_order_amount: '', quantity: '', start_date: '', end_date: '' }
   form.value = { 
     ...coupon,
     start_date: coupon.start_date ? coupon.start_date.split('T')[0] : '',
@@ -396,22 +417,64 @@ const openEditModal = (coupon) => {
 }
 
 const saveCoupon = async () => {
-  if (!form.value.code) return toast.warning('Vui lòng nhập mã voucher')
+  errors.value = { code: '', description: '', value: '', min_order_amount: '', quantity: '', start_date: '', end_date: '' }
+  let hasError = false
+
+  if (!form.value.code) {
+    errors.value.code = 'Vui lòng nhập mã voucher'
+    hasError = true
+  }
+
+  // Description is normally optional but based on screenshots it seems they want it validated
+  // if (!form.value.description) {
+  //   errors.value.description = 'Vui lòng nhập mô tả'
+  //   hasError = true
+  // }
   
   // Validation
-  if (form.value.value < 0) return toast.warning('Giá trị giảm không được âm')
-  if (form.value.min_order_amount < 0) return toast.warning('Đơn tối thiểu không được âm')
-  if (form.value.quantity < 1) return toast.warning('Số lượng phát hành phải lớn hơn 0')
+  if (form.value.type !== 'free_shipping') {
+    if (form.value.value === null || form.value.value === undefined || form.value.value <= 0) {
+      errors.value.value = 'Giá trị giảm giá phải lớn hơn 0'
+      hasError = true
+    }
+    if (form.value.type === 'percentage') {
+      if (form.value.value > 100) {
+        errors.value.value = 'Giảm giá theo % không thể vượt quá 100%'
+        hasError = true
+      }
+    }
+  }
 
-  if (form.value.type === 'percentage') {
-    if (form.value.value > 100) return toast.warning('Giảm giá theo % không thể vượt quá 100%')
+  if (form.value.min_order_amount === null || form.value.min_order_amount === undefined || form.value.min_order_amount < 0) {
+    errors.value.min_order_amount = 'Vui lòng nhập đơn tối thiểu (≥ 0)'
+    hasError = true
+  }
+  if (form.value.quantity === null || form.value.quantity === undefined || form.value.quantity < 1) {
+    errors.value.quantity = 'Vui lòng nhập số lượng (> 0)'
+    hasError = true
+  }
+
+  if (!form.value.start_date) {
+    errors.value.start_date = 'Vui lòng chọn ngày bắt đầu'
+    hasError = true
+  }
+
+  if (!form.value.end_date) {
+    errors.value.end_date = 'Vui lòng chọn ngày kết thúc'
+    hasError = true
   }
 
   if (form.value.start_date && form.value.end_date) {
     const start = new Date(form.value.start_date)
     const end = new Date(form.value.end_date)
-    if (end <= start) return toast.warning('Ngày kết thúc phải sau ngày bắt đầu')
+    if (end <= start) {
+      errors.value.end_date = 'Ngày kết thúc phải sau ngày bắt đầu'
+      hasError = true
+    }
   }
+
+  if (hasError) return
+  
   
   saving.value = true
   try {
@@ -444,7 +507,18 @@ const saveCoupon = async () => {
       toast.success(isEditing.value ? 'Cập nhật thành công' : 'Thêm mới thành công')
       await fetchCoupons()
     } else {
-      toast.error(data.message || 'Có lỗi xảy ra')
+      const msg = data.message || ''
+      if (msg.toLowerCase().includes('đã tồn tại')) {
+        errors.value.code = msg
+      } else if (msg.toLowerCase().includes('dương') || msg.toLowerCase().includes('giá trị')) {
+        errors.value.value = msg
+      } else if (msg.toLowerCase().includes('số lượng')) {
+        errors.value.quantity = msg
+      } else if (msg.toLowerCase().includes('ngày')) {
+        errors.value.end_date = msg
+      } else {
+        toast.error(msg || 'Có lỗi xảy ra')
+      }
     }
   } catch (error) {
     console.error('Error saving coupon:', error)
@@ -533,5 +607,6 @@ input[type=number]::-webkit-outer-spin-button {
 }
 input[type=number] {
   -moz-appearance: textfield;
+  appearance: none;
 }
 </style>

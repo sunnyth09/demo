@@ -41,16 +41,49 @@ export const uploadFile = async (file) => {
     "Content-Type": file.mimetype,
   });
 
-  // Trả về URL public
-  return `http://localhost:9000/${BUCKET}/${filename}`;
+  // Trả về tên file (Object Key) thay vì URL đầy đủ
+  return filename;
+};
+
+// Lấy URL đầy đủ từ tên file
+export const getFullUrl = (filename) => {
+  if (!filename) return null;
+  // Nếu filename đã là URL absolute cũ (với IP hardcoded), extract relative path
+  if (filename.startsWith("http")) {
+    // Ví dụ: http://192.168.10.6:3001/minio/products/image.webp -> /minio/products/image.webp
+    try {
+      const url = new URL(filename);
+      return url.pathname; // Trả về relative path
+    } catch (e) {
+      return filename;
+    }
+  }
+  
+  const host = process.env.MINIO_PUBLIC_URL || "/minio";
+  return `${host}/${BUCKET}/${filename}`;
 };
 
 // Xóa file trên MinIO
-export const deleteFile = async (fileUrl) => {
-  if (!fileUrl) return;
-  // Lấy filename từ URL
-  const filename = fileUrl.split(`/${BUCKET}/`)[1];
-  if (filename) {
-    await minioClient.removeObject(BUCKET, filename);
+export const deleteFile = async (filename) => {
+  if (!filename) return;
+  
+  try {
+    // Nếu là URL bên ngoài (không chứa /minio) thì bỏ qua không xóa
+    if (filename.startsWith("http") && !filename.includes("/minio")) {
+      return;
+    }
+
+    // Tách lấy chính xác tên file (Object Key) ở cuối chuỗi
+    let objectKey = filename;
+    const url = new URL(filename, "http://localhost"); // Dummy base URL
+    const parts = url.pathname.split('/');
+    objectKey = parts[parts.length - 1];
+
+    if (!objectKey) return;
+
+    // Xóa file bằng object key
+    await minioClient.removeObject(BUCKET, objectKey);
+  } catch (error) {
+    console.error("Lỗi xóa file khỏi MinIO:", error.message);
   }
 };

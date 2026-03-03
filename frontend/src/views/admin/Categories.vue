@@ -76,8 +76,8 @@
             </div>
 
             <!-- Icon -->
-            <div class="col-span-2">
-              <span class="text-xl">{{ getIconEmoji(item.icon) }}</span>
+            <div class="col-span-2 flex items-center">
+              <span class="w-5 h-5 text-muted-foreground flex items-center justify-center" v-html="getIconSVG(item.icon)"></span>
             </div>
 
             <!-- Product Count -->
@@ -174,14 +174,17 @@
         
         <form @submit.prevent="saveCategory" novalidate class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-1">Tên danh mục *</label>
+            <label class="block text-sm font-medium mb-1" :class="{ 'text-red-500': errors.name }">Tên danh mục *</label>
             <input 
               v-model="form.name" 
               type="text" 
               required
-              class="w-full px-3 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
+              class="w-full px-3 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+              :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.name }"
               placeholder="Nhập tên danh mục"
+              @input="errors.name = ''"
             />
+            <p v-if="errors.name" class="text-sm text-red-500 mt-1">{{ errors.name }}</p>
           </div>
           
           <div>
@@ -207,19 +210,47 @@
           
           <div>
             <label class="block text-sm font-medium mb-1">Icon</label>
-            <select 
-              v-model="form.icon"
-              class="w-full px-3 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
-            >
-              <option value="">Chọn icon</option>
-              <option value="book">📚 Sách</option>
-              <option value="globe">🌍 Quốc tế</option>
-              <option value="pencil">✏️ Văn phòng phẩm</option>
-              <option value="puzzle">🧩 Đồ chơi</option>
-              <option value="heart">❤️ Yêu thích</option>
-              <option value="star">⭐ Nổi bật</option>
-              <option value="folder">📁 Thư mục</option>
-            </select>
+            <div class="relative">
+              <button 
+                type="button"
+                @click="showIconDropdown = !showIconDropdown"
+                class="w-full flex items-center justify-between px-3 py-2 border rounded-md bg-background hover:bg-muted/50 transition-colors text-left"
+                :class="{ 'ring-2 ring-primary border-transparent': showIconDropdown }"
+              >
+                <span class="flex items-center gap-2">
+                  <span v-if="form.icon" class="w-4 h-4 text-muted-foreground" v-html="getIconSVG(form.icon)"></span>
+                  <span>{{ form.icon ? getIconName(form.icon) : 'Chọn icon' }}</span>
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-muted-foreground transition-transform" :class="{ 'rotate-180': showIconDropdown }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              
+              <!-- Dropdown menu -->
+              <div 
+                v-if="showIconDropdown"
+                class="absolute z-10 w-full mt-1 bg-popover text-popover-foreground border rounded-md shadow-lg max-h-60 overflow-auto py-1"
+              >
+                <button 
+                  type="button"
+                  @click="selectIcon('')"
+                  class="w-full text-left px-3 py-2 hover:bg-muted transition-colors flex items-center gap-2"
+                  :class="{ 'bg-muted': form.icon === '' }"
+                >
+                  <span class="w-4 h-4"></span>
+                  <span>Không có icon</span>
+                </button>
+                <button 
+                  v-for="(iconSvg, iconKey) in availableIcons"
+                  :key="iconKey"
+                  type="button"
+                  @click="selectIcon(iconKey)"
+                  class="w-full text-left px-3 py-2 hover:bg-muted transition-colors flex items-center gap-2"
+                  :class="{ 'bg-muted': form.icon === iconKey }"
+                >
+                  <span class="w-4 h-4 text-muted-foreground" v-html="iconSvg"></span>
+                  <span>{{ getIconName(iconKey) }}</span>
+                </button>
+              </div>
+            </div>
           </div>
           
           <div>
@@ -339,6 +370,7 @@ const expandedIds = ref([])
 
 const showModal = ref(false)
 const showDeleteModal = ref(false)
+const showIconDropdown = ref(false)
 const isEditing = ref(false)
 const editingId = ref(null)
 const categoryToDelete = ref(null)
@@ -350,6 +382,10 @@ const form = ref({
   icon: '',
   parent_id: null,
   status: true
+})
+
+const errors = ref({
+  name: ''
 })
 
 // Auto-generate slug từ tên
@@ -486,18 +522,37 @@ const countChildren = (categoryId) => {
   return categories.value.filter(c => c.parent_id === categoryId).length
 }
 
-// Get icon emoji
-const getIconEmoji = (icon) => {
-  const icons = {
-    book: '📚',
-    globe: '🌍',
-    pencil: '✏️',
-    puzzle: '🧩',
-    heart: '❤️',
-    star: '⭐',
-    folder: '📁'
+const availableIcons = {
+  book: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>',
+  globe: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>',
+  pencil: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>',
+  puzzle: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 0-.253.902l.462 1.962c.164.693-.146 1.426-.763 1.838l-1.66.862a2.001 2.001 0 0 1-1.577.139l-1.846-.598c-.334-.108-.69-.091-1.012.046l-1.56 1.15c-.592.38-1.343.38-1.935 0l-1.56-1.15a1.982 1.982 0 0 0-1.012-.046l-1.846.598a2.001 2.001 0 0 1-1.577-.139l-1.66-.862c-.617-.412-.927-1.145-.763-1.838l.462-1.962a.98.98 0 0 0-.253-.902l-1.611-1.611c-.47-.47-.706-1.087-.706-1.704s.235-1.233.706-1.704l1.568-1.568c.23-.23.338-.556.289-.878l-.367-2.388c-.1-.652.193-1.306.75-1.677l1.78-.976a2.001 2.001 0 0 1 1.623-.05l1.916.822c.31.134.664.134.974 0l1.916-.822a2.001 2.001 0 0 1 1.623.05l1.78.976c.557.371.85.1025.75 1.677l-.367 2.388z"/></svg>',
+  heart: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>',
+  star: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  folder: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>'
+}
+
+const getIconName = (icon) => {
+  const names = {
+    book: 'Sách',
+    globe: 'Quốc tế',
+    pencil: 'Văn phòng phẩm',
+    puzzle: 'Đồ chơi',
+    heart: 'Yêu thích',
+    star: 'Nổi bật',
+    folder: 'Thư mục'
   }
-  return icons[icon] || '📁'
+  return names[icon] || 'Không xác định'
+}
+
+// Get icon SVG
+const getIconSVG = (icon) => {
+  return availableIcons[icon] || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>' // Fallback to folder
+}
+
+const selectIcon = (iconKey) => {
+  form.value.icon = iconKey
+  showIconDropdown.value = false
 }
 
 // Show toast
@@ -536,6 +591,7 @@ const openAddModal = (parentId = null) => {
   isEditing.value = false
   editingId.value = null
   slugManuallyEdited.value = false
+  errors.value = { name: '' }
   form.value = {
     name: '',
     slug: '',
@@ -552,6 +608,7 @@ const openEditModal = (category) => {
   isEditing.value = true
   editingId.value = category.id
   slugManuallyEdited.value = true // Khi edit, giữ slug hiện có
+  errors.value = { name: '' }
   form.value = {
     name: category.name,
     slug: category.slug || '',
@@ -578,8 +635,9 @@ const confirmDelete = (category) => {
 
 // Save category
 const saveCategory = async () => {
+  errors.value = { name: '' }
   if (!form.value.name.trim()) {
-    showToast('Vui lòng nhập tên danh mục', 'error')
+    errors.value.name = 'Vui lòng nhập tên danh mục'
     return
   }
 

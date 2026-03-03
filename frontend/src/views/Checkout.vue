@@ -209,7 +209,7 @@
           <div class="space-y-4 mb-6 max-h-60 overflow-y-auto px-2 pt-3 custom-scrollbar">
             <div v-for="item in checkoutItems" :key="item.id" class="flex gap-3 relative">
               <div class="w-16 h-20 rounded bg-muted flex-shrink-0 relative overflow-hidden border">
-                <img :src="item.thumbnail || 'https://via.placeholder.com/100'" class="w-full h-full object-cover" />
+                <img :src="getImageUrl(item.thumbnail)" class="w-full h-full object-cover" />
               </div>
               <span class="absolute -top-2 left-12 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold z-10 shadow-sm border border-white">
                 {{ item.quantity }}
@@ -469,7 +469,7 @@
                 class="flex items-center gap-4 p-3 bg-muted/50 rounded-lg"
               >
                 <div class="w-16 h-16 bg-gray-100 rounded-md shrink-0 overflow-hidden border">
-                  <img v-if="item.thumbnail" :src="item.thumbnail" :alt="item.name" class="w-full h-full object-cover" />
+                  <img v-if="item.thumbnail" :src="getImageUrl(item.thumbnail)" :alt="item.name" class="w-full h-full object-cover" />
                   <div v-else class="w-full h-full flex items-center justify-center text-gray-400 text-xl">📦</div>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -551,6 +551,7 @@ import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
 import { toast } from 'vue-sonner'
+import { getImageUrl } from '@/utils/format'
 
 const router = useRouter()
 const cartStore = useCartStore()

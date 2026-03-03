@@ -230,15 +230,18 @@ export const syncCart = async (req, res) => {
                         product_id: localItem.id
                     }
                 });
-
+                const product = await Product.findByPk(localItem.id);
+                if (!product) continue;
                 if (existingItem) {
-                    existingItem.quantity += localItem.quantity;
+                    const newQuantity = existingItem.quantity + localItem.quantity;
+                    existingItem.quantity = newQuantity > product.quantity ? product.quantity : newQuantity;
                     await existingItem.save();
                 } else {
+                    const validateQuantity = localItem.quantity > product.quantity ? product.quantity : localItem.quantity;
                     await CartItem.create({
                         cart_id: cart.id,
                         product_id: localItem.id,
-                        quantity: localItem.quantity
+                        quantity: validateQuantity
                     });
                 }
             }

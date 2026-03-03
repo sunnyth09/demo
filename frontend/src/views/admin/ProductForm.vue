@@ -520,16 +520,15 @@ const fetchProductDetail = async () => {
         name: p.name,
         sku: p.sku || '',
         slug: p.slug || '',
-        price: p.price,
+        price: p.admin_price !== undefined ? p.admin_price : p.price,
         quantity: p.quantity || 0,
         description: p.description || '',
         category_id: p.category_id,
         status: p.status || 'active',
         author: p.author || '',
         publisher: p.publisher || '',
-        publisher: p.publisher || '',
         publication_year: p.publication_year || null,
-        original_price: p.original_price,
+        original_price: p.admin_original_price !== undefined ? p.admin_original_price : p.original_price,
         discount_start: p.discount_start ? new Date(p.discount_start).toISOString().slice(0, 16) : null,
         discount_end: p.discount_end ? new Date(p.discount_end).toISOString().slice(0, 16) : null
       }
@@ -566,13 +565,44 @@ const removeThumbnail = () => {
 const handleImagesChange = (e) => {
   const files = Array.from(e.target.files)
   if (files.length > 0) {
+    let duplicateCount = 0
+    let excessCount = 0
+
     files.forEach(file => {
+      // Kiểm tra trùng lặp dựa trên tên, kích thước và ngày sửa đổi
+      const isDuplicate = imageFiles.value.some(
+        existing => existing.name === file.name && 
+                    existing.size === file.size && 
+                    existing.lastModified === file.lastModified
+      )
+
+      if (isDuplicate) {
+        duplicateCount++
+        return // Bỏ qua file trùng
+      }
+
+      // Kiểm tra tổng số lượng ảnh (ảnh hiện tại + ảnh mới) không vượt quá 10
+      const totalImages = existingImages.value.length + imageFiles.value.length
+      if (totalImages >= 10) {
+        excessCount++
+        return // Bỏ qua nếu vượt quá giới hạn
+      }
+
       imageFiles.value.push(file)
       imagePreviews.value.push({
         url: URL.createObjectURL(file),
         file: file
       })
     })
+
+    if (duplicateCount > 0) {
+      showToast(`Đã bỏ qua ${duplicateCount} ảnh bị trùng lặp.`, 'error')
+    }
+    if (excessCount > 0) {
+      setTimeout(() => {
+        showToast(`Chỉ cho phép tối đa 10 ảnh. Đã bỏ qua ${excessCount} ảnh thừa.`, 'error')
+      }, duplicateCount > 0 ? 3000 : 0) // Hiện sau nếu có thông báo trùng
+    }
   }
   // Reset input
   e.target.value = ''
@@ -701,16 +731,22 @@ const saveProduct = async () => {
       formData.append('publication_year', form.value.publication_year)
     }
 
-    if (form.value.original_price) {
+    if (form.value.original_price || form.value.original_price === 0) {
       formData.append('original_price', form.value.original_price)
+    } else {
+      formData.append('original_price', '')
     }
 
     if (form.value.discount_start) {
       formData.append('discount_start', form.value.discount_start)
+    } else {
+      formData.append('discount_start', '')
     }
 
     if (form.value.discount_end) {
       formData.append('discount_end', form.value.discount_end)
+    } else {
+      formData.append('discount_end', '')
     }
     
     if (form.value.slug) {

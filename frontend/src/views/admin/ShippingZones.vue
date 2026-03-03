@@ -106,14 +106,17 @@
         <form @submit.prevent="saveZone" novalidate class="p-6 space-y-4">
           <!-- Name -->
           <div>
-            <label class="block text-sm font-medium mb-1">Tên khu vực *</label>
+            <label class="block text-sm font-medium mb-1" :class="{ 'text-red-500': errors.name }">Tên khu vực *</label>
             <input 
               v-model="form.name" 
               type="text" 
               required
-              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 transition-colors"
+              :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.name }"
               placeholder="VD: Nội thành Buôn Ma Thuột"
+              @input="errors.name = ''"
             />
+            <p v-if="errors.name" class="text-sm text-red-500 mt-1">{{ errors.name }}</p>
           </div>
 
           <!-- Provinces -->
@@ -141,15 +144,18 @@
           <div class="grid grid-cols-2 gap-4">
             <!-- Shipping Fee -->
             <div>
-              <label class="block text-sm font-medium mb-1">Phí ship (VNĐ) *</label>
+              <label class="block text-sm font-medium mb-1" :class="{ 'text-red-500': errors.shipping_fee }">Phí ship (VNĐ) *</label>
               <input 
                 v-model.number="form.shipping_fee" 
                 type="number" 
                 required
                 min="0"
                 step="1000"
-                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 transition-colors"
+                :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.shipping_fee }"
+                @input="errors.shipping_fee = ''"
               />
+              <p v-if="errors.shipping_fee" class="text-sm text-red-500 mt-1">{{ errors.shipping_fee }}</p>
             </div>
 
             <!-- Free Threshold -->
@@ -274,6 +280,11 @@ const form = ref({
   is_active: true
 })
 
+const errors = ref({
+  name: '',
+  shipping_fee: ''
+})
+
 const provincesText = computed({
   get: () => (form.value.provinces || []).join('\n'),
   set: (val) => {
@@ -316,6 +327,7 @@ const fetchZones = async () => {
 
 const openCreateModal = () => {
   isEditing.value = false
+  errors.value = { name: '', shipping_fee: '' }
   form.value = {
     name: '',
     provinces: [],
@@ -331,19 +343,25 @@ const openCreateModal = () => {
 
 const openEditModal = (zone) => {
   isEditing.value = true
+  errors.value = { name: '', shipping_fee: '' }
   form.value = { ...zone }
   showModal.value = true
 }
 
 const saveZone = async () => {
+  errors.value = { name: '', shipping_fee: '' }
+  let hasError = false
+
   if (!form.value.name || !form.value.name.trim()) {
-    toast.error('Vui lòng nhập tên khu vực')
-    return
+    errors.value.name = 'Vui lòng nhập tên khu vực'
+    hasError = true
   }
-  if (form.value.shipping_fee === null || form.value.shipping_fee === undefined) {
-    toast.error('Vui lòng nhập phí ship')
-    return
+  if (form.value.shipping_fee === null || form.value.shipping_fee === undefined || form.value.shipping_fee === '') {
+    errors.value.shipping_fee = 'Vui lòng nhập phí ship'
+    hasError = true
   }
+
+  if (hasError) return
 
   saving.value = true
   try {

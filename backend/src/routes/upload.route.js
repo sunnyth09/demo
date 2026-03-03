@@ -1,7 +1,7 @@
 import express from "express";
 import upload from "../middlewares/upload.middleware.js";
 import { checkToken, checkAdmin } from "../middlewares/auth.middleware.js";
-import { uploadFile } from "../services/minio.service.js";
+import { uploadFile, getFullUrl } from "../services/minio.service.js";
 
 const router = express.Router();
 
@@ -17,7 +17,8 @@ router.post(
         return res.status(400).json({ message: "Không có file ảnh" });
       }
 
-      const url = await uploadFile(req.file);
+      const filename = await uploadFile(req.file);
+      const url = getFullUrl(filename);
 
       return res.json({ status: true, url });
     } catch (error) {

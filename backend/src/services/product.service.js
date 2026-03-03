@@ -1,5 +1,5 @@
 import { Product, Category, Review } from "../models/sequelize/index.js";
-import { uploadFile, deleteFile } from "./minio.service.js";
+import { uploadFile, deleteFile, getFullUrl } from "./minio.service.js";
 import { Op } from "sequelize";
 import { getAllChildIds } from "./category.service.js";
 
@@ -72,13 +72,16 @@ export const getProducts = async ({ limit = 10, offset = 0, category_id = null, 
       name: p.name,
       slug: p.slug,
       sku: p.sku,
+      // Lưu trữ giá trị gốc cho Admin Form edit
+      admin_price: p.price,
+      admin_original_price: p.original_price,
       // Nếu hết hạn khuyến mãi → hiển thị giá gốc, ẩn giá giảm
       price: (!discountActive && p.original_price) ? p.original_price : p.price,
       original_price: discountActive ? p.original_price : null,
       discount_start: p.discount_start,
       discount_end: p.discount_end,
       quantity: p.quantity,
-      thumbnail: p.thumbnail,
+      thumbnail: getFullUrl(p.thumbnail),
       status: p.status,
       category_name: p.category?.name || null
     };
@@ -129,7 +132,8 @@ export const getProductDetail = async (idOrSlug) => {
   // Parse images từ JSON string
   if (result.image) {
     try {
-      result.images = JSON.parse(result.image);
+      const rawImages = JSON.parse(result.image);
+      result.images = Array.isArray(rawImages) ? rawImages.map(img => getFullUrl(img)) : [];
     } catch (e) {
       result.images = [];
     }
@@ -137,8 +141,17 @@ export const getProductDetail = async (idOrSlug) => {
     result.images = [];
   }
 
+  // Covert thumbnail to full Url
+  if (result.thumbnail) {
+    result.thumbnail = getFullUrl(result.thumbnail);
+  }
+
   // Thêm category_name
   result.category_name = result.category?.name || null;
+
+  // Lưu trữ giá trị gốc cho Admin Form edit
+  result.admin_price = result.price;
+  result.admin_original_price = result.original_price;
 
   // Ẩn giá giảm nếu khuyến mãi đã hết hạn, quay về giá gốc
   if (!isDiscountActive(result.discount_start, result.discount_end)) {
@@ -222,11 +235,29 @@ export const create = async (data, files) => {
 };
 
 /**
+ * Helper: Trích xuất Object Key (tên file) từ URL đầy đủ
+ */
+const extractObjectKey = (url) => {
+  if (!url) return null;
+  // Nếu url chỉ là tên file (không chứa http hoặc /) thì trả về luôn
+  if (!url.startsWith('http') && !url.includes('/')) return url;
+  
+  try {
+    const parsedUrl = new URL(url, "http://localhost"); // Dummy base
+    const parts = parsedUrl.pathname.split('/');
+    return parts[parts.length - 1];
+  } catch(e) {
+    return url;
+  }
+};
+
+/**
  * Cập nhật sản phẩm
  */
 export const update = async (id, data, files) => {
   // Lấy sản phẩm hiện tại
   const existingProduct = await getProductDetail(id);
+  const product = await Product.findByPk(id); // Gọi DB để lấy raw value
 
   if (!data.name || !data.price) {
     throw new Error("Tên và giá sản phẩm là bắt buộc");
@@ -255,7 +286,8 @@ export const update = async (id, data, files) => {
     }
   }
 
-  let thumbnailUrl = existingProduct.thumbnail;
+  // Dùng raw DB thumbnail (không phải URl resolve đầy đủ từ detail), tránh trùng lặp đính kèm Host
+  let thumbnailUrl = product.thumbnail; 
   let imageUrls = null;
 
   // Nếu có thumbnail mới
@@ -269,48 +301,59 @@ export const update = async (id, data, files) => {
 
   // Xử lý images gallery
   const hasNewImages = files?.images && files.images.length > 0;
+  // data.existing_images xuất hiện khi frontend có tác động vào ảnh cũ
   const hasExistingImages = data.existing_images !== undefined;
 
+  let finalImages = [];
+
   if (hasNewImages || hasExistingImages) {
-    // Danh sách ảnh cũ cần giữ lại (gửi từ frontend)
-    let keepImages = [];
+    // Danh sách URL cũ cần giữ lại (từ frontend)
+    let keepImagesUrls = [];
     if (hasExistingImages) {
-      keepImages = Array.isArray(data.existing_images)
+      keepImagesUrls = Array.isArray(data.existing_images)
         ? data.existing_images.filter(url => url && url.trim() !== '')
         : (data.existing_images && data.existing_images.trim() !== '' ? [data.existing_images] : []);
     } else if (!hasNewImages) {
-      // Không gửi gì → giữ nguyên
-      keepImages = existingProduct.images || [];
+      // Không gửi gì (không tác động) -> giữ nguyên
+      keepImagesUrls = existingProduct.images || [];
+    } else {
+      // Nếu có ảnh mới nhưng không gửi existing_images → Mặc định ở frontend mới có nghĩa là KHÔNG CÓ THAY ĐỔI
+      keepImagesUrls = existingProduct.images || [];
     }
 
-    // Xóa những ảnh cũ bị loại bỏ
+    // Xóa những ảnh cũ bị loại bỏ (những ảnh nằm trong existingProduct.images nhưng không nằm trong keepImagesUrls)
     const oldImages = existingProduct.images || [];
-    const removedImages = oldImages.filter(url => !keepImages.includes(url));
+    const removedImages = oldImages.filter(url => !keepImagesUrls.includes(url));
     if (removedImages.length > 0) {
       await Promise.all(removedImages.map(url => deleteFile(url)));
     }
 
+    // Convert các URL cũ giữ lại sang Object Key (để lưu trong DB)
+    const keepImageKeys = keepImagesUrls.map(url => extractObjectKey(url)).filter(Boolean);
+
     // Upload ảnh mới (nếu có)
-    let newUploadedUrls = [];
+    let newUploadedKeys = [];
     if (hasNewImages) {
-      newUploadedUrls = await Promise.all(files.images.map(file => uploadFile(file)));
+      newUploadedKeys = await Promise.all(files.images.map(file => uploadFile(file)));
     }
 
-    // Kết hợp: ảnh cũ giữ lại + ảnh mới upload
-    const finalImages = [...keepImages, ...newUploadedUrls];
+    // Kết hợp: key ảnh cũ giữ lại + key ảnh mới upload
+    finalImages = [...keepImageKeys, ...newUploadedKeys];
     imageUrls = JSON.stringify(finalImages);
+  } else {
+      // Frontend ko gửi gì về ảnh (kể cả ảnh mới và existing_images)
+      finalImages = product.image ? JSON.parse(product.image) : [];
   }
 
   // Tìm và cập nhật product
-  const product = await Product.findByPk(id);
   await product.update({
     name: data.name,
     slug: slug,
     sku: data.sku !== undefined ? data.sku : product.sku,
     price: data.price,
-    original_price: data.original_price !== undefined ? data.original_price : product.original_price,
-    discount_start: data.discount_start !== undefined ? data.discount_start : product.discount_start,
-    discount_end: data.discount_end !== undefined ? data.discount_end : product.discount_end,
+    original_price: data.original_price === "" ? null : (data.original_price !== undefined ? data.original_price : product.original_price),
+    discount_start: data.discount_start === "" ? null : (data.discount_start !== undefined ? data.discount_start : product.discount_start),
+    discount_end: data.discount_end === "" ? null : (data.discount_end !== undefined ? data.discount_end : product.discount_end),
     quantity: data.quantity !== undefined ? data.quantity : product.quantity,
     description: data.description !== undefined ? data.description : product.description,
     category_id: data.category_id !== undefined ? data.category_id : product.category_id,

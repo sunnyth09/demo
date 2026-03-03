@@ -12,6 +12,7 @@ export const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     port: process.env.DB_PORT || 3309,
     dialect: 'mysql',
+    timezone: '+07:00', // Asia/Ho_Chi_Minh - đảm bảo Sequelize xử lý datetime đúng múi giờ Việt Nam
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     pool: {
       max: 10,

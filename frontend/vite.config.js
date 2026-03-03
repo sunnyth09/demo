@@ -21,5 +21,16 @@ export default defineConfig({
   server: {
     host: true,
     port: 3001,
+    proxy: {
+      '/minio': {
+        target: 'http://minio:9000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/minio/, ''),
+      },
+      '/api': {
+        target: 'http://backend:3000',
+        changeOrigin: true,
+      }
+    }
   },
 })

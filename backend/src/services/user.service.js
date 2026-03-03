@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { User } from "../models/sequelize/index.js";
+import { getFullUrl } from "./minio.service.js";
 import { Op } from "sequelize";
 
 // ========== DỊCH VỤ PROFILE NGƯỜI DÙNG ==========
@@ -16,7 +17,12 @@ export const getProfile = async (userId) => {
     throw new Error("Không tìm thấy người dùng");
   }
   
-  return user;
+  const userData = user.toJSON();
+  if (userData.avatar) {
+    userData.avatar = getFullUrl(userData.avatar);
+  }
+
+  return userData;
 };
 
 /**
@@ -56,7 +62,7 @@ export const updateProfile = async (userId, data) => {
     email: user.email,
     role: user.role,
     phone: user.phone,
-    avatar: user.avatar,
+    avatar: getFullUrl(user.avatar),
     created_at: user.created_at
   };
 };
