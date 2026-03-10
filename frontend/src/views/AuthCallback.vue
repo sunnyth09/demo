@@ -23,17 +23,17 @@ onMounted(() => {
     try {
       const userData = JSON.parse(user);
       
-      // Update store
+      // Cập nhật store
       authStore.accessToken = accessToken;
       authStore.refreshToken = refreshToken;
       authStore.user = userData;
 
-      // Save to localStorage (default for social login)
+      // Lưu vào localStorage (mặc định cho đăng nhập mạng xã hội)
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(userData));
 
-      // Redirect to home
+      // Chuyển hướng về trang chủ
       router.push('/');
     } catch (e) {
         console.error("Error parsing user data", e);

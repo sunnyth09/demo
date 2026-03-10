@@ -1,7 +1,7 @@
 <template>
   <div class="container max-w-7xl mx-auto px-4 py-6 bg-background min-h-screen">
     <div class="flex flex-col md:flex-row gap-6">
-      <!-- Sidebar (Categories Tree) - Hidden on mobile -->
+      <!-- Cột bên (Cây Danh mục) - Ẩn trên mobile -->
       <div class="hidden md:block w-full md:w-1/4 lg:w-1/5">
         <div class="bg-card rounded-xl shadow-sm border border-border overflow-hidden sticky top-24">
           <div class="px-4 py-3 border-b border-border bg-muted/30">
@@ -14,7 +14,7 @@
           </div>
           <div class="p-2">
             <div class="space-y-1">
-              <!-- All Products -->
+              <!-- Tất cả sản phẩm -->
               <button
                 @click="selectCategory(null)"
                 :class="[
@@ -27,7 +27,7 @@
                 Tất cả sản phẩm
               </button>
 
-              <!-- Level 1 Categories -->
+              <!-- Danh mục Cấp 1 -->
               <div v-for="cat1 in categoryTree" :key="cat1.id" class="space-y-1">
                 <button 
                   @click="selectCategory(cat1.id)"
@@ -50,7 +50,7 @@
                   </svg>
                 </button>
 
-                <!-- Level 2 Categories (Children of Level 1) -->
+                <!-- Danh mục Cấp 2 (Con của Cấp 1) -->
                 <div 
                   v-if="expandedCats.has(cat1.id) && cat1.children && cat1.children.length > 0" 
                   class="ml-3 pl-3 border-l border-gray-100 space-y-1 mt-1"
@@ -77,7 +77,7 @@
                       </svg>
                     </button>
 
-                    <!-- Level 3 Categories (Children of Level 2) -->
+                    <!-- Danh mục Cấp 3 (Con của Cấp 2) -->
                     <div 
                       v-if="expandedCats.has(cat2.id) && cat2.children && cat2.children.length > 0" 
                       class="ml-3 pl-3 border-l border-gray-100 mt-1 space-y-1"
@@ -104,11 +104,11 @@
         </div>
       </div>
 
-      <!-- Main Content -->
+      <!-- Nội dung chính -->
       <div class="flex-1">
-        <!-- Sort Bar -->
+        <!-- Thanh Sắp xếp -->
         <div class="bg-card p-3 rounded-xl shadow-sm border border-border mb-6 flex items-center justify-between gap-3">
-          <!-- Mobile Filter Button -->
+          <!-- Nút Lọc trên Mobile -->
           <button 
             @click="showMobileFilter = true"
             class="md:hidden flex items-center gap-2 px-3 py-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
@@ -132,7 +132,7 @@
                 </svg>
               </button>
 
-              <!-- Dropdown Menu -->
+              <!-- Menu Sổ xuống -->
               <div 
                 v-if="showSortMenu"
                 class="absolute top-full right-0 mt-2 w-full bg-popover rounded-lg shadow-lg border border-border overflow-hidden z-30 animate-in fade-in zoom-in-95 duration-200"
@@ -153,13 +153,13 @@
                 </div>
               </div>
               
-              <!-- Backdrop to close -->
+              <!-- Nền tối để đóng menu -->
               <div v-if="showSortMenu" class="fixed inset-0 z-20" @click="showSortMenu = false"></div>
             </div>
           </div>
         </div>
 
-        <!-- Skeleton Loading -->
+        <!-- Khung tải trang tĩnh (Skeleton) -->
         <div v-if="loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div v-for="n in 8" :key="n" class="bg-card rounded-xl border overflow-hidden animate-pulse">
             <div class="aspect-[3/4] bg-gray-200"></div>
@@ -201,7 +201,7 @@
               </span>
             </div>
 
-            <!-- Image -->
+            <!-- Hình ảnh -->
             <div 
               class="relative aspect-[3/4] overflow-hidden p-[2px] bg-transparent cursor-pointer"
               @click="goToDetail(product.slug || product.id)"
@@ -211,7 +211,7 @@
                 :alt="product.name"
                 class="w-full h-full object-cover rounded-[2px] transition-transform duration-500 group-hover:scale-110"
               />
-              <!-- Favorite Button -->
+              <!-- Nút Yêu thích -->
               <button
                 @click.stop="toggleFavorite(product)"
                 class="absolute top-2 right-2 z-20 p-1.5 rounded-full bg-white/80 hover:bg-white text-gray-400 hover:text-red-500 transition-colors shadow-sm"
@@ -223,9 +223,8 @@
               </button>
             </div>
 
-            <!-- Info -->
+            <!-- Thông tin -->
             <div class="p-3 pt-2 flex flex-col">
-              <!-- ... rest of info ... -->
               <h3 
                 class="text-sm font-medium text-card-foreground line-clamp-2 mb-1 group-hover:text-primary transition-colors cursor-pointer leading-snug"
                 :title="product.name"
@@ -242,7 +241,7 @@
                   </span>
                 </div>
                 
-                <!-- Rating -->
+                <!-- Đánh giá -->
                 <div class="flex items-center gap-1 mt-1.5">
                   <div class="flex text-yellow-500 text-xs">
                     <span v-for="n in 5" :key="n">{{ n <= Math.round(product.rating || 0) ? '★' : '☆' }}</span>
@@ -264,7 +263,7 @@
           <p class="mt-1 text-sm text-muted-foreground">Thử thay đổi bộ lọc hoặc tìm kiếm từ khóa khác.</p>
         </div>
 
-        <!-- Pagination -->
+        <!-- Phân trang -->
         <div
           v-if="products.length > 0 && totalPages > 1"
           class="flex justify-center mt-8 gap-2"
@@ -325,16 +324,16 @@
         </div>
       </div>
     </div>
-    <!-- Mobile Filter Drawer -->
+    <!-- Ngăn kéo Bộ lọc trên Mobile -->
     <Teleport to="body">
       <div v-if="showMobileFilter" class="fixed inset-0 z-50 md:hidden flex justify-end">
-        <!-- Backdrop -->
+        <!-- Nền tối -->
         <div 
           class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" 
           @click="showMobileFilter = false"
         ></div>
 
-        <!-- Drawer Content -->
+        <!-- Nội dung Ngăn kéo -->
         <div class="relative w-[300px] h-full bg-background shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300">
           <div class="p-4 border-b border-border flex items-center justify-between sticky top-0 bg-background z-10">
             <h3 class="font-bold text-lg">Lọc sản phẩm</h3>
@@ -348,7 +347,7 @@
           <div class="p-4">
             <p class="font-semibold text-sm mb-3 text-muted-foreground uppercase">Danh mục</p>
             <div class="space-y-1">
-              <!-- All Products -->
+              <!-- Tất cả sản phẩm -->
               <button
                 @click="selectCategory(null); showMobileFilter = false"
                 :class="[
@@ -361,7 +360,7 @@
                 Tất cả sản phẩm
               </button>
 
-              <!-- Level 1 Categories -->
+              <!-- Danh mục Cấp 1 -->
               <div v-for="cat1 in categoryTree" :key="cat1.id">
                 <div class="flex items-center">
                   <button 
@@ -387,7 +386,7 @@
                   </button>
                 </div>
 
-                <!-- Level 2 -->
+                <!-- Danh mục Cấp 2 -->
                 <div 
                   v-if="expandedCats.has(cat1.id) && cat1.children && cat1.children.length > 0" 
                   class="ml-4 pl-3 border-l border-border mt-1 space-y-1"

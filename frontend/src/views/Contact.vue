@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-background">
-    <!-- Header / Banner -->
+    <!-- Phần Tiêu Đề / Hình Ảnh -->
     <div class="bg-primary/5 py-16">
       <div class="container max-w-7xl mx-auto px-4 text-center">
         <h1 class="text-4xl font-bold text-foreground mb-4">Liên hệ với chúng tôi</h1>
@@ -12,7 +12,7 @@
 
     <div class="container max-w-7xl mx-auto px-4 py-12">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
-        <!-- Contact Info -->
+        <!-- Thông tin liên lạc -->
         <div class="space-y-8">
           <div>
             <h3 class="text-2xl font-semibold mb-6">Thông tin liên hệ</h3>
@@ -58,7 +58,7 @@
             </div>
           </div>
 
-          <!-- Google Map (Placeholder) -->
+          <!-- Bản đồ Google (Tạm ẩn) -->
           <!-- <div class="rounded-xl overflow-hidden h-64 bg-muted border border-border">
              <iframe 
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3892.492723737526!2d108.0382473148123!3d12.681605991047605!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31721d8b67195c6f%3A0xe5f2b8f8705d0452!2zMTM0IE5ndXnhu4VuIFRo4buLIMSQ4buLbmgsIFRow6BuaCBOaOG6pXQsIFRow6BuaCBwaOG7kSBCdcO0biBNYSBUaHXhuq10LCDEkOG6r2sgTOG6r2sgNjMwMDAsIFZpZXRuYW0!5e0!3m2!1sen!2s!4v1679540000000!5m2!1sen!2s" 
@@ -72,7 +72,7 @@
           </div> -->
         </div>
 
-        <!-- Contact Form -->
+        <!-- Biểu mẫu liên hệ -->
         <div class="bg-card border border-border rounded-2xl p-8 shadow-sm">
           <h3 class="text-2xl font-semibold mb-6">Gửi tin nhắn cho chúng tôi</h3>
           <form @submit.prevent="handleSubmit" novalidate class="space-y-6">
@@ -211,7 +211,7 @@ const handleSubmit = async () => {
     
     if (res.status === 'success') {
       toast.success(res.message);
-      // Reset form
+      // Xóa form sau khi gửi thành công
       form.name = '';
       form.email = '';
       form.subject = '';

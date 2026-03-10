@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import UserLayout from '@/layouts/UserLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 
-// Public views
+// Giao diện Public
 import Home from '@/views/Home.vue'
 import About from '@/views/About.vue'
 import Products from '@/views/Products.vue'
@@ -14,14 +14,13 @@ import Register from '@/views/Register.vue'
 import ForgotPassword from '@/views/ForgotPassword.vue'
 import NotFound from '@/views/NotFound.vue'
 
-// Admin views
+// Giao diện Admin
 import AdminDashboard from '@/views/admin/Dashboard.vue'
 import AdminProducts from '@/views/admin/Products.vue'
 import AdminProductForm from '@/views/admin/ProductForm.vue'
 import AdminCategories from '@/views/admin/Categories.vue'
 import AdminOrders from '@/views/admin/Orders.vue'
 import AdminUsers from '@/views/admin/Users.vue'
-import AdminSettings from '@/views/admin/Settings.vue'
 import AdminRevenue from '@/views/admin/RevenueAnalytics.vue'
 import AdminArticles from '@/views/admin/Articles.vue'
 
@@ -29,7 +28,7 @@ import AdminArticleForm from '@/views/admin/ArticleForm.vue'
 import AdminContacts from '@/views/admin/Contacts.vue'
 
 const routes = [
-  // User routes - with UserLayout (Navbar + Footer)
+  // Tuyến đường cho User - kèm Navbar và Footer
   {
     path: '/',
     component: UserLayout,
@@ -56,20 +55,20 @@ const routes = [
 
       { path: 'contact', name: 'contact', component: () => import('@/views/Contact.vue'), meta: { title: 'Liên hệ', description: 'Liên hệ Ocean Books - Hỗ trợ khách hàng 24/7' } },
       
-      // Policy pages
+      // Các trang chính sách
       { path: 'faq', name: 'faq', component: () => import('@/views/FAQ.vue'), meta: { title: 'FAQ - Câu hỏi thường gặp' } },
       { path: 'return-policy', name: 'return-policy', component: () => import('@/views/ReturnPolicy.vue'), meta: { title: 'Chính sách đổi trả' } },
       { path: 'terms-of-service', name: 'terms-of-service', component: () => import('@/views/TermsOfService.vue'), meta: { title: 'Điều khoản dịch vụ' } },
       { path: 'privacy-policy', name: 'privacy-policy', component: () => import('@/views/PrivacyPolicy.vue'), meta: { title: 'Chính sách bảo mật' } },
       { path: 'shopping-guide', name: 'shopping-guide', component: () => import('@/views/ShoppingGuide.vue'), meta: { title: 'Hướng dẫn mua hàng' } },
       { path: 'recruitment', name: 'recruitment', component: () => import('@/views/Recruitment.vue'), meta: { title: 'Tuyển dụng - Cơ hội nghề nghiệp' } },
-      { path: 'cookies', redirect: '/privacy-policy' }, // Redirect cookies to privacy policy for now
+      { path: 'cookies', redirect: '/privacy-policy' }, // Tạm thời chuyển hướng cookies sang chính sách bảo mật
       
       { path: 'payment/result', name: 'payment-result', component: () => import('@/views/PaymentResult.vue'), meta: { title: 'Kết quả thanh toán' } },
     ]
   },
 
-  // Admin routes - with AdminLayout (Sidebar)
+  // Tuyến đường Admin - kèm Sidebar
   {
     path: '/admin',
     component: AdminLayout,
@@ -92,11 +91,10 @@ const routes = [
       { path: 'shipping', name: 'admin-shipping', component: () => import('@/views/admin/ShippingZones.vue'), meta: { title: 'Phí vận chuyển' } },
       { path: 'coupons', name: 'admin-coupons', component: () => import('@/views/admin/Coupons.vue'), meta: { title: 'Mã giảm giá' } },
       { path: 'reviews', name: 'admin-reviews', component: () => import('@/views/admin/Reviews.vue'), meta: { title: 'Đánh giá & Bình luận' } },
-      { path: 'settings', name: 'admin-settings', component: AdminSettings, meta: { title: 'Cài đặt' } },
     ]
   },
 
-  // 404 - no layout
+  // Trang 404 - không có layout
   { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFound, meta: { title: '404' } }
 ]
 
@@ -104,15 +102,15 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
   scrollBehavior(to, from, savedPosition) {
-    // If user uses browser back/forward, restore saved position
+    // Nếu người dùng sử dụng nút back/forward trong trình duyệt, hãy khôi phục vị trí lưu trữ
     if (savedPosition) {
       return savedPosition
     }
-    // If navigating to a hash (anchor), scroll to that element
+    // Nếu điều hướng tới một hash (neo), hãy cuộn xuống phần tử đó
     if (to.hash) {
       return { el: to.hash, behavior: 'smooth' }
     }
-    // Otherwise, scroll to top
+    // Nếu không thì cuộn lên đầu trang
     return { top: 0, behavior: 'smooth' }
   }
 })
@@ -121,7 +119,7 @@ router.beforeEach(async (to, from, next) => {
   const pageTitle = to.meta.title ? `${to.meta.title} | Ocean Books` : 'Ocean Books'
   document.title = pageTitle
 
-  // Helper to set meta tags
+  // Trợ thủ thiết lập meta tags
   const setMeta = (name, content, isProperty = false) => {
     const attr = isProperty ? 'property' : 'name'
     let el = document.querySelector(`meta[${attr}="${name}"]`)
@@ -142,7 +140,7 @@ router.beforeEach(async (to, from, next) => {
   const desc = to.meta.description || 'Ocean Books - Đại dương tri thức, nơi cung cấp sách hay nhất Việt Nam'
   const fullUrl = `${window.location.origin}${to.fullPath}`
 
-  // Standard meta
+  // Standard meta - thẻ cơ bản
   setMeta('description', desc)
 
   // Open Graph
@@ -152,7 +150,7 @@ router.beforeEach(async (to, from, next) => {
   setMeta('og:type', 'website', true)
   setMeta('og:site_name', 'Ocean Books', true)
 
-  // Twitter Card
+  // Twitter Card (thẻ chia sẻ trên Twitter)
   setMeta('twitter:card', 'summary_large_image')
   setMeta('twitter:title', pageTitle)
   setMeta('twitter:description', desc)

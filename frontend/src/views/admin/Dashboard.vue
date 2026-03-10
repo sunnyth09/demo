@@ -39,69 +39,156 @@
 
     <!-- Charts Row -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Revenue Chart -->
-      <div class="lg:col-span-2 bg-card rounded-2xl border p-6 shadow-sm">
-        <div class="flex items-center justify-between mb-16">
-          <div>
-            <h3 class="text-lg font-bold">Phân tích doanh thu</h3>
-            <p class="text-sm text-muted-foreground">Thống kê giao dịch hoàn tất {{ chartDays }} ngày qua</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="flex items-center gap-1 p-1 bg-muted rounded-lg text-xs font-medium">
-              <button 
-                @click="setChartDays(7)"
-                :class="['px-3 py-1.5 rounded-md transition-all', chartDays === 7 ? 'bg-background border shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground']">
-                7D
-              </button>
-              <button 
-                @click="setChartDays(30)"
-                :class="['px-3 py-1.5 rounded-md transition-all', chartDays === 30 ? 'bg-background border shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground']">
-                30D
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <div class="relative h-80 flex items-end gap-3 px-2">
-          <!-- Grid Lines -->
-          <div class="absolute inset-0 flex flex-col justify-between py-1 pointer-events-none opacity-[0.03]">
-            <div v-for="i in 4" :key="i" class="border-t border-foreground w-full"></div>
-            <div class="w-full"></div>
-          </div>
-
-          <div 
-            v-for="(item, index) in revenueChartData" 
-            :key="index"
-            class="group/bar flex-1 relative flex flex-col items-center h-full justify-end"
-          >
-            <div 
-              class="w-full bg-gradient-to-t from-primary/40 to-primary/80 hover:to-primary transition-all duration-500 rounded-t-lg relative flex flex-col justify-end"
-              :style="{ height: `${Math.max(item.percent, 5)}%` }"
-            >
-              <!-- Bar Tip Glow -->
-              <div class="absolute top-0 left-0 right-0 h-1 bg-white/40 rounded-t-lg"></div>
-              
-              <!-- Tooltip Premium -->
-              <div class="absolute -top-14 left-1/2 -translate-x-1/2 bg-foreground/90 backdrop-blur-md text-background text-[10px] font-bold px-3 py-2 rounded-xl opacity-0 group-hover/bar:opacity-100 group-hover/bar:-top-16 transition-all duration-300 whitespace-nowrap z-20 shadow-xl border border-white/10">
-                <div class="text-muted-foreground text-[8px] uppercase tracking-tighter mb-0.5">Doanh thu {{ item.label }}</div>
-                <div>{{ formatCurrency(item.value) }}</div>
-                <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-foreground/90 rotate-45"></div>
+      <!-- Revenue & Orders Area Chart (shadcn style) -->
+      <div class="lg:col-span-2 bg-card rounded-2xl border pt-0 shadow-sm overflow-hidden">
+        <div class="flex items-center gap-2 space-y-0 border-b py-5 px-6 flex-col sm:flex-row">
+          <div class="grid flex-1 gap-1">
+            <h3 class="text-lg font-bold tracking-tight">Thống kê doanh thu</h3>
+            <div class="flex items-center gap-4 mt-1">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full" style="background: hsl(221, 83%, 53%)"></span>
+                <span class="text-xs text-muted-foreground">Doanh thu</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full" style="background: hsl(25, 95%, 53%)"></span>
+                <span class="text-xs text-muted-foreground">Đơn hàng</span>
               </div>
             </div>
           </div>
+          <div class="flex items-center gap-1 p-1 bg-muted rounded-lg text-xs font-medium">
+            <button 
+              @click="setChartDays(7)"
+              :class="['px-3 py-1.5 rounded-md transition-all', chartDays === 7 ? 'bg-background border shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground']">
+              7D
+            </button>
+            <button 
+              @click="setChartDays(30)"
+              :class="['px-3 py-1.5 rounded-md transition-all', chartDays === 30 ? 'bg-background border shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground']">
+              30D
+            </button>
+          </div>
         </div>
-        
-        <div class="flex justify-between mt-4 px-2">
-          <span 
-            v-for="(item, index) in revenueChartData" 
-            :key="index"
-            class="text-[10px] font-bold text-muted-foreground uppercase tracking-tight"
-          >
-            {{ item.label }}
-          </span>
+        <div class="px-2 pt-4 sm:px-6 sm:pt-6 pb-4">
+          <ChartContainer v-if="revenueChartData.length > 0" :config="revenueChartConfig" class="aspect-auto h-[280px] w-full">
+            <VisXYContainer
+              :data="revenueChartData"
+              :svg-defs="revenueSvgDefs"
+              :margin="{ left: 5, top: 10 }"
+            >
+              <VisArea
+                :x="(d, i) => i"
+                :y="[(d) => d.orders, (d) => d.revenue]"
+                :color="(d, i) => ['url(#fillOrders)', 'url(#fillRevenue)'][i]"
+                :opacity="0.4"
+              />
+              <VisLine
+                :x="(d, i) => i"
+                :y="[(d) => d.orders, (d) => d.revenue]"
+                :color="(d, i) => [revenueChartConfig.orders.color, revenueChartConfig.revenue.color][i]"
+                :line-width="1"
+              />
+              <VisAxis
+                type="x"
+                :x="(d, i) => i"
+                :tick-line="false"
+                :domain-line="false"
+                :grid-line="false"
+                :num-ticks="Math.min(revenueChartData.length, 7)"
+                :tick-format="(i) => revenueChartData[Math.round(i)]?.label || ''"
+              />
+              <VisAxis
+                type="y"
+                :num-ticks="3"
+                :tick-line="false"
+                :domain-line="false"
+                :tick-format="() => ''"
+              />
+              <ChartTooltip />
+              <ChartCrosshair
+                :template="revenueTooltipTemplate"
+                :color="(d, i) => [revenueChartConfig.orders.color, revenueChartConfig.revenue.color][i % 2]"
+              />
+            </VisXYContainer>
+          </ChartContainer>
+          <div v-else class="h-[280px] flex items-center justify-center text-muted-foreground text-sm">
+            Chưa có dữ liệu doanh thu
+          </div>
         </div>
       </div>
 
+      <!-- Top Products -->
+      <div class="bg-card rounded-2xl border p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-bold">Bán chạy</h3>
+          <!-- Custom Sort Dropdown -->
+          <div class="relative z-20">
+            <button 
+              @click="isSortDropdownOpen = !isSortDropdownOpen"
+              @blur="closeSortDropdown"
+              class="flex items-center gap-2 text-xs text-primary font-bold bg-primary/5 hover:bg-primary/10 border border-primary/10 hover:border-primary/30 py-1.5 px-3 rounded-lg transition-all"
+            >
+              <span>{{ topProductsSort === 'sold' ? 'Sắp xếp: Số lượng bán' : 'Sắp xếp: Doanh thu' }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" :class="['w-3.5 h-3.5 transition-transform duration-200', isSortDropdownOpen ? 'rotate-180' : '']" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div 
+              v-show="isSortDropdownOpen"
+              class="absolute right-0 top-full mt-1.5 w-44 bg-card border border-border/50 shadow-xl rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+            >
+              <button 
+                @click="setTopProductsSort('sold')"
+                :class="['w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-muted transition-colors', topProductsSort === 'sold' ? 'text-primary bg-primary/5' : 'text-muted-foreground']"
+              >
+                Số lượng bán ra
+              </button>
+              <button 
+                @click="setTopProductsSort('revenue')"
+                :class="['w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-muted transition-colors border-t border-border/50', topProductsSort === 'revenue' ? 'text-primary bg-primary/5' : 'text-muted-foreground']"
+              >
+                Doanh thu
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="space-y-5">
+          <div 
+            v-for="(product, index) in topProducts" 
+            :key="product.id"
+            class="flex items-center gap-4 group cursor-pointer"
+          >
+            <div class="relative">
+              <span class="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-black z-10 shadow-sm">
+                {{ index + 1 }}
+              </span>
+              <div class="w-14 h-14 rounded-xl bg-muted overflow-hidden flex-shrink-0 border transition-transform duration-300 group-hover:scale-105">
+                <img 
+                  v-if="product.thumbnail"
+                  :src="product.thumbnail" 
+                  class="w-full h-full object-cover"
+                  :alt="product.name"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center text-xl">📚</div>
+              </div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-bold truncate group-hover:text-primary transition-colors">{{ product.name }}</p>
+              <div class="flex items-center gap-2 mt-1">
+                <div class="h-1.5 flex-1 bg-muted rounded-full overflow-hidden max-w-[100px]">
+                  <div class="h-full bg-primary rounded-full transition-all duration-1000" :style="{ width: topProducts.length > 0 ? `${(topProductsSort === 'sold' ? product.sold / topProducts[0].sold : product.revenue / topProducts[0].revenue) * 100}%` : '0%' }"></div>
+                </div>
+                <span class="text-[10px] font-bold text-muted-foreground uppercase">{{ product.sold }} đã bán</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-black">{{ formatCurrency(product.revenue) }}</p>
+              <p class="text-[10px] text-green-500 font-bold uppercase mt-0.5">Còn {{ product.stock }} sản phẩm</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Recent Orders List -->
       <div class="bg-card rounded-2xl border p-6 shadow-sm overflow-hidden">
         <div class="flex items-center justify-between mb-6">
@@ -136,68 +223,24 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Bottom Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Top Products -->
-      <div class="bg-card rounded-2xl border p-6 shadow-sm">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-bold">Sản phẩm bán chạy</h3>
-          <button class="text-xs text-primary font-bold hover:underline">Sắp xếp: Doanh số</button>
-        </div>
-        <div class="space-y-5">
-          <div 
-            v-for="(product, index) in topProducts" 
-            :key="product.id"
-            class="flex items-center gap-4 group cursor-pointer"
-          >
-            <div class="relative">
-              <span class="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-black z-10 shadow-sm">
-                {{ index + 1 }}
-              </span>
-              <div class="w-14 h-14 rounded-xl bg-muted overflow-hidden flex-shrink-0 border transition-transform duration-300 group-hover:scale-105">
-                <img 
-                  v-if="product.thumbnail"
-                  :src="product.thumbnail" 
-                  class="w-full h-full object-cover"
-                  :alt="product.name"
-                />
-                <div v-else class="w-full h-full flex items-center justify-center text-xl">📚</div>
-              </div>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-bold truncate group-hover:text-primary transition-colors">{{ product.name }}</p>
-              <div class="flex items-center gap-2 mt-1">
-                <div class="h-1.5 flex-1 bg-muted rounded-full overflow-hidden max-w-[100px]">
-                  <div class="h-full bg-primary rounded-full transition-all duration-1000" :style="{ width: topProducts.length > 0 ? `${(product.sold / topProducts[0].sold) * 100}%` : '0%' }"></div>
-                </div>
-                <span class="text-[10px] font-bold text-muted-foreground uppercase">{{ product.sold }} đã bán</span>
-              </div>
-            </div>
-            <div class="text-right">
-              <p class="text-sm font-black">{{ formatCurrency(product.revenue) }}</p>
-              <p class="text-[10px] text-green-500 font-bold uppercase mt-0.5">Đã thanh toán</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Recent Activities Timeline -->
-      <div class="bg-card rounded-2xl border p-6 shadow-sm">
-        <h3 class="text-lg font-bold mb-6">Thông báo hệ thống</h3>
-        <div class="relative space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-[2px] before:bg-muted before:rounded-full">
-          <div 
-            v-for="activity in activities" 
-            :key="activity.id"
-            class="relative flex gap-6 pl-2 group"
-          >
-            <div class="absolute left-0 w-4 h-4 rounded-full border-2 border-background bg-primary mt-1 z-10 transition-transform group-hover:scale-125 shadow-sm shadow-primary/50"></div>
-            <div class="flex-1 pb-1">
-              <p class="text-sm font-medium text-foreground/90 group-hover:text-primary transition-colors leading-relaxed">{{ activity.message }}</p>
-              <div class="flex items-center gap-2 mt-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <span class="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">{{ activity.time }}</span>
+      <div class="bg-card rounded-2xl border p-4 sm:p-6 shadow-sm overflow-hidden">
+        <h3 class="text-lg font-bold mb-4 sm:mb-6">Thông báo hệ thống</h3>
+        <div class="max-h-[350px] sm:max-h-[450px] overflow-y-auto pr-1 scrollbar-thin">
+          <div class="relative space-y-4 sm:space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-[2px] before:bg-muted before:rounded-full">
+            <div 
+              v-for="activity in activities" 
+              :key="activity.id"
+              class="relative flex gap-4 sm:gap-6 pl-7 group"
+            >
+              <div class="absolute left-0 w-4 h-4 rounded-full border-2 border-background bg-primary mt-1 z-10 transition-transform group-hover:scale-125 shadow-sm shadow-primary/50 flex-shrink-0"></div>
+              <div class="flex-1 min-w-0 pb-1">
+                <p class="text-sm font-medium text-foreground/90 group-hover:text-primary transition-colors leading-relaxed break-words">{{ activity.message }}</p>
+                <div class="flex items-center gap-2 mt-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-muted-foreground flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span class="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">{{ activity.time }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -284,6 +327,8 @@
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
+import { ChartContainer, ChartCrosshair, ChartTooltip, ChartTooltipContent, componentToString } from '@/components/ui/chart'
+import { VisArea, VisAxis, VisLine, VisXYContainer } from '@unovis/vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -291,6 +336,8 @@ const API_URL = import.meta.env.VITE_API_URL
 
 const loading = ref(true)
 const chartDays = ref(7)
+const topProductsSort = ref('sold')
+const isSortDropdownOpen = ref(false)
 
 // SVG Icons
 const icons = {
@@ -340,6 +387,45 @@ const recentOrders = ref([])
 const topProducts = ref([])
 const activities = ref([])
 
+// Revenue Chart Config (shadcn-vue style)
+const revenueChartConfig = {
+  revenue: {
+    label: 'Doanh thu',
+    color: 'hsl(221, 83%, 53%)'
+  },
+  orders: {
+    label: 'Đơn hàng',
+    color: 'hsl(25, 95%, 53%)'
+  }
+}
+
+const revenueSvgDefs = `
+  <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="5%" stop-color="var(--color-revenue)" stop-opacity="0.8" />
+    <stop offset="95%" stop-color="var(--color-revenue)" stop-opacity="0.1" />
+  </linearGradient>
+  <linearGradient id="fillOrders" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="5%" stop-color="var(--color-orders)" stop-opacity="0.8" />
+    <stop offset="95%" stop-color="var(--color-orders)" stop-opacity="0.1" />
+  </linearGradient>
+`
+
+const formatShortCurrency = (value) => {
+  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}tr`
+  if (value >= 1000) return `${(value / 1000).toFixed(0)}K`
+  return value.toString()
+}
+
+const revenueTooltipTemplate = componentToString(revenueChartConfig, ChartTooltipContent, {
+  labelFormatter: (x) => {
+    const idx = Math.round(x)
+    if (idx >= 0 && idx < revenueChartData.value.length) {
+      return revenueChartData.value[idx]?.label || ''
+    }
+    return ''
+  }
+})
+
 // Order Modal Refs
 const showOrderModal = ref(false)
 const selectedOrder = ref(null)
@@ -374,10 +460,14 @@ const formatRelativeTime = (dateStr) => {
 
 const getStatusClass = (status) => {
   switch (status) {
-    case 'completed': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-    case 'shipped': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+    case 'delivered': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+    case 'out_for_delivery': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+    case 'arrived_hub': return 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400'
+    case 'in_transit': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+    case 'picked_up': return 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400'
+    case 'packing': return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+    case 'confirmed': return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
     case 'pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-    case 'processing': return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
     case 'cancelled': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
     default: return 'bg-gray-100 text-gray-700'
   }
@@ -385,10 +475,14 @@ const getStatusClass = (status) => {
 
 const mapStatusName = (status) => {
   const map = {
-    'pending': 'Chờ xử lý',
-    'processing': 'Đang đóng gói',
-    'shipped': 'Đang giao',
-    'completed': 'Hoàn thành',
+    'pending': 'Chờ xác nhận',
+    'confirmed': 'Đã xác nhận',
+    'packing': 'Đang đóng gói',
+    'picked_up': 'Đã lấy hàng',
+    'in_transit': 'Đang vận chuyển',
+    'arrived_hub': 'Đến kho phân loại',
+    'out_for_delivery': 'Đang giao hàng',
+    'delivered': 'Đã giao hàng',
     'cancelled': 'Đã hủy'
   }
   return map[status] || status
@@ -397,7 +491,7 @@ const mapStatusName = (status) => {
 const fetchData = async () => {
   loading.value = true
   try {
-    const res = await fetch(`${API_URL}/orders/admin/stats?days=${chartDays.value}`, {
+    const res = await fetch(`${API_URL}/orders/admin/stats?days=${chartDays.value}&sort=${topProductsSort.value}`, {
       headers: {
         'Authorization': `Bearer ${authStore.accessToken}`
       }
@@ -418,7 +512,7 @@ const fetchData = async () => {
       // Update Recent Orders
       if (data.recentOrders) {
         recentOrders.value = data.recentOrders.map(order => ({
-          ...order, // Keep all properties for modal
+          ...order,
           customer: order.customer_name,
           itemCount: order.items ? order.items.reduce((sum, item) => sum + item.quantity, 0) : 0,
           total: order.total_amount,
@@ -434,18 +528,17 @@ const fetchData = async () => {
           name: p.product_name,
           sold: p.sold,
           revenue: p.revenue,
-          thumbnail: p.product?.thumbnail
+          thumbnail: p.product?.thumbnail,
+          stock: p.product?.quantity || 0
         }))
       }
 
-      // Update Revenue Chart
+      // Update Revenue Chart (shadcn format)
       if (data.revenueChart && data.revenueChart.length > 0) {
-        const maxRevenue = Math.max(...data.revenueChart.map(d => d.revenue), 1)
-        
         revenueChartData.value = data.revenueChart.map(d => ({
           label: d.day,
-          value: d.revenue,
-          percent: (d.revenue / maxRevenue) * 100
+          revenue: d.revenue,
+          orders: d.orders || 0
         }))
       }
       
@@ -477,6 +570,18 @@ const fetchData = async () => {
 const setChartDays = (days) => {
   chartDays.value = days
   fetchData()
+}
+
+const setTopProductsSort = (val) => {
+  topProductsSort.value = val;
+  isSortDropdownOpen.value = false;
+  fetchData();
+}
+
+const closeSortDropdown = () => {
+  setTimeout(() => {
+    isSortDropdownOpen.value = false;
+  }, 200);
 }
 
 const openOrderModal = (order) => {

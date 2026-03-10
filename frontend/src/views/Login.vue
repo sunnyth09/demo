@@ -2,7 +2,7 @@
   <div class="min-h-screen flex items-center justify-center py-12 px-4">
     <div class="w-full max-w-md">
       <div class="bg-card rounded-2xl border shadow-lg p-8">
-        <!-- Header -->
+        <!-- Phần đầu trang -->
         <div class="text-center mb-8">
           <div class="w-16 h-16 rounded-2xl bg-primary/10 mx-auto mb-4 flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -10,12 +10,10 @@
             </svg>
           </div>
           <h1 class="text-2xl font-bold">Đăng nhập</h1>
-          <!-- <p class="text-muted-foreground mt-2">Chào mừng bạn quay trở lại!</p> -->
         </div>
 
-        <!-- Form -->
         <form @submit.prevent="handleLogin" novalidate class="space-y-4">
-          <!-- Error Message -->
+          <!-- Tin nhắn lỗi -->
           <Alert v-if="errorMessage" variant="destructive">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -26,7 +24,7 @@
             </AlertDescription>
           </Alert>
 
-          <!-- Email Field -->
+          <!-- Input Email -->
           <div>
             <label class="block text-sm font-medium mb-2">Email</label>
             <input 
@@ -41,7 +39,7 @@
             <p v-if="errors.email" class="mt-1 text-sm text-destructive">{{ errors.email }}</p>
           </div>
 
-          <!-- Password Field -->
+          <!-- Input Mật khẩu -->
           <div>
             <label class="block text-sm font-medium mb-2">Mật khẩu</label>
             <div class="relative">
@@ -71,7 +69,7 @@
             <p v-if="errors.password" class="mt-1 text-sm text-destructive">{{ errors.password }}</p>
           </div>
 
-          <!-- Remember & Forgot -->
+          <!-- Ghi nhớ đăng nhập và Quýên Mật Khẩu -->
           <div class="flex items-center justify-between text-sm">
             <label class="flex items-center gap-2 cursor-pointer">
               <input v-model="rememberMe" type="checkbox" class="rounded border-input" />
@@ -80,11 +78,10 @@
             <router-link to="/forgot-password" class="text-primary hover:underline">Quên mật khẩu?</router-link>
           </div>
 
-          <!-- Cloudflare Turnstile -->
+          <!-- Cloudflare Turnstile xác thực chống bot -->
           <div id="turnstile-login" class="flex justify-center"></div>
           <p v-if="errors.turnstile" class="text-sm text-destructive text-center -mt-2">{{ errors.turnstile }}</p>
 
-          <!-- Submit Button -->
           <button 
             type="submit"
             class="w-full h-11 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -98,7 +95,7 @@
           </button>
         </form>
 
-        <!-- Divider -->
+        <!-- Dòng kẻ phân chia -->
         <div class="relative my-6">
           <div class="absolute inset-0 flex items-center">
             <div class="w-full border-t border-border"></div>
@@ -108,7 +105,7 @@
           </div>
         </div>
 
-        <!-- Social Login -->
+        <!-- Đăng nhập qua mạng xã hội -->
         <div class="grid grid-cols-2 gap-4">
           <a :href="`${API_URL}/auth/google`" class="h-11 rounded-md border border-input bg-white hover:bg-accent transition-colors flex items-center justify-center gap-2 text-sm font-medium">
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -127,7 +124,7 @@
           </a>
         </div>
 
-        <!-- Register Link -->
+        <!-- Đường Link đăng ký -->
         <p class="text-center mt-6 text-sm text-muted-foreground">
           Chưa có tài khoản? 
           <router-link to="/register" class="text-primary font-medium hover:underline">
@@ -162,7 +159,7 @@ const errors = reactive({
   turnstile: ''
 })
 
-// Cloudflare Turnstile
+// Cloudflare Turnstile xác thực
 const { turnstileToken, resetTurnstile, getToken } = useTurnstile('turnstile-login')
 
 const loading = ref(false)
@@ -170,10 +167,10 @@ const errorMessage = ref('')
 const showPassword = ref(false)
 const rememberMe = ref(false)
 
-// Email regex pattern
+// Mẫu kiểm tra định dạng email
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-// Validation functions
+// Các hàm xác thực đầu vào
 const validateEmail = () => {
   if (!form.email.trim()) {
     errors.email = 'Vui lòng nhập email'
@@ -197,7 +194,7 @@ const clearError = (field) => {
   errorMessage.value = ''
 }
 
-// Validate all fields
+// Xác thực mọi trường đầu vào
 const validateAll = () => {
   validateEmail()
   validatePassword()
@@ -208,12 +205,12 @@ const validateAll = () => {
 const handleLogin = async () => {
   if (loading.value) return
   
-  // Validate all fields
+  // Kiểm tra từng trường
   if (!validateAll()) {
     return
   }
 
-  // Validate Turnstile token
+  // Cấp Turnstile token phòng chống bot
   const token = getToken()
   if (!token) {
     errors.turnstile = 'Vui lòng xác minh bạn không phải robot.'

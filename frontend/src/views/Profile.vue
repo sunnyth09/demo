@@ -1,7 +1,7 @@
 <template>
   <div class="container max-w-7xl mx-auto px-4 py-12 overflow-hidden">
     <div class="grid md:grid-cols-4 gap-8">
-      <!-- Sidebar -->
+      <!-- Thanh bên -->
       <div class="md:col-span-1">
         <div class="bg-card rounded-xl border p-6 text-center mb-6">
           <div class="relative w-24 h-24 mx-auto mb-4 group cursor-pointer" @click="triggerAvatarUpload">
@@ -15,7 +15,7 @@
                 />
                 <span v-else class="text-4xl font-bold text-muted-foreground">{{ userInitial }}</span>
              </div>
-             <!-- Overlay edit icon -->
+             <!-- Biểu tượng chỉnh sửa (Lớp phủ) -->
              <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
              </div>
@@ -79,9 +79,9 @@
         </nav>
       </div>
 
-      <!-- Main Content -->
+      <!-- Nội dung chính -->
       <div class="md:col-span-3 space-y-6 min-w-0">
-        <!-- Profile Info -->
+        <!-- Thông tin cá nhân -->
         <div v-if="activeTab === 'profile'" class="bg-card rounded-xl border p-6">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-bold">Thông tin cá nhân</h2>
@@ -117,7 +117,7 @@
           </div>
         </div>
 
-        <!-- Recent Orders -->
+        <!-- Đơn hàng gần đây -->
         <div v-if="activeTab === 'profile' || activeTab === 'orders'" class="bg-card rounded-xl border p-6 overflow-hidden">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-bold">{{ activeTab === 'orders' ? 'Tất cả đơn hàng' : 'Đơn hàng gần đây' }}</h2>
@@ -126,7 +126,7 @@
           <div v-if="recentOrders.length > 0" class="space-y-4">
             <router-link v-for="order in recentOrders" :key="order.id" :to="`/orders/${order.id}`" class="border rounded-lg p-4 md:p-5 hover:shadow-md transition-all cursor-pointer bg-white group block overflow-hidden">
               <div class="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
-                <!-- Col 1: Basic Info -->
+                <!-- Cột 1: Thông tin cơ bản -->
                 <div class="w-full md:w-[200px] md:shrink-0">
                    <div class="flex items-center gap-2 mb-1">
                       <span class="font-mono font-medium text-base md:text-lg text-gray-900 group-hover:text-primary transition-colors" :title="order.order_code">#{{ order.order_code ? order.order_code.slice(0, 8).toUpperCase() : order.id }}</span>
@@ -138,7 +138,7 @@
                    <p class="text-sm font-medium text-gray-500">{{ order.itemsCount }} sản phẩm</p>
                 </div>
 
-                <!-- Col 2: Status Message (Center) - Hidden on Mobile -->
+                <!-- Cột 2: Thông điệp trạng thái (Giữa) - Ẩn trên Mobile -->
                 <div class="hidden md:flex flex-1 min-w-0 px-4 justify-center">
                    <div class="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-full border border-gray-100 max-w-sm">
                       <component :is="getStatusIcon(order.status)" :class="['w-5 h-5', getStatusColor(order.status)]" />
@@ -148,7 +148,7 @@
                    </div>
                 </div>
 
-                <!-- Col 3: Status & Price & Action -->
+                <!-- Cột 3: Trạng thái & Giá & Hành động -->
                 <div class="flex items-center justify-between md:w-[180px] md:shrink-0 md:flex-col md:items-end gap-2">
                    <p class="font-medium text-primary text-lg md:text-xl">{{ formatCurrency(order.total_amount) }}</p>
                    <span :class="['px-3 py-1 rounded-full text-xs font-medium hidden md:inline-block', getStatusClass(order.status)]">
@@ -185,7 +185,7 @@
           </div>
         </div>
 
-        <!-- Wishlist -->
+        <!-- Danh sách yêu thích -->
         <div v-if="activeTab === 'wishlist'" class="bg-card rounded-xl border p-6">
           <h2 class="text-xl font-bold mb-6">Sản phẩm yêu thích</h2>
           
@@ -195,7 +195,7 @@
               :key="fav.id"
               class="group bg-white rounded-xl border border-gray-200 p-4 hover:shadow-lg transition-all duration-300 relative"
             >
-              <!-- Image Container -->
+              <!-- Vùng chứa hình ảnh -->
               <div 
                  class="relative aspect-[2/3] overflow-hidden rounded-lg bg-gray-100 cursor-pointer mb-3"
                  @click="router.push(`/san-pham/${fav.product.slug || fav.product.id}`)"
@@ -206,7 +206,7 @@
                   class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                  
-                 <!-- Remove Icon Top Right -->
+                 <!-- Biểu tượng xóa ở góc trên bên phải -->
                  <button
                     @click.stop="toggleFavorite(fav.product)"
                     class="absolute top-2 right-2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm hover:bg-gray-50 transition-colors group/btn"
@@ -218,9 +218,9 @@
                  </button>
               </div>
               
-              <!-- Content -->
+              <!-- Nội dung -->
               <div class="flex flex-col">
-                  <!-- Title -->
+                  <!-- Tiêu đề -->
                   <h3 class="font-medium text-gray-900 line-clamp-2 mb-2 min-h-[3rem] cursor-pointer hover:text-primary transition-colors leading-snug"
                       @click="router.push(`/san-pham/${fav.product.slug || fav.product.id}`)"
                       :title="fav.product.name"
@@ -228,12 +228,12 @@
                       {{ fav.product.name }}
                   </h3>
                   
-                  <!-- Price -->
+                  <!-- Giá -->
                   <div class="text-xl font-bold text-blue-600 mb-1">
                       {{ formatCurrency(fav.product.price) }}
                   </div>
                   
-                  <!-- Rating (Static for now as per design) -->
+                  <!-- Đánh giá (Tạm thời hiển thị tĩnh theo thiết kế) -->
                   <div class="flex items-center gap-1">
                       <div class="flex text-yellow-400 text-sm">
                         <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
@@ -251,7 +251,7 @@
           </div>
         </div>
 
-        <!-- My Vouchers Tab -->
+        <!-- Tab Voucher của tôi -->
         <div v-if="activeTab === 'myVouchers'" class="bg-card rounded-xl border p-6">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-bold">Mã của tôi</h2>
@@ -271,7 +271,7 @@
                 coupon.is_used ? 'opacity-60 bg-gray-50' : 'bg-white hover:shadow-md'
               ]"
             >
-              <!-- Left Badge -->
+              <!-- Huy hiệu bên trái -->
               <div 
                 :class="[
                   'w-24 flex flex-col items-center justify-center p-3',
@@ -286,7 +286,7 @@
                 </span>
               </div>
 
-              <!-- Content -->
+              <!-- Nội dung -->
               <div class="flex-1 p-3">
                 <h4 class="font-semibold text-gray-900 line-clamp-1 text-sm">{{ coupon.description || coupon.code }}</h4>
                 <p class="font-mono text-xs text-gray-500 mt-0.5">{{ coupon.code }}</p>
@@ -314,7 +314,7 @@
           </div>
         </div>
 
-        <!-- Address Book -->
+        <!-- Sổ địa chỉ -->
         <div v-if="activeTab === 'address'" class="bg-card rounded-xl border p-6">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-bold">Sổ địa chỉ</h2>
@@ -350,7 +350,7 @@
     </div>
   </div>
 
-  <!-- Profile Modal -->
+  <!-- Modal Hồ sơ -->
   <div v-if="showProfileModal" class="fixed inset-0 z-50 flex items-center justify-center">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showProfileModal = false"></div>
     <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6 m-4 animate-in fade-in zoom-in-95 duration-200">
@@ -398,7 +398,7 @@
     </div>
   </div>
 
-  <!-- Address Modal -->
+  <!-- Modal Địa chỉ -->
   <div v-if="showAddressModal" class="fixed inset-0 z-50 flex items-center justify-center">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showAddressModal = false"></div>
     <div class="relative bg-white rounded-xl shadow-xl w-full max-w-lg p-6 m-4 animate-in fade-in zoom-in-95 duration-200">
@@ -453,7 +453,7 @@
   </div>
   </div>
 
-  <!-- Order Detail Modal -->
+  <!-- Modal Chi tiết Đơn hàng -->
   <div v-if="showOrderModal" class="fixed inset-0 z-50 flex items-center justify-center">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showOrderModal = false"></div>
     <div class="relative bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 m-4 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
@@ -468,20 +468,20 @@
       </div>
       
       <div class="space-y-6">
-         <!-- Status -->
-         <!-- Order Tracking Timeline -->
+         <!-- Trạng thái -->
+         <!-- Dòng thời gian theo dõi đơn hàng -->
          <div v-if="selectedOrder?.status !== 'cancelled'" class="mb-8 px-2">
             <div class="relative mt-4">
-              <!-- Progress Bar Background -->
+              <!-- Nền của thanh tiến trình -->
               <div class="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 rounded-full -z-10"></div>
               
-              <!-- Active Progress Bar -->
+              <!-- Thanh tiến trình đang hoạt động -->
               <div 
                 class="absolute top-1/2 left-0 h-1 bg-primary -translate-y-1/2 rounded-full -z-10 transition-all duration-500 ease-out"
                 :style="{ width: trackingProgress + '%' }"
               ></div>
 
-              <!-- Steps -->
+              <!-- Các bước -->
               <div class="flex justify-between w-full">
                 <div v-for="(step, index) in trackingSteps" :key="index" class="flex flex-col items-center gap-2">
                    <div 
@@ -514,7 +514,7 @@
            </div>
          </div>
 
-         <!-- Status Text (Legacy) -->
+         <!-- Văn bản trạng thái (Cũ) -->
          <div class="flex items-center gap-2">
             <span class="text-sm font-medium">Trạng thái hiện tại:</span>
             <span :class="['px-2 py-1 rounded-full text-xs font-medium', getStatusClass(selectedOrder?.status)]">
@@ -522,7 +522,7 @@
             </span>
          </div>
 
-         <!-- Shipping Info -->
+         <!-- Thông tin giao hàng -->
          <div class="bg-gray-50 p-4 rounded-lg">
             <h4 class="font-bold text-sm mb-3">Thông tin giao hàng</h4>
             <div class="space-y-1 text-sm">
@@ -533,7 +533,7 @@
             </div>
          </div>
 
-         <!-- Order Items -->
+         <!-- Sản phẩm trong đơn hàng -->
          <div>
             <h4 class="font-bold text-sm mb-3">Sản phẩm</h4>
             <div class="border rounded-lg overflow-hidden">
@@ -554,7 +554,7 @@
             </div>
          </div>
 
-          <!-- Summary -->
+          <!-- Tóm tắt -->
          <div class="border-t pt-4 space-y-2">
             <div class="flex justify-between text-sm">
                <span class="text-muted-foreground">Phương thức thanh toán</span>

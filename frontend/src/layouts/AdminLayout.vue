@@ -1,13 +1,13 @@
 <template>
   <div class="flex min-h-screen bg-muted/30">
-    <!-- Mobile Sidebar Overlay -->
+    <!-- Lớp phủ cho Sidebar trên thiết bị di động -->
     <div 
       v-if="isSidebarOpen" 
       class="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
       @click="isSidebarOpen = false"
     ></div>
 
-    <!-- Sidebar -->
+    <!-- Thanh điều hướng (Sidebar) -->
     <aside 
       class="fixed left-0 top-0 z-50 h-screen w-64 border-r border-border bg-card transition-transform duration-300 lg:translate-x-0"
       :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'"
@@ -20,7 +20,7 @@
           </svg>
         </div>
         <span class="text-xl font-bold">Admin</span>
-        <!-- Close button on mobile -->
+        <!-- Nút đóng trên di động -->
         <button 
           @click="isSidebarOpen = false" 
           class="ml-auto lg:hidden text-muted-foreground hover:text-foreground"
@@ -31,10 +31,10 @@
         </button>
       </div>
 
-      <!-- Navigation -->
+      <!-- Điều hướng -->
       <nav class="p-4 space-y-2 overflow-y-auto max-h-[calc(100vh-8rem)]">
         <template v-for="item in menuItems" :key="item.name">
-          <!-- Single Item -->
+          <!-- Mục đơn lẻ -->
           <router-link 
             v-if="!item.children"
             :to="item.path"
@@ -46,7 +46,7 @@
             {{ item.name }}
           </router-link>
 
-          <!-- Group Item -->
+          <!-- Mục nhóm -->
           <div v-else class="space-y-1">
             <button 
               @click="toggleGroup(item.name)"
@@ -72,7 +72,7 @@
               </svg>
             </button>
             
-            <!-- Children -->
+            <!-- Danh sách mục con -->
             <div 
               v-show="expandedGroups[item.name]"
               class="pl-4 space-y-1"
@@ -85,7 +85,7 @@
                 class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                 active-class="bg-primary/10 text-primary hover:bg-primary/20"
               >
-                <!-- Dot icon for children -->
+                <!-- Dấu chấm cho mục con -->
                  <span class="w-1.5 h-1.5 rounded-full bg-current opacity-50"></span>
                  {{ child.name }}
               </router-link>
@@ -94,7 +94,7 @@
         </template>
       </nav>
 
-      <!-- User Info -->
+      <!-- Thông tin người dùng -->
       <div class="absolute bottom-0 left-0 right-0 border-t border-border p-4 bg-card">
         <div class="flex items-center gap-3">
           <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-lg">
@@ -108,9 +108,9 @@
       </div>
     </aside>
 
-    <!-- Main Content -->
+    <!-- Nội dung chính -->
     <main class="flex-1 transition-all duration-300 w-full lg:ml-64">
-      <!-- Header -->
+      <!-- Đầu trang -->
       <header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 backdrop-blur px-4 lg:px-6">
         <div class="flex items-center gap-4">
           <!-- Toggle Button -->
@@ -134,7 +134,7 @@
         </div>
       </header>
 
-      <!-- Page Content -->
+      <!-- Nội dung trang -->
       <div class="p-4 lg:p-6 overflow-x-hidden">
         <router-view />
       </div>
@@ -156,14 +156,8 @@ import {
   LayoutDashboard, 
   ShoppingBag, 
   Store, 
-  Settings, 
   MessageSquare,
-//  Users,
-//  Truck,
-//  Ticket,
-//  FileText,
-//  BarChart,
-//  Star
+
 } from 'lucide-vue-next'
 
 const menuItems = [
@@ -184,7 +178,6 @@ const menuItems = [
     ]
   },
   { name: 'Liên hệ', path: '/admin/contacts', icon: MessageSquare },
-  { name: 'Cài đặt', path: '/admin/settings', icon: Settings },
 ]
 
 const toggleGroup = (name) => {
@@ -196,7 +189,7 @@ const isGroupActive = (item) => {
   return item.children.some(child => route.path.startsWith(child.path))
 }
 
-// Auto-expand group if a child is active
+// Tự động mở menu nếu mục con đang được chọn
 watch(
   () => route.path,
   () => {
@@ -210,11 +203,11 @@ watch(
 )
 
 const currentPageTitle = computed(() => {
-  // Check top-level items
+  // Kiểm tra các mục độc lập
   const directItem = menuItems.find(item => item.path && (item.path === route.path || (route.path.startsWith(item.path) && item.path !== '/admin')))
   if (directItem) return directItem.name
 
-  // Check children
+  // Kiểm tra các mục con
   for (const item of menuItems) {
     if (item.children) {
       const child = item.children.find(c => c.path === route.path || (route.path.startsWith(c.path)))

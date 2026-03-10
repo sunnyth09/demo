@@ -7,6 +7,42 @@
       </div>
     </div>
 
+    <!-- Search Bar -->
+    <div class="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl border shadow-sm">
+      <div class="w-full md:w-72 relative">
+        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input 
+          v-model="searchQuery"
+          type="text" 
+          placeholder="Tìm tên, email hoặc tiêu đề..." 
+          class="w-full h-10 pl-10 pr-10 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+          @input="debouncedSearch"
+        />
+        <button v-if="searchQuery" @click="searchQuery = ''; fetchContacts(1)" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">✕</button>
+      </div>
+      <div class="flex gap-3">
+        <div class="relative">
+          <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+          </svg>
+          <select 
+            v-model="filterStatus"
+            @change="fetchContacts(1)"
+            class="h-10 pl-9 pr-8 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer appearance-none text-sm font-medium"
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="pending">Chờ xử lý</option>
+            <option value="replied">Đã phản hồi</option>
+          </select>
+          <svg xmlns="http://www.w3.org/2000/svg" class="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
     <div class="bg-card rounded-xl border overflow-hidden">
       <div v-if="loading" class="p-8 text-center text-muted-foreground">
         Đang tải dữ liệu...
@@ -65,23 +101,40 @@
         </tbody>
       </table>
       </div>
+    </div>
 
-      <!-- Pagination (Simple implementation) -->
-      <div v-if="pagination.totalPages > 1" class="p-4 border-t border-border flex justify-end gap-2">
-        <button 
-          @click="changePage(pagination.page - 1)" 
-          :disabled="pagination.page <= 1"
-          class="px-3 py-1 text-sm border rounded hover:bg-muted disabled:opacity-50"
+    <!-- Pagination -->
+    <div v-if="totalContacts > 0" class="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p class="text-sm text-muted-foreground">
+        Hiển thị {{ (currentPage - 1) * limit + 1 }}-{{ Math.min(currentPage * limit, totalContacts) }} trong tổng số {{ totalContacts }} liên hệ
+      </p>
+      <div class="flex items-center gap-1">
+        <button
+          @click="goToPage(currentPage - 1)"
+          :disabled="currentPage <= 1"
+          class="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           Trước
         </button>
-        <span class="px-3 py-1 text-sm flex items-center">
-          Trang {{ pagination.page }} / {{ pagination.totalPages }}
-        </span>
-        <button 
-          @click="changePage(pagination.page + 1)" 
-          :disabled="pagination.page >= pagination.totalPages"
-          class="px-3 py-1 text-sm border rounded hover:bg-muted disabled:opacity-50"
+        <template v-for="p in displayedPages" :key="p">
+          <span v-if="p === '...'" class="px-2 text-muted-foreground">...</span>
+          <button
+            v-else
+            @click="goToPage(p)"
+            :class="[
+              'w-9 h-9 text-sm rounded-lg transition-colors',
+              p === currentPage 
+                ? 'bg-primary text-primary-foreground font-bold' 
+                : 'hover:bg-muted border'
+            ]"
+          >
+            {{ p }}
+          </button>
+        </template>
+        <button
+          @click="goToPage(currentPage + 1)"
+          :disabled="currentPage >= totalPages"
+          class="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           Sau
         </button>
@@ -143,7 +196,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { contactApi } from '@/api/contact';
 import { toast } from 'vue-sonner';
 import { useConfirmDialog } from '@/composables/useConfirmDialog'
@@ -151,10 +204,45 @@ import { useConfirmDialog } from '@/composables/useConfirmDialog'
 const { confirm } = useConfirmDialog()
 const contacts = ref([]);
 const loading = ref(false);
-const pagination = ref({
-  page: 1,
-  totalPages: 1
-});
+
+// Search & Pagination
+const searchQuery = ref('')
+const filterStatus = ref('')
+const currentPage = ref(1)
+const totalPages = ref(1)
+const totalContacts = ref(0)
+const limit = 10
+
+let searchTimer = null
+const debouncedSearch = () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    fetchContacts(1)
+  }, 300)
+}
+
+const displayedPages = computed(() => {
+  const pages = []
+  const total = totalPages.value
+  const current = currentPage.value
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (current > 3) pages.push('...')
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+      pages.push(i)
+    }
+    if (current < total - 2) pages.push('...')
+    pages.push(total)
+  }
+  return pages
+})
+
+const goToPage = (page) => {
+  if (page < 1 || page > totalPages.value) return
+  fetchContacts(page)
+}
 
 // Reply State
 const showReplyModal = ref(false);
@@ -170,22 +258,24 @@ const formatDate = (dateString) => {
 const fetchContacts = async (page = 1) => {
   try {
     loading.value = true;
-    const res = await contactApi.getAllContacts({ page, limit: 10 });
+    const params = { page, limit, search: searchQuery.value }
+    if (filterStatus.value) {
+      params.status = filterStatus.value
+    }
+    const res = await contactApi.getAllContacts(params);
     if (res.status === 'success') {
       contacts.value = res.data;
-      pagination.value = res.pagination;
+      if (res.pagination) {
+        currentPage.value = res.pagination.page
+        totalPages.value = res.pagination.totalPages
+        totalContacts.value = res.pagination.total
+      }
     }
   } catch (error) {
     console.error(error);
     toast.error('Không thể tải danh sách liên hệ');
   } finally {
     loading.value = false;
-  }
-};
-
-const changePage = (page) => {
-  if (page >= 1 && page <= pagination.value.totalPages) {
-    fetchContacts(page);
   }
 };
 
@@ -213,7 +303,7 @@ const sendReply = async () => {
     if (res.status === 'success') {
       toast.success('Đã gửi phản hồi thành công');
       closeReplyModal();
-      fetchContacts(pagination.value.page);
+      fetchContacts(currentPage.value);
     }
   } catch (error) {
     console.error(error);
@@ -231,7 +321,7 @@ const deleteContact = async (id) => {
     const res = await contactApi.deleteContact(id);
     if (res.status === 'success') {
       toast.success('Xóa thành công');
-      fetchContacts(pagination.value.page);
+      fetchContacts(currentPage.value);
     }
   } catch (error) {
     console.error(error);

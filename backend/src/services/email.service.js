@@ -86,7 +86,7 @@ export const sendCouponEmail = async (to, coupon, title = "Bạn nhận được
             "${coupon.description || 'Áp dụng cho đơn hàng đủ điều kiện'}"
           </p>
 
-          <a href="http://localhost:3001/vouchers" class="cta-button">Sử dụng ngay</a>
+          <a href="http://localhost:3001/vouchers" class="cta-button" style="background-color: #4F46E5; color: #ffffff !important; display: inline-block; padding: 14px 32px; text-decoration: none; border-radius: 50px; font-weight: 600;">Sử dụng ngay</a>
         </div>
         
         <div class="footer">
@@ -184,7 +184,7 @@ export const sendOrderConfirmationEmail = async (to, order) => {
 
           <p style="text-align: center;">
             ${order.user_id ? 
-              `<a href="http://localhost:3001/orders/${order.id}" class="btn">Xem chi tiết đơn hàng</a>` : 
+              `<a href="http://localhost:3001/orders/${order.id}" class="btn" style="background-color: #4F46E5; color: #ffffff !important; display: inline-block; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">Xem chi tiết đơn hàng</a>` : 
               `<span style="color: #666; font-style: italic;">Vui lòng lưu lại email này để tra cứu khi cần thiết.</span>`
             }
           </p>
@@ -285,7 +285,7 @@ export const sendOrderCancelledEmail = async (to, order, cancelReason, needsRefu
           </table>
 
           <p style="text-align: center;">
-            <a href="http://localhost:3001/" class="btn">Tiếp tục mua sắm</a>
+            <a href="http://localhost:3001/" class="btn" style="background-color: #4F46E5; color: white; display: inline-block; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">Tiếp tục mua sắm</a>
           </p>
         </div>
         
@@ -350,4 +350,58 @@ export const sendOrderCancelRequestEmail = async (to, order, cancelReason) => {
   `;
   
   return await sendEmail(to, `Đã nhận yêu cầu hủy đơn #${orderIdDisplay} - Ocean Books`, htmlContent);
+};
+
+export const sendOrderCancelRejectedEmail = async (to, order) => {
+  const orderIdDisplay = String(order.order_code || order.id).slice(0, 8).toUpperCase();
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        .container { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
+        .header { background-color: #4B5563; padding: 30px 20px; text-align: center; color: white; }
+        .logo { font-size: 24px; font-weight: bold; margin: 0; }
+        .content { padding: 30px 20px; color: #374151; }
+        .info-box { background-color: #F3F4F6; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; border: 1px solid #E5E7EB; }
+        .footer { background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb; }
+        .btn { display: inline-block; background-color: #4F46E5; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-weight: 500; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div class="logo">Ocean Books</div>
+          <p style="margin: 5px 0 0; opacity: 0.9;">Yêu cầu hủy đơn không thành công</p>
+        </div>
+        
+        <div class="content">
+          <p>Xin chào <strong>${order.customer_name}</strong>,</p>
+          <p>Ban quản trị đã xem xét yêu cầu hủy đơn hàng <strong>#${orderIdDisplay}</strong> của bạn.</p>
+          
+          <div class="info-box">
+            <p style="margin: 0; color: #374151;">
+              Rất tiếc, yêu cầu hủy đơn hàng của bạn đã bị <strong>từ chối</strong> vì đơn hàng đã được xử lý hoặc đang trên đường giao đến bạn.
+            </p>
+          </div>
+
+          <p>Đơn hàng của bạn sẽ tiếp tục được giao. Bạn có thể theo dõi trạng thái đơn hàng trên website.</p>
+
+          <p style="text-align: center;">
+            <a href="http://localhost:3001/orders/${order.id}" class="btn" style="background-color: #4F46E5; color: #ffffff !important; display: inline-block; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">Xem lại đơn hàng</a>
+          </p>
+        </div>
+        
+        <div class="footer">
+          <p>Nếu bạn có bất kỳ thắc mắc nào, vui lòng trả lời email này hoặc liên hệ hotline 1900 xxxx.</p>
+          <p>© 2026 Ocean Books. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+  
+  return await sendEmail(to, `Yêu cầu hủy đơn #${orderIdDisplay} - Ocean Books`, htmlContent);
 };

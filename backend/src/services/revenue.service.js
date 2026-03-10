@@ -64,13 +64,17 @@ export const getRevenueAnalytics = async (startDate, endDate, type = 'daily') =>
     order: [['createdAt', 'ASC']]
   });
 
+  // Helper: format date as local YYYY-MM-DD (avoid UTC timezone shift)
+  const toLocalDateKey = (d) => {
+    const date = new Date(d);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
+
   // Grouping logic
   const chartMap = new Map();
-  // Fill empty dates? 
-  // Let's create a date range loop to ensure x-axis continuity
   const dateLoop = new Date(start);
   while (dateLoop <= end) {
-    const key = dateLoop.toISOString().split('T')[0]; // YYYY-MM-DD
+    const key = toLocalDateKey(dateLoop);
     chartMap.set(key, {
       date: key,
       label: `${dateLoop.getDate()}/${dateLoop.getMonth() + 1}`,
@@ -82,11 +86,11 @@ export const getRevenueAnalytics = async (startDate, endDate, type = 'daily') =>
   }
 
   orders.forEach(order => {
-    const dateKey = order.createdAt.toISOString().split('T')[0];
+    const dateKey = toLocalDateKey(order.createdAt);
     if (chartMap.has(dateKey)) {
       const entry = chartMap.get(dateKey);
-      if (order.status === 'completed') {
-        entry.revenue += order.total_amount;
+      if (order.status === 'delivered') {
+        entry.revenue += parseFloat(order.total_amount) || 0;
       }
       
       if (order.status === 'cancelled') {

@@ -7,19 +7,19 @@ import router from './router'
 import { toast } from 'vue-sonner'
 import { getImageUrl } from './utils/format'
 
-// --- Global Fetch Interceptor ---
-// Automatically clean up absolute image URLs with hardcoded IPs 
-// to relative paths so they work via Vite proxy correctly
+// --- Interceptor Fetch Global ---
+// Tự động chuyển đổi các URL ảnh tuyệt đối có IP cứng 
+// sang đường dẫn tương đối để proxy của Vite hoạt động chuẩn xác
 const originalFetch = window.fetch;
 window.fetch = async (...args) => {
   const response = await originalFetch(...args);
 
-  // We only care about modifying the .json() parsing
+  // Chúng ta chỉ cần thay đổi phần parse .json()
   const originalJson = response.json.bind(response);
   response.json = async () => {
     const data = await originalJson();
     
-    // Deeply traverse and fix image URLs
+    // Duyệt sâu và sửa URL ảnh
     const fixUrls = (obj) => {
       if (!obj || typeof obj !== 'object') return obj;
       
@@ -30,12 +30,12 @@ window.fetch = async (...args) => {
       const newObj = { ...obj };
       for (const [key, value] of Object.entries(newObj)) {
         if (value && typeof value === 'string') {
-          // Fields known to contain image URLs
+          // Các trường chứa URL ảnh
           if (['thumbnail', 'image', 'avatar'].includes(key) || (key === 'images' && Array.isArray(value))) {
             newObj[key] = getImageUrl(value);
           }
         } else if (value && typeof value === 'object') {
-             // Special case for array of images
+             // Trường hợp đặc biệt cho mảng ảnh
              if (key === 'images' && Array.isArray(value)) {
                  newObj[key] = value.map(img => typeof img === 'string' ? getImageUrl(img) : img)
              } else {
@@ -52,7 +52,7 @@ window.fetch = async (...args) => {
   return response;
 };
 
-// --- Global Axios Interceptor ---
+// --- Interceptor Axios Global ---
 import axios from 'axios';
 axios.interceptors.response.use((response) => {
   if (response.data) {
@@ -87,7 +87,7 @@ axios.interceptors.response.use((response) => {
 const app = createApp(App)
 const pinia = createPinia()
 
-// Global error handler — catch unhandled Vue errors
+// Global error handler — Bắt lỗi Vue không được xử lý
 app.config.errorHandler = (err, instance, info) => {
   console.error('[Vue Error]', err, info)
   if (import.meta.env.DEV) {
@@ -97,7 +97,7 @@ app.config.errorHandler = (err, instance, info) => {
   }
 }
 
-// Catch unhandled promise rejections globally
+// Bắt các promise rejection chưa được xử lý
 window.addEventListener('unhandledrejection', (event) => {
   console.error('[Unhandled Rejection]', event.reason)
 })

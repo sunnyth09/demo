@@ -29,6 +29,42 @@
       </button>
     </div>
 
+    <!-- Search Bar -->
+    <div v-show="activeTab === 'list'" class="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl border shadow-sm">
+      <div class="w-full md:w-72 relative">
+        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input 
+          v-model="searchQuery"
+          type="text" 
+          placeholder="Tìm mã hoặc mô tả..." 
+          class="w-full h-10 pl-10 pr-10 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+          @input="debouncedSearch"
+        />
+        <button v-if="searchQuery" @click="searchQuery = ''; fetchCoupons(1)" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">✕</button>
+      </div>
+      <div class="flex gap-3">
+        <div class="relative">
+          <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+          </svg>
+          <select 
+            v-model="filterStatus"
+            @change="fetchCoupons(1)"
+            class="h-10 pl-9 pr-8 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer appearance-none text-sm font-medium"
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="active">Đang hoạt động</option>
+            <option value="inactive">Tạm khóa</option>
+          </select>
+          <svg xmlns="http://www.w3.org/2000/svg" class="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
     <!-- Table -->
     <div v-show="activeTab === 'list'" class="bg-white rounded-xl shadow-sm border overflow-hidden">
       <div v-if="loading" class="p-8 text-center">
@@ -124,6 +160,47 @@
           </tr>
         </tbody>
       </table>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div v-show="activeTab === 'list'" v-if="totalPages > 1" class="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p class="text-sm text-muted-foreground">
+        Hiển thị <span class="font-medium text-foreground">{{ (currentPage - 1) * limit + 1 }}-{{ Math.min(currentPage * limit, totalCoupons) }}</span> trong tổng số <span class="font-medium text-foreground">{{ totalCoupons }}</span> mã giảm giá
+      </p>
+      
+      <div class="flex items-center gap-1">
+        <button 
+          @click="goToPage(currentPage - 1)"
+          :disabled="currentPage === 1"
+          class="min-w-[70px] px-3 py-1.5 rounded-lg border bg-background hover:bg-accent hover:text-accent-foreground text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Trước
+        </button>
+        
+        <div class="flex items-center gap-1 mx-2">
+          <button 
+            v-for="page in displayedPages" 
+            :key="page"
+            @click="goToPage(page)"
+            :class="[
+              'w-8 h-8 rounded-lg text-sm font-medium transition-colors flex items-center justify-center',
+              currentPage === page 
+                ? 'bg-primary text-primary-foreground shadow-sm' 
+                : 'hover:bg-accent text-muted-foreground hover:text-foreground'
+            ]"
+          >
+            {{ page }}
+          </button>
+        </div>
+
+        <button 
+          @click="goToPage(currentPage + 1)"
+          :disabled="currentPage === totalPages"
+          class="min-w-[70px] px-3 py-1.5 rounded-lg border bg-background hover:bg-accent hover:text-accent-foreground text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Sau
+        </button>
       </div>
     </div>
 
@@ -312,7 +389,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from 'vue-sonner'
 
@@ -330,6 +407,37 @@ const activeTab = ref('list')
 const categories = ref([])
 const couponStats = ref([])
 const loadingStats = ref(false)
+
+// Search & Pagination
+const searchQuery = ref('')
+const filterStatus = ref('')
+const currentPage = ref(1)
+const totalPages = ref(1)
+const totalCoupons = ref(0)
+const limit = 10
+
+let searchTimeout = null
+const debouncedSearch = () => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    fetchCoupons(1)
+  }, 300)
+}
+
+const displayedPages = computed(() => {
+  const total = totalPages.value
+  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1)
+  const start = Math.max(1, currentPage.value - 2)
+  const end = Math.min(total, start + 4)
+  const adjusted = Math.max(1, end - 4)
+  return Array.from({ length: end - adjusted + 1 }, (_, i) => adjusted + i)
+})
+
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    fetchCoupons(page)
+  }
+}
 
 const form = ref({
   code: '',
@@ -363,10 +471,14 @@ const formatDate = (dateStr) => {
    return new Date(dateStr).toLocaleDateString('vi-VN')
 }
 
-const fetchCoupons = async () => {
+const fetchCoupons = async (page = 1) => {
   loading.value = true
   try {
-    const res = await fetch(`${API_URL}/coupons`, {
+    let url = `${API_URL}/coupons?page=${page}&limit=${limit}&search=${encodeURIComponent(searchQuery.value)}`
+    if (filterStatus.value) {
+      url += `&status=${filterStatus.value}`
+    }
+    const res = await fetch(url, {
       headers: {
         Authorization: `Bearer ${authStore.accessToken}`
       }
@@ -374,6 +486,11 @@ const fetchCoupons = async () => {
     const data = await res.json()
     if (data.status) {
       coupons.value = data.data
+      if (data.pagination) {
+        currentPage.value = data.pagination.page
+        totalPages.value = data.pagination.totalPages
+        totalCoupons.value = data.pagination.total
+      }
     }
   } catch (error) {
     console.error('Error fetching coupons:', error)
@@ -505,7 +622,7 @@ const saveCoupon = async () => {
     if (data.status) {
       showModal.value = false
       toast.success(isEditing.value ? 'Cập nhật thành công' : 'Thêm mới thành công')
-      await fetchCoupons()
+      await fetchCoupons(currentPage.value)
     } else {
       const msg = data.message || ''
       if (msg.toLowerCase().includes('đã tồn tại')) {
@@ -546,7 +663,7 @@ const deleteCoupon = async () => {
     if (data.status) {
       showDeleteModal.value = false
       toast.success('Xóa thành công')
-      await fetchCoupons()
+      await fetchCoupons(currentPage.value)
     } else {
       toast.error(data.message)
     }

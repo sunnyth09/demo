@@ -1,5 +1,6 @@
 
 import { Review, User, Product, ReviewReport, Order, OrderItem } from "../models/sequelize/index.js";
+import { Op } from "sequelize";
 
 export const createReview = async (req, res) => {
   try {
@@ -216,10 +217,22 @@ export const getProductReviews = async (req, res) => {
 export const getAllReviewsAdmin = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
     const offset = (page - 1) * limit;
 
+    const where = {};
+    if (search && search.trim()) {
+      where[Op.or] = [
+        { comment: { [Op.like]: `%${search.trim()}%` } },
+        { '$user.name$': { [Op.like]: `%${search.trim()}%` } },
+        { '$user.email$': { [Op.like]: `%${search.trim()}%` } },
+        { '$product.name$': { [Op.like]: `%${search.trim()}%` } }
+      ];
+    }
+
     const { count, rows } = await Review.findAndCountAll({
+      where,
       include: [
         {
           model: User,
@@ -229,12 +242,13 @@ export const getAllReviewsAdmin = async (req, res) => {
         {
           model: Product,
           as: "product",
-          attributes: ["id", "name"]
+          attributes: ["id", "name", "slug"]
         }
       ],
       order: [["created_at", "DESC"]],
       limit,
-      offset
+      offset,
+      subQuery: false
     });
 
     return res.status(200).json({

@@ -13,6 +13,42 @@
       </button>
     </div>
 
+    <!-- Search Bar -->
+    <div class="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl border shadow-sm">
+      <div class="w-full md:w-72 relative">
+        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input 
+          v-model="searchQuery"
+          type="text" 
+          placeholder="Tìm tên hoặc email..." 
+          class="w-full h-10 pl-10 pr-10 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+          @input="debouncedSearch"
+        />
+        <button v-if="searchQuery" @click="searchQuery = ''; fetchUsers(1)" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">✕</button>
+      </div>
+      <div class="flex gap-3">
+        <div class="relative">
+          <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+          </svg>
+          <select 
+            v-model="filterRole"
+            @change="fetchUsers(1)"
+            class="h-10 pl-9 pr-8 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer appearance-none text-sm font-medium"
+          >
+            <option value="">Tất cả vai trò</option>
+            <option value="admin">Admin</option>
+            <option value="user">Thành viên</option>
+          </select>
+          <svg xmlns="http://www.w3.org/2000/svg" class="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
     <div class="bg-card rounded-xl border overflow-hidden">
       <div v-if="loading" class="p-8 text-center text-muted-foreground">
         Đang tải dữ liệu...
@@ -78,6 +114,44 @@
           </tr>
         </tbody>
       </table>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div v-if="totalUsers > 0" class="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p class="text-sm text-muted-foreground">
+        Hiển thị {{ (currentPage - 1) * limit + 1 }}-{{ Math.min(currentPage * limit, totalUsers) }} trong tổng số {{ totalUsers }} người dùng
+      </p>
+      <div class="flex items-center gap-1">
+        <button
+          @click="goToPage(currentPage - 1)"
+          :disabled="currentPage <= 1"
+          class="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          Trước
+        </button>
+        <template v-for="p in displayedPages" :key="p">
+          <span v-if="p === '...'" class="px-2 text-muted-foreground">...</span>
+          <button
+            v-else
+            @click="goToPage(p)"
+            :class="[
+              'w-9 h-9 text-sm rounded-lg transition-colors',
+              p === currentPage 
+                ? 'bg-primary text-primary-foreground font-bold' 
+                : 'hover:bg-muted border'
+            ]"
+          >
+            {{ p }}
+          </button>
+        </template>
+        <button
+          @click="goToPage(currentPage + 1)"
+          :disabled="currentPage >= totalPages"
+          class="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          Sau
+        </button>
       </div>
     </div>
 
@@ -176,10 +250,11 @@
 
 
 
+
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from 'vue-sonner'
 import { useConfirmDialog } from '@/composables/useConfirmDialog'
@@ -189,6 +264,45 @@ const { confirm } = useConfirmDialog()
 const users = ref([])
 const loading = ref(false)
 const isLoadingAction = ref(false)
+
+// Search & Pagination
+const searchQuery = ref('')
+const filterRole = ref('')
+const currentPage = ref(1)
+const totalPages = ref(1)
+const totalUsers = ref(0)
+const limit = 10
+
+let searchTimer = null
+const debouncedSearch = () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    fetchUsers(1)
+  }, 300)
+}
+
+const displayedPages = computed(() => {
+  const pages = []
+  const total = totalPages.value
+  const current = currentPage.value
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (current > 3) pages.push('...')
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+      pages.push(i)
+    }
+    if (current < total - 2) pages.push('...')
+    pages.push(total)
+  }
+  return pages
+})
+
+const goToPage = (page) => {
+  if (page < 1 || page > totalPages.value) return
+  fetchUsers(page)
+}
 
 // Modal State
 const showModal = ref(false)
@@ -209,10 +323,14 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('vi-VN')
 }
 
-const fetchUsers = async () => {
+const fetchUsers = async (page = 1) => {
   loading.value = true
   try {
-    const response = await fetch(`${API_URL}/user/admin/users`, {
+    let url = `${API_URL}/user/admin/users?page=${page}&limit=${limit}&search=${encodeURIComponent(searchQuery.value)}`
+    if (filterRole.value) {
+      url += `&role=${filterRole.value}`
+    }
+    const response = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${authStore.accessToken}`
       }
@@ -220,6 +338,11 @@ const fetchUsers = async () => {
     const data = await response.json()
     if (data.status) {
       users.value = data.data
+      if (data.pagination) {
+        currentPage.value = data.pagination.page
+        totalPages.value = data.pagination.totalPages
+        totalUsers.value = data.pagination.total
+      }
     }
   } catch (error) {
     console.error('Error fetching users:', error)
@@ -343,7 +466,7 @@ const saveUser = async () => {
     const json = await res.json()
     
     if (json.status) {
-      fetchUsers()
+      fetchUsers(currentPage.value)
       closeModal()
       toast.success(isEditing.value ? 'Cập nhật thành công' : 'Thêm thành công')
     } else {
@@ -370,7 +493,7 @@ const deleteUser = async (id) => {
     })
     const json = await res.json()
     if (json.status) {
-      fetchUsers()
+      fetchUsers(currentPage.value)
       toast.success('Xóa người dùng thành công')
     } else {
       toast.error(json.message || 'Không thể xóa người dùng')

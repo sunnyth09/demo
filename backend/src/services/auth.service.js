@@ -143,8 +143,8 @@ export const forgotPasswordService = async (email) => {
 
   // Tạo OTP 6 số
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  // Hết hạn sau 3 phút
-  const expiresAt = new Date(Date.now() + 3 * 60 * 1000);
+  // Hết hạn sau 15 phút
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
   user.otp_code = otp;
   user.otp_expires_at = expiresAt;
@@ -163,7 +163,7 @@ export const forgotPasswordService = async (email) => {
                 <span style="font-family: 'Courier New', monospace; font-size: 32px; font-weight: bold; color: #0F172A; letter-spacing: 4px;">${otp}</span>
             </div>
             
-            <p style="font-size: 14px; color: #64748B; text-align: center; margin: 0;">Mã này sẽ hết hạn sau <strong>3 phút</strong>.</p>
+            <p style="font-size: 14px; color: #64748B; text-align: center; margin: 0;">Mã này sẽ hết hạn sau <strong>15 phút</strong>.</p>
             <p style="font-size: 14px; color: #64748B; text-align: center; margin-top: 8px;">Nếu bạn không yêu cầu, vui lòng bỏ qua email này.</p>
         </div>
         

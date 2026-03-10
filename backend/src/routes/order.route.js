@@ -15,6 +15,7 @@ router.put("/my-orders/:id/cancel", checkToken, OrderController.cancelMyOrder);
 // Routes cho admin
 router.get("/admin", checkToken, checkAdmin, OrderController.getAllOrders);
 router.get("/admin/stats", checkToken, checkAdmin, OrderController.getOrderStats);
+router.put("/admin/bulk-status", checkToken, checkAdmin, OrderController.bulkUpdateStatus);
 router.get("/admin/:id", checkToken, checkAdmin, OrderController.getOrderById);
 router.get("/admin/:id/status-logs", checkToken, checkAdmin, OrderController.getOrderStatusLogs);
 router.put("/admin/:id/status", checkToken, checkAdmin, OrderController.updateStatus);

@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="flex items-center gap-4">
       <router-link
-        to="/admin/orders"
+        :to="{ path: '/admin/orders', query: { page: $route.query.page } }"
         class="p-2 rounded-full hover:bg-accent transition-colors"
       >
         <svg
@@ -220,9 +220,6 @@
                   <p class="text-xs text-muted-foreground">{{ formatDateTime(log.createdAt) }}</p>
                   <p class="text-xs text-gray-500 mt-1">
                     Bởi: <strong>{{ log.changed_by_name || 'Hệ thống' }}</strong>
-                    <span v-if="log.changedByUser" class="ml-1 px-1.5 py-0.5 text-[10px] rounded-full"
-                      :class="log.changedByUser.role === 'admin' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'"
-                    >{{ log.changedByUser.role === 'admin' ? 'Admin' : 'User' }}</span>
                   </p>
                   <p
                     v-if="log.note"
@@ -448,12 +445,6 @@
             >
               Hủy đơn hàng
             </button>
-            <button
-              @click="printOrder"
-              class="w-full px-4 py-2 border rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              In đơn hàng
-            </button>
           </div>
         </div>
       </div>
@@ -462,10 +453,50 @@
     <div v-else class="text-center py-12">
       <p class="text-muted-foreground">Không tìm thấy đơn hàng</p>
       <router-link
-        to="/admin/orders"
+        :to="{ path: '/admin/orders', query: { page: $route.query.page } }"
         class="text-primary hover:underline mt-2 inline-block"
         >Quay lại danh sách</router-link
       >
+    </div>
+
+    <!-- Custom Cancel Dialog -->
+    <div v-if="cancelReasonDialog" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+       <!-- Backdrop -->
+       <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeCancelDialog"></div>
+       
+       <!-- Dialog Content -->
+       <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative z-10 animate-in fade-in zoom-in-95 duration-200">
+          <div class="p-6">
+             <h3 class="text-xl font-bold mb-2">Hủy đơn hàng</h3>
+             <p class="text-sm text-muted-foreground mb-6">
+                Vui lòng cho chúng tôi biết lý do bạn muốn hủy đơn hàng này.
+             </p>
+             
+             <textarea 
+                v-model="cancelReasonInput"
+                rows="4"
+                placeholder="Nhập lý do hủy (không bắt buộc)..."
+                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white resize-none transition-colors"
+                @keyup.enter.ctrl="submitCancelOrder"
+             ></textarea>
+          </div>
+          
+          <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t">
+             <button 
+                @click="closeCancelDialog"
+                class="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+             >
+                Hủy
+             </button>
+             <button 
+                @click="submitCancelOrder"
+                :disabled="updating"
+                class="px-5 py-2.5 bg-red-50 text-red-600 border border-transparent rounded-xl text-sm font-medium hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+             >
+                {{ updating ? 'Đang xử lý...' : 'Xác nhận hủy' }}
+             </button>
+          </div>
+       </div>
     </div>
   </div>
 </template>
@@ -488,6 +519,8 @@ const loading = ref(true);
 const updating = ref(false);
 const newStatus = ref("");
 const statusLogs = ref([]);
+const cancelReasonDialog = ref(false);
+const cancelReasonInput = ref("");
 
 const statusFlow = [
   'pending', 'confirmed', 'packing', 'picked_up', 
@@ -707,11 +740,12 @@ const getStatusLabel = (status) => {
   return map[status] || status;
 };
 
-const updateOrderStatus = async () => {
+const updateOrderStatus = async (extraPayload = {}) => {
   if (!newStatus.value || newStatus.value === order.value.status) return;
 
   updating.value = true;
   try {
+    const payload = { status: newStatus.value, ...extraPayload };
     const res = await fetch(
       `${API_URL}/orders/admin/${order.value.id}/status`,
       {
@@ -720,7 +754,7 @@ const updateOrderStatus = async () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authStore.accessToken}`,
         },
-        body: JSON.stringify({ status: newStatus.value }),
+        body: JSON.stringify(payload),
       },
     );
     const json = await res.json();
@@ -738,11 +772,32 @@ const updateOrderStatus = async () => {
   }
 };
 
-const cancelOrder = async () => {
-  const ok = await confirm('Hủy đơn hàng', 'Bạn có chắc muốn xóa/hủy đơn hàng này?', { actionLabel: 'Xác nhận hủy' })
-  if (!ok) return
-  newStatus.value = "cancelled";
-  await updateOrderStatus();
+const cancelOrder = () => {
+   // Open the custom dialog instead of prompt
+   cancelReasonInput.value = "";
+   cancelReasonDialog.value = true;
+};
+
+const closeCancelDialog = () => {
+   if (updating.value) return;
+   cancelReasonDialog.value = false;
+   cancelReasonInput.value = "";
+};
+
+const submitCancelOrder = async () => {
+   const reason = cancelReasonInput.value.trim();
+   
+   // Dù UI ghi không bắt buộc, nhưng nếu hệ thống cũ đang expect có thì ta vẫn có thể require, 
+   // hoặc cho phép trống và pass string rỗng. Dựa theo yêu cầu "nhập lý do như ảnh" ("không bắt buộc").
+   // Nếu ảnh UX cho phép không bắt buộc thì ta cứ truyền "" hoặc text default.
+   const finalReason = reason || "Hủy đơn hàng không có lý do cụ thể";
+   
+   newStatus.value = "cancelled";
+   await updateOrderStatus({ cancel_reason: finalReason, note: `Admin hủy đơn: ${finalReason}` });
+   
+   if (!toast.error) {
+      closeCancelDialog();
+   }
 };
 
 const approveCancel = async () => {
@@ -758,10 +813,6 @@ const rejectCancel = async () => {
    newStatus.value = 'pending';
    await updateOrderStatus();
 }
-
-const printOrder = () => {
-  window.print();
-};
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat("vi-VN", {

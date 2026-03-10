@@ -4,7 +4,7 @@
     <h1 class="text-xl font-bold mb-8">Giỏ hàng</h1>
 
     <div class="grid lg:grid-cols-3 gap-8">
-      <!-- Cart Items -->
+      <!-- Sản phẩm trong giỏ -->
       <div class="lg:col-span-2 space-y-4">
         <div v-if="cartItems.length === 0" class="bg-card rounded-xl border p-12 text-center">
           <div class="text-6xl mb-4">🛒</div>
@@ -18,7 +18,7 @@
         </div>
 
         <div v-else>
-          <!-- Select All Header -->
+          <!-- Tiêu đề Chọn tất cả -->
           <div class="bg-card rounded-xl border p-4 mb-4 flex items-center gap-4">
              <input 
                type="checkbox" 
@@ -38,7 +38,7 @@
                'border-red-500 bg-red-50/10': item.stock && item.quantity > item.stock 
             }"
           >
-            <!-- Checkbox (Centered vertically relative to image approx) -->
+            <!-- Checkbox (Căn giữa theo chiều dọc tương đối so với hình ảnh) -->
             <div class="flex-shrink-0 pt-10 sm:pt-0 sm:self-center">
                <input 
                  type="checkbox" 
@@ -48,22 +48,22 @@
                />
             </div>
             
-            <!-- Image (Portrait aspect) -->
+            <!-- Hình ảnh (Tỉ lệ dọc) -->
             <div class="w-24 h-32 sm:w-28 sm:h-36 rounded-md border bg-muted flex-shrink-0 overflow-hidden relative">
                <img :src="item.thumbnail || 'https://via.placeholder.com/100'" class="w-full h-full object-cover" />
             </div>
 
-            <!-- Content Column -->
+            <!-- Cột Nội dung -->
             <div class="flex-1 min-w-0 flex flex-col justify-between min-h-[128px] sm:min-h-[144px]">
-              <!-- Top Info -->
+              <!-- Thông tin chung -->
               <div>
                 <div class="flex justify-between items-start gap-2">
                    <h3 class="font-medium text-sm sm:text-base line-clamp-2 text-foreground leading-snug">{{ item.name }}</h3>
                 </div>
-                <!-- Category/Author if needed -->
+                <!-- Danh mục/Tác giả (nếu cần) -->
                 <p class="text-xs text-muted-foreground mt-1">{{ item.category || 'Sách' }}</p>
                 
-                <!-- Price -->
+                <!-- Giá -->
                 <div class="flex flex-wrap items-baseline gap-2 mt-2">
                    <p class="text-base sm:text-lg font-bold text-primary">{{ formatCurrency(item.price) }}</p>
                    <p v-if="item.original_price" class="text-xs text-muted-foreground line-through decoration-gray-400">
@@ -72,9 +72,9 @@
                 </div>
               </div>
 
-              <!-- Bottom Actions (Qty & Delete) -->
+              <!-- Hành động bên dưới (Số lượng & Xóa) -->
               <div class="flex items-center justify-between mt-3">
-                 <!-- Quantity Control -->
+                 <!-- Điều khiển số lượng -->
                  <div class="flex items-center border border-gray-200 rounded-lg bg-background">
                     <button 
                       @click="updateQuantity(item.id, -1)" 
@@ -96,7 +96,7 @@
                     </button>
                  </div>
 
-                 <!-- Delete Button -->
+                 <!-- Nút Xóa -->
                  <button 
                   @click="removeItem(item)" 
                   class="p-2 text-gray-400 hover:text-destructive hover:bg-destructive/10 rounded-full transition-all"
@@ -113,7 +113,7 @@
         </div>
       </div>
 
-      <!-- Order Summary -->
+      <!-- Tóm tắt đơn hàng -->
       <div class="lg:col-span-1">
       <div class="bg-card rounded-xl border p-6 sticky top-24">
         <h3 class="font-semibold text-lg mb-4">Tóm tắt đơn hàng</h3>
@@ -137,7 +137,7 @@
           </p>
         </div>
 
-          <!-- Warning for invalid items -->
+          <!-- Cảnh báo sản phẩm không hợp lệ -->
           <div v-if="hasInvalidItems" class="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
              <svg class="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
              <span class="text-xs text-red-600 font-medium">Một số sản phẩm vượt quá số lượng tồn kho. Vui lòng điều chỉnh trước khi thanh toán.</span>
@@ -174,7 +174,7 @@ const couponCode = ref('')
 const shippingFee = ref(0)
 const discount = ref(0) // Tạm thời để 0
 
-// Total in cart only includes subtotal - discount (shipping added at checkout)
+// Tổng giỏ hàng chỉ bao gồm tạm tính - giảm giá (phí vận chuyển thêm ở bước thanh toán)
 const total = computed(() => subtotal.value - discount.value)
 
 const isAllSelected = computed(() => {

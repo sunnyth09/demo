@@ -1,6 +1,6 @@
 <template>
   <div class="bg-background min-h-screen">
-    <!-- Hero Section -->
+    <!-- Phần Hero -->
     <div class="relative bg-primary/5 py-20 md:py-32 overflow-hidden">
       <div class="absolute inset-0 opacity-10">
          <svg class="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -20,7 +20,7 @@
     </div>
 
     <div class="container mx-auto px-4 py-16 space-y-24">
-      <!-- Story Section -->
+      <!-- Phần Câu chuyện -->
       <div class="grid md:grid-cols-2 gap-12 items-center">
         <div class="order-2 md:order-1 space-y-6">
           <h2 class="text-3xl font-bold text-foreground">Câu Chuyện Của Chúng Tôi</h2>
@@ -42,7 +42,7 @@
         </div>
       </div>
 
-      <!-- Mission & Values -->
+      <!-- Sứ mệnh & Giá trị cốt lõi -->
       <div class="grid md:grid-cols-3 gap-8">
         <div class="md:col-span-1 bg-primary text-primary-foreground p-8 rounded-2xl flex flex-col justify-center">
           <h2 class="text-2xl font-bold mb-4">Sứ Mệnh & Tầm Nhìn</h2>
@@ -66,7 +66,7 @@
         </div>
       </div>
 
-      <!-- Stats -->
+      <!-- Số liệu thống kê -->
       <div class="bg-muted/30 rounded-3xl p-12 text-center">
          <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div v-for="stat in stats" :key="stat.label" class="space-y-2">
@@ -76,7 +76,7 @@
          </div>
       </div>
 
-      <!-- Team -->
+      <!-- Đội ngũ -->
       <div class="text-center space-y-12">
         <div class="max-w-2xl mx-auto text-center">
           <h2 class="text-3xl font-bold mb-4">Đội Ngũ Nhiệt Huyết</h2>
@@ -90,7 +90,7 @@
                <h3 class="text-xl font-bold">{{ member.name }}</h3>
                <p class="text-white/80 text-sm mb-4">{{ member.role }}</p>
                <div class="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
-                  <!-- Fake Social Icons -->
+                  <!-- Các biểu tượng MXH (Mô phỏng) -->
                   <div class="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/40 cursor-pointer">FB</div>
                   <div class="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/40 cursor-pointer">LN</div>
                </div>
@@ -99,7 +99,7 @@
         </div>
       </div>
 
-      <!-- Testimonials -->
+      <!-- Đánh giá khách hàng -->
       <div class="space-y-12">
          <h2 class="text-3xl font-bold text-center">Khách Hàng Nói Gì Về Chúng Tôi</h2>
          <div class="grid md:grid-cols-3 gap-6">
@@ -121,7 +121,7 @@
          </div>
       </div>
 
-      <!-- CTA -->
+      <!-- Kêu gọi hành động (CTA) -->
       <div class="relative rounded-3xl overflow-hidden bg-primary text-primary-foreground py-16 px-6 text-center">
          <div class="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
          <div class="absolute bottom-0 right-0 w-64 h-64 bg-white/5 rounded-full translate-x-1/3 translate-y-1/3"></div>

@@ -118,7 +118,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
       return false;
     } catch {
-      // Access token expired — try silent refresh
+      // Access token đã hết hạn — động làm mới (silent refresh)
       const refreshed = await silentRefresh();
       if (refreshed) return true;
       logout();
@@ -126,7 +126,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Silent refresh — get new access token using refresh token
+  // Tự động làm mới — lấy access token mới bằng refresh token
   async function silentRefresh() {
     if (!refreshToken.value) return false;
     try {
@@ -136,7 +136,7 @@ export const useAuthStore = defineStore('auth', () => {
         refreshToken.value = result.refreshToken;
         user.value = result.user;
 
-        // Detect storage type and update
+        // Nhận diện loại lưu trữ và cập nhật
         const storage = localStorage.getItem('accessToken') ? localStorage : sessionStorage;
         storage.setItem('accessToken', result.accessToken);
         storage.setItem('refreshToken', result.refreshToken);

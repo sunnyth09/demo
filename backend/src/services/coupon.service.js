@@ -69,7 +69,7 @@ export const createCoupon = async (data) => {
 /**
  * Get all coupons (Admin)
  */
-export const getAllCoupons = async (isActiveOnly = false) => {
+export const getAllCoupons = async ({ isActiveOnly = false, status = '', search = '', page = 1, limit = 10 } = {}) => {
   const where = {};
   if (isActiveOnly) {
     where.is_active = true;
@@ -77,8 +77,23 @@ export const getAllCoupons = async (isActiveOnly = false) => {
     where.end_date = { [Op.gte]: new Date() };
     where.quantity = { [Op.gt]: 0 };
   }
+
+  if (status === 'active') {
+    where.is_active = true;
+  } else if (status === 'inactive') {
+    where.is_active = false;
+  }
+
+  if (search && search.trim()) {
+    where[Op.or] = [
+      { code: { [Op.like]: `%${search.trim()}%` } },
+      { description: { [Op.like]: `%${search.trim()}%` } }
+    ];
+  }
+
+  const offset = (page - 1) * limit;
   
-  return await Coupon.findAll({
+  const { count, rows } = await Coupon.findAndCountAll({
     where,
     attributes: {
       include: [
@@ -92,8 +107,17 @@ export const getAllCoupons = async (isActiveOnly = false) => {
         ]
       ]
     },
-    order: [['createdAt', 'DESC']]
+    order: [['createdAt', 'DESC']],
+    limit,
+    offset
   });
+
+  return {
+    rows,
+    total: count,
+    page,
+    totalPages: Math.ceil(count / limit)
+  };
 };
 
 /**

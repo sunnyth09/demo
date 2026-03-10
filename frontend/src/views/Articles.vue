@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-background">
-    <!-- Header/Banner Section -->
+    <!-- Phần Header/Banner -->
     <div class="bg-primary text-primary-foreground py-12 md:py-20 relative overflow-hidden">
       <div class="absolute inset-0 z-0">
         <div class="absolute inset-0 bg-gradient-to-r from-primary via-primary/95 to-primary-foreground/10"></div>
@@ -24,11 +24,11 @@
       </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- Nội dung chính -->
     <div class="container max-w-7xl mx-auto px-4 py-8 md:py-12">
-      <!-- Search & Filter Bar -->
+      <!-- Thanh tìm kiếm & bộ lọc -->
       <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 bg-card p-4 rounded-xl border shadow-sm">
-        <!-- Search -->
+        <!-- Tìm kiếm -->
         <div class="relative w-full md:w-96">
           <input 
             v-model="searchQuery"
@@ -40,7 +40,7 @@
           <svg class="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         </div>
 
-        <!-- Sort/Filter (Visual only for now) -->
+        <!-- Sắp xếp/Lọc (Tạm thời chỉ hiển thị tĩnh) -->
         <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
           <button 
             v-for="filter in ['Tất cả', 'Review Sách', 'Kinh Nghiệm', 'Tin Tức']" 
@@ -53,7 +53,7 @@
         </div>
       </div>
 
-      <!-- Loading State -->
+      <!-- Trạng thái Đang tải -->
       <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <div v-for="i in 6" :key="i" class="bg-card rounded-2xl overflow-hidden border shadow-sm animate-pulse h-[400px]">
           <div class="h-48 bg-muted"></div>
@@ -66,14 +66,14 @@
         </div>
       </div>
 
-      <!-- Articles Grid -->
+      <!-- Lưới bài viết -->
       <div v-else-if="articles.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <article 
           v-for="article in articles" 
           :key="article.id" 
           class="bg-card rounded-2xl overflow-hidden border border-border/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col h-full"
         >
-          <!-- Image -->
+          <!-- Hình ảnh -->
           <router-link :to="`/articles/${article.id}`" class="block relative overflow-hidden aspect-[16/10]">
             <img 
               :src="article.thumbnail || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800'" 
@@ -83,9 +83,9 @@
             <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </router-link>
 
-          <!-- Content -->
+          <!-- Nội dung -->
           <div class="p-6 flex-1 flex flex-col">
-            <!-- Meta -->
+            <!-- Thông tin bổ sung (Meta) -->
             <div class="flex items-center gap-3 text-xs text-muted-foreground mb-3">
               <span class="bg-primary/10 text-primary px-2 py-1 rounded-md font-medium">Tin tức</span>
               <span>{{ formatDate(article.createdAt) }}</span>
@@ -95,19 +95,19 @@
               </span>
             </div>
 
-            <!-- Title -->
+            <!-- Tiêu đề -->
             <h2 class="text-xl font-bold mb-3 line-clamp-2 group-hover:text-primary transition-colors">
               <router-link :to="`/articles/${article.id}`">
                 {{ article.title }}
               </router-link>
             </h2>
 
-            <!-- Excerpt -->
+            <!-- Đoạn trích -->
             <p class="text-muted-foreground text-sm line-clamp-3 mb-4 flex-1">
               {{ article.excerpt }}
             </p>
 
-            <!-- Footer -->
+            <!-- Phần chân thẻ (Footer) -->
             <div class="pt-4 border-t border-border mt-auto flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <div class="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">A</div>
@@ -125,7 +125,7 @@
         </article>
       </div>
 
-      <!-- Empty State -->
+      <!-- Trạng thái trống (Không có bài viết) -->
       <div v-else class="text-center py-20">
         <div class="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
           <svg class="w-10 h-10 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
@@ -141,7 +141,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
-// Simple debounce function
+// Hàm chống rung (Debounce) đơn giản
 function debounce(func, wait) {
   let timeout;
   return function executedFunction(...args) {

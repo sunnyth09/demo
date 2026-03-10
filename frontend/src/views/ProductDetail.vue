@@ -201,7 +201,8 @@
                 :product-id="product.id" 
                 :reviews="reviews"
                 :loading="loading"
-                @refresh="onReviewListRefresh" 
+                @refresh="onReviewListRefresh"
+                @edit-review="openEditModal"
              />
            </div>
         </div>
@@ -226,6 +227,63 @@
           </button>
       </div>
     </Teleport>
+
+    <!-- Edit Review Modal -->
+    <Teleport to="body">
+      <div v-if="isEditModalOpen" class="fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold text-gray-900">Sửa đánh giá</h3>
+            <button @click="closeEditModal" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Đánh giá chung</label>
+              <div class="flex gap-2">
+                <button 
+                  v-for="star in 5" :key="star" 
+                  @click="editingReview.rating = star"
+                  class="text-3xl focus:outline-none transition-transform hover:scale-110"
+                  :class="editingReview.rating >= star ? 'text-yellow-400' : 'text-gray-200'"
+                >
+                  ★
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Lời đánh giá</label>
+              <textarea 
+                v-model="editingReview.comment" 
+                rows="4" 
+                class="w-full border-gray-200 rounded-xl focus:ring focus:ring-primary/20 p-3 text-sm text-gray-700"
+                placeholder="Nội dung đánh giá..."
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3 mt-6">
+            <button @click="closeEditModal" class="px-5 py-2 rounded-lg font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors text-sm">
+              Hủy
+            </button>
+            <button 
+              @click="submitEditReview" 
+              class="px-5 py-2 rounded-lg font-bold text-white bg-primary hover:bg-primary/90 transition-colors shadow-lg shadow-primary/30 text-sm flex items-center gap-2"
+              :disabled="savingReview"
+            >
+              <svg v-if="savingReview" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {{ savingReview ? 'Đang lưu...' : 'Lưu thay đổi' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
   </div>
 </template>
@@ -233,6 +291,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
 import { useFavoriteStore } from '@/stores/favorite'
 import ReviewList from '@/components/Reviews/ReviewList.vue'
@@ -257,9 +316,58 @@ const activeImage = ref('')
 const galleryImages = ref([])
 const isExpanded = ref(false)
 
+const isEditModalOpen = ref(false)
+const editingReview = ref({ id: null, rating: 0, comment: '' })
+const savingReview = ref(false)
+
+const authStore = useAuthStore()
+
+const openEditModal = (review) => {
+  editingReview.value = { ...review }
+  isEditModalOpen.value = true
+}
+
+const closeEditModal = () => {
+  isEditModalOpen.value = false
+}
+
+const submitEditReview = async () => {
+  if (!editingReview.value.rating) return toast.error('Vui lòng chọn số sao đánh giá')
+  if (!editingReview.value.comment.trim()) return toast.error('Vui lòng nhập nội dung đánh giá')
+  
+  savingReview.value = true
+  try {
+    const res = await fetch(`${API_URL}/reviews/${editingReview.value.id}`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authStore.accessToken}` 
+      },
+      body: JSON.stringify({
+        rating: editingReview.value.rating,
+        comment: editingReview.value.comment
+      })
+    })
+
+    const json = await res.json()
+    if (res.ok) {
+      toast.success('Cập nhật đánh giá thành công')
+      closeEditModal()
+      fetchReviews() // Refresh list
+    } else {
+      toast.error(json.message || 'Lỗi cập nhật đánh giá')
+    }
+  } catch(e) {
+    console.error('Update review error:', e)
+    toast.error('Lỗi khi cập nhật đánh giá')
+  } finally {
+    savingReview.value = false
+  }
+}
+
 const fetchReviews = async () => {
   try {
-    const id = route.params.id || product.value?.id
+    const id = product.value?.id
     if (!id) return
     
     // Using the same endpoint as ReviewList used: /reviews/product/:id
@@ -387,14 +495,18 @@ const fetchProductDetail = async () => {
 }
 
 // Watch params change to reload
-watch(() => route.params.id, () => {
-  fetchProductDetail()
-  fetchReviews()
+watch(() => route.params.id, async () => {
+  await fetchProductDetail()
+  if (product.value) {
+    fetchReviews()
+  }
 })
 
-onMounted(() => {
-  fetchProductDetail()
-  fetchReviews()
+onMounted(async () => {
+  await fetchProductDetail()
+  if (product.value) {
+    fetchReviews()
+  }
 })
 </script>
 

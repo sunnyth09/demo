@@ -2,9 +2,23 @@ import * as CouponService from "../services/coupon.service.js";
 
 export const getCoupons = async (req, res) => {
   try {
-    const { active } = req.query;
-    const coupons = await CouponService.getAllCoupons(active === 'true');
-    res.json({ status: true, data: coupons });
+    const { active, search = '', page = 1, limit = 10, status = '' } = req.query;
+    const result = await CouponService.getAllCoupons({
+      isActiveOnly: active === 'true',
+      status,
+      search,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || 10
+    });
+    res.json({
+      status: true,
+      data: result.rows,
+      pagination: {
+        page: result.page,
+        totalPages: result.totalPages,
+        total: result.total
+      }
+    });
   } catch (error) {
     console.error('❌ Error getCoupons:', error);
     res.status(500).json({ status: false, message: error.message });

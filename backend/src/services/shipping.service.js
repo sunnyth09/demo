@@ -15,10 +15,30 @@ class ShippingService {
   /**
    * Lấy tất cả khu vực (bao gồm inactive) - cho admin
    */
-  async getAllZonesAdmin() {
-    return await ShippingZone.findAll({
-      order: [['priority', 'DESC'], ['name', 'ASC']]
+  async getAllZonesAdmin({ search = '', page = 1, limit = 10 } = {}) {
+    const offset = (page - 1) * limit;
+    const where = {};
+
+    if (search && search.trim()) {
+      where.name = { [Op.like]: `%${search.trim()}%` };
+    }
+
+    const { count, rows } = await ShippingZone.findAndCountAll({
+      where,
+      order: [['priority', 'DESC'], ['name', 'ASC']],
+      limit,
+      offset
     });
+
+    return {
+      zones: rows,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil(count / limit)
+      }
+    };
   }
 
   /**

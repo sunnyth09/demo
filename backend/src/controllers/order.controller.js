@@ -124,7 +124,7 @@ export const getOrderById = async (req, res) => {
 
 export const updateStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, cancel_reason, note } = req.body;
     
     // Check current status first
     const currentOrder = await OrderService.getOrderById(req.params.id);
@@ -178,14 +178,14 @@ export const updateStatus = async (req, res) => {
       const newStatusIndex = statusFlow.indexOf(status);
 
       if (currentStatusIndex === -1) {
-        // Current status is request_cancel, only allow cancelled (handled above)
-        return res.status(400).json({
-          status: false,
-          message: "Đơn hàng đang yêu cầu hủy, chỉ có thể chuyển sang 'cancelled'."
-        });
-      }
-
-      if (newStatusIndex < currentStatusIndex) {
+        // Current status is request_cancel, allow cancelled (handled above) or pending (reject cancel)
+        if (status !== 'pending') {
+          return res.status(400).json({
+            status: false,
+            message: "Đơn hàng đang yêu cầu hủy, chỉ có thể chuyển sang 'cancelled' (Duyệt) hoặc 'pending' (Từ chối)."
+          });
+        }
+      } else if (newStatusIndex < currentStatusIndex) {
         return res.status(400).json({ 
           status: false, 
           message: "Không thể cập nhật ngược trạng thái đơn hàng (Quy trình một chiều)." 
@@ -211,8 +211,17 @@ export const updateStatus = async (req, res) => {
       const { sendOrderCancelledEmail } = await import("../services/email.service.js");
       // Check if refund needed (paid orders)
       const needsRefund = order.payment_status === 'paid';
-      sendOrderCancelledEmail(order.customer_email, order, order.cancel_reason, needsRefund).catch(err => {
+      const actualCancelReason = cancel_reason || order.cancel_reason;
+      sendOrderCancelledEmail(order.customer_email, order, actualCancelReason, needsRefund).catch(err => {
          console.error('Failed to send cancellation confirmed email:', err);
+      });
+    }
+
+    // Send "Cancellation Rejected" email if status changed back to pending from request_cancel
+    if (previousStatus === 'request_cancel' && status === 'pending' && order.customer_email) {
+      const { sendOrderCancelRejectedEmail } = await import("../services/email.service.js");
+      sendOrderCancelRejectedEmail(order.customer_email, order).catch(err => {
+         console.error('Failed to send cancellation rejected email:', err);
       });
     }
 
@@ -229,10 +238,108 @@ export const updateStatus = async (req, res) => {
   }
 };
 
+export const bulkUpdateStatus = async (req, res) => {
+  try {
+    const { orderIds, status, cancel_reason } = req.body;
+    
+    if (!Array.isArray(orderIds) || orderIds.length === 0) {
+      return res.status(400).json({ status: false, message: "Danh sách đơn hàng trống" });
+    }
+
+    const statusFlow = [
+      'pending', 'confirmed', 'packing', 'picked_up', 
+      'in_transit', 'arrived_hub', 'out_for_delivery', 'delivered'
+    ];
+    const validStatuses = [...statusFlow, 'request_cancel', 'cancelled'];
+
+    if (!validStatuses.includes(status)) {
+       return res.status(400).json({ status: false, message: `Trạng thái "${status}" không hợp lệ.` });
+    }
+    
+    if (status === 'request_cancel') {
+        return res.status(400).json({ status: false, message: "Admin không dùng 'request_cancel'." });
+    }
+
+    const { sendOrderCancelledEmail, sendOrderCancelRejectedEmail } = await import("../services/email.service.js");
+
+    let successCount = 0;
+    let failedCount = 0;
+    const errors = [];
+
+    // Process sequentially to ensure hooks/transactions apply safely per order
+    for (const orderId of orderIds) {
+      try {
+        const currentOrder = await OrderService.getOrderById(orderId);
+        if (!currentOrder) throw new Error("Không tồn tại");
+        if (currentOrder.status === 'delivered') throw new Error("Đã giao thành công");
+
+        if (status === 'cancelled') {
+          const cancellableStatuses = ['pending', 'confirmed', 'packing', 'request_cancel'];
+          if (!cancellableStatuses.includes(currentOrder.status)) {
+             throw new Error("Trạng thái hiện tại không cho phép hủy");
+          }
+        } else {
+          const currentStatusIndex = statusFlow.indexOf(currentOrder.status);
+          const newStatusIndex = statusFlow.indexOf(status);
+
+          if (currentStatusIndex === -1) {
+             if (status !== 'pending') throw new Error("Đang yêu cầu hủy, chỉ có thể Hủy (cancelled) hoặc Từ chối (pending)");
+          } else if (newStatusIndex < currentStatusIndex) {
+             throw new Error("Không thể lùi trạng thái");
+          } else if (newStatusIndex === currentStatusIndex) {
+             throw new Error("Trạng thái không đổi");
+          }
+        }
+
+        const previousStatus = currentOrder.status;
+        const extraData = status === 'cancelled' ? { cancel_reason: cancel_reason || currentOrder.cancel_reason } : {};
+        const order = await OrderService.updateStatus(orderId, status, extraData);
+
+        await OrderStatusLog.create({
+          order_id: order.id,
+          from_status: previousStatus,
+          to_status: status,
+          changed_by: req.user.id,
+          changed_by_name: req.user.name || req.user.email,
+          note: req.body.note || (status === 'cancelled' && extraData.cancel_reason ? `Admin hủy đơn: ${extraData.cancel_reason}` : 'Cập nhật trạng thái hàng loạt')
+        });
+
+        if (status === 'cancelled' && order.customer_email) {
+          const needsRefund = order.payment_status === 'paid';
+          const actualCancelReason = cancel_reason || order.cancel_reason;
+          sendOrderCancelledEmail(order.customer_email, order, actualCancelReason, needsRefund).catch(e => console.error(e));
+        }
+
+        if (previousStatus === 'request_cancel' && status === 'pending' && order.customer_email) {
+          sendOrderCancelRejectedEmail(order.customer_email, order).catch(e => console.error(e));
+        }
+
+        successCount++;
+      } catch (err) {
+        failedCount++;
+        errors.push(`Đơn #${orderId ? orderId.toString().slice(0,8).toUpperCase() : 'N/A'}: ${err.message}`);
+      }
+    }
+
+    res.status(200).json({
+      status: true,
+      message: `Đã xử lý ${successCount + failedCount} đơn (Thành công: ${successCount}, Thất bại: ${failedCount}).`,
+      data: { successCount, failedCount, errors }
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: error.message
+    });
+  }
+};
+
 export const getOrderStats = async (req, res) => {
   try {
     const days = parseInt(req.query.days) || 7;
-    const stats = await OrderService.getOrderStats(days);
+    const sort = req.query.sort || 'sold';
+    const stats = await OrderService.getOrderStats(days, sort);
     res.status(200).json({
       status: true,
       data: stats

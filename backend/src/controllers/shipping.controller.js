@@ -60,10 +60,16 @@ export const calculateShipping = async (req, res) => {
  */
 export const adminGetAllZones = async (req, res) => {
   try {
-    const zones = await ShippingService.getAllZonesAdmin();
+    const { search = '', page = 1, limit = 10 } = req.query;
+    const result = await ShippingService.getAllZonesAdmin({
+      search,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || 10
+    });
     res.json({
       status: true,
-      data: zones
+      data: result.zones,
+      pagination: result.pagination
     });
   } catch (error) {
     res.status(500).json({

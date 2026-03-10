@@ -2,13 +2,13 @@
   <div class="min-h-screen flex items-center justify-center py-12 px-4 bg-background">
     <div class="w-full max-w-md">
       <div class="bg-card rounded-2xl border shadow-lg p-8">
-        <!-- Back Button -->
+        <!-- Nút Trở Lại -->
         <router-link to="/login" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           Quay lại đăng nhập
         </router-link>
 
-        <!-- Step 1: Request OTP -->
+        <!-- Bước 1: Yêu cầu lấy OTP -->
         <div v-if="step === 1">
           <div class="text-center mb-6">
             <div class="w-16 h-16 rounded-2xl bg-primary/10 mx-auto mb-4 flex items-center justify-center">
@@ -22,7 +22,7 @@
           </div>
 
           <form @submit.prevent="handleSendOtp" novalidate class="space-y-4">
-             <!-- Error Message -->
+             <!-- Tin nhắn lỗi -->
             <Alert v-if="errorMessage" variant="destructive">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -60,7 +60,7 @@
           </form>
         </div>
 
-        <!-- Step 2: Verify OTP & Reset Password -->
+        <!-- Bước 2: Xác minh OTP & Đặt lại mật khẩu -->
         <div v-if="step === 2">
           <div class="text-center mb-6">
             <h1 class="text-2xl font-bold">Đặt lại mật khẩu</h1>
@@ -68,7 +68,7 @@
           </div>
 
           <form @submit.prevent="handleResetPassword" novalidate class="space-y-4">
-             <!-- Error Message -->
+             <!-- Tin nhắn lỗi -->
             <Alert v-if="errorMessage" variant="destructive">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>

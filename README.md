@@ -47,7 +47,7 @@ Dự án này mô phỏng một hệ thống thương mại điện tử hoặc 
 1. **Clone repository**
 
    ```bash
-   git clone <link-repository-cua-ban>
+   git clone https://github.com/sunnyth09/demo.git
    cd backend-compose
    ```
 

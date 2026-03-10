@@ -7,7 +7,7 @@ import { validateCoupon } from "./coupon.service.js";
 /**
  * Get order statistics (Admin) - Dashboard V2
  */
-export const getOrderStats = async (days = 7) => {
+export const getOrderStats = async (days = 7, sort = 'sold') => {
   // 1. Basic Counts - All 9 statuses
   const pending = await Order.count({ where: { status: 'pending' } });
   const confirmed = await Order.count({ where: { status: 'confirmed' } });
@@ -47,17 +47,23 @@ export const getOrderStats = async (days = 7) => {
       'product_id',
       'product_name',
       [sequelize.fn('SUM', sequelize.col('OrderItem.quantity')), 'sold'],
-      [sequelize.fn('SUM', sequelize.col('total_price')), 'revenue']
+      [sequelize.fn('SUM', sequelize.col('OrderItem.total_price')), 'revenue']
     ],
     include: [
       {
         model: Product,
         as: 'product',
-        attributes: ['thumbnail']
+        attributes: ['thumbnail', 'quantity']
+      },
+      {
+        model: Order,
+        as: 'order',
+        attributes: [],
+        where: { status: 'delivered' }
       }
     ],
-    group: ['product_id', 'product_name', 'product.id', 'product.thumbnail'],
-    order: [[sequelize.literal('sold'), 'DESC']],
+    group: ['product_id', 'product_name', 'product.id', 'product.thumbnail', 'product.quantity'],
+    order: sort === 'revenue' ? [[sequelize.literal('revenue'), 'DESC']] : [[sequelize.literal('sold'), 'DESC']],
     limit: 5
   });
 
@@ -79,24 +85,32 @@ export const getOrderStats = async (days = 7) => {
     raw: true
   });
 
+  // Helper: format date as local YYYY-MM-DD (avoid UTC timezone shift)
+  const toLocalDateKey = (d) => {
+    const date = new Date(d);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
+
   // Build date map with empty days pre-filled
   const revenueMap = new Map();
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = toLocalDateKey(date);
     revenueMap.set(dateString, {
       date: dateString,
       day: `${date.getDate()}/${date.getMonth() + 1}`,
-      revenue: 0
+      revenue: 0,
+      orders: 0
     });
   }
 
   // Aggregate revenue from batch query
   deliveredOrders.forEach(order => {
-    const dateKey = new Date(order.createdAt).toISOString().split('T')[0];
+    const dateKey = toLocalDateKey(order.createdAt);
     if (revenueMap.has(dateKey)) {
       revenueMap.get(dateKey).revenue += parseFloat(order.total_amount) || 0;
+      revenueMap.get(dateKey).orders += 1;
     }
   });
 

@@ -2,7 +2,7 @@
   <div class="min-h-screen flex items-center justify-center py-12 px-4">
     <div class="w-full max-w-md">
       <div class="bg-card rounded-2xl border shadow-lg p-8">
-        <!-- Header -->
+        <!-- Phần đầu trang -->
         <div class="text-center mb-8">
           <div class="w-16 h-16 rounded-2xl bg-primary/10 mx-auto mb-4 flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -13,9 +13,9 @@
           <p class="text-muted-foreground mt-2">Bắt đầu hành trình khám phá tri thức</p>
         </div>
 
-        <!-- Form -->
+        <!-- Biểu mẫu -->
         <form @submit.prevent="handleRegister" novalidate class="space-y-4">
-          <!-- Error Message -->
+          <!-- Tin nhắn lỗi -->
           <Alert v-if="errorMessage" variant="destructive">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -26,12 +26,12 @@
             </AlertDescription>
           </Alert>
           
-          <!-- Success Message -->
+          <!-- Tin nhắn thành công -->
           <div v-if="successMessage" class="p-3 rounded-md bg-green-500/10 border border-green-500/20 text-green-600 text-sm">
             {{ successMessage }}
           </div>
 
-          <!-- Name Field -->
+          <!-- Input Tên -->
           <div>
             <label class="block text-sm font-medium mb-2">Họ và tên</label>
             <input 
@@ -46,7 +46,7 @@
             <p v-if="errors.name" class="mt-1 text-sm text-destructive">{{ errors.name }}</p>
           </div>
 
-          <!-- Email Field -->
+          <!-- Input Email -->
           <div>
             <label class="block text-sm font-medium mb-2">Email</label>
             <input 
@@ -61,7 +61,7 @@
             <p v-if="errors.email" class="mt-1 text-sm text-destructive">{{ errors.email }}</p>
           </div>
 
-          <!-- Password Field -->
+          <!-- Input Mật khẩu -->
           <div>
             <label class="block text-sm font-medium mb-2">Mật khẩu</label>
             <div class="relative">
@@ -89,7 +89,7 @@
               </button>
             </div>
             <p v-if="errors.password" class="mt-1 text-sm text-destructive">{{ errors.password }}</p>
-            <!-- Password strength indicator -->
+            <!-- Hiển thị độ mạnh của mật khẩu -->
             <div v-if="form.password" class="mt-2">
               <div class="flex gap-1">
                 <div class="h-1 flex-1 rounded-full" :class="passwordStrength >= 1 ? 'bg-red-500' : 'bg-muted'"></div>
@@ -100,7 +100,7 @@
             </div>
           </div>
 
-          <!-- Confirm Password Field -->
+          <!-- Xác nhận Mật khẩu -->
           <div>
             <label class="block text-sm font-medium mb-2">Xác nhận mật khẩu</label>
             <div class="relative">
@@ -130,7 +130,7 @@
             <p v-if="errors.confirmPassword" class="mt-1 text-sm text-destructive">{{ errors.confirmPassword }}</p>
           </div>
 
-          <!-- Terms Checkbox -->
+          <!-- Đồng ý Điều khoản -->
           <div>
             <div class="flex items-start gap-2">
               <input 
@@ -148,11 +148,11 @@
             <p v-if="errors.agreeTerms" class="mt-1 text-sm text-destructive">{{ errors.agreeTerms }}</p>
           </div>
 
-          <!-- Cloudflare Turnstile -->
+          <!-- Xác minh Cloudflare Turnstile -->
           <div id="turnstile-register" class="flex justify-center"></div>
           <p v-if="errors.turnstile" class="text-sm text-destructive text-center -mt-2">{{ errors.turnstile }}</p>
 
-          <!-- Submit Button -->
+          <!-- Nút Đăng ký -->
           <button 
             type="submit"
             class="w-full h-11 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -166,7 +166,7 @@
           </button>
         </form>
 
-        <!-- Login Link -->
+        <!-- Trở về Đăng nhập -->
         <p class="text-center mt-6 text-sm text-muted-foreground">
           Đã có tài khoản? 
           <router-link to="/login" class="text-primary font-medium hover:underline">
@@ -205,7 +205,7 @@ const errors = reactive({
   turnstile: ''
 })
 
-// Cloudflare Turnstile
+// Xác minh qua Cloudflare Turnstile
 const { turnstileToken, resetTurnstile, getToken } = useTurnstile('turnstile-register')
 
 const loading = ref(false)
@@ -214,10 +214,10 @@ const successMessage = ref('')
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 
-// Email regex pattern
+// Khớp định dạng email
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-// Password strength calculation
+// Tính toán độ mạnh của mật khẩu
 const passwordStrength = computed(() => {
   const password = form.password
   if (!password) return 0
@@ -240,13 +240,13 @@ const passwordStrengthColor = computed(() => {
   return colors[passwordStrength.value]
 })
 
-// Form validity check
+// Kiểm tra tính hợp lệ của toàn bộ form
 const isFormValid = computed(() => {
   return form.name && form.email && form.password && form.confirmPassword && form.agreeTerms &&
          !errors.name && !errors.email && !errors.password && !errors.confirmPassword && !errors.agreeTerms
 })
 
-// Validation functions
+// Các hàm xác minh từng trường
 const validateName = () => {
   if (!form.name.trim()) {
     errors.name = 'Vui lòng nhập họ và tên'
@@ -277,7 +277,7 @@ const validatePassword = () => {
   } else {
     errors.password = ''
   }
-  // Also validate confirm password if it has value
+  // Nếu có nhập xác nhận mật khẩu thì kiểm tra luôn
   if (form.confirmPassword) {
     validateConfirmPassword()
   }
@@ -305,7 +305,7 @@ const clearError = (field) => {
   errors[field] = ''
 }
 
-// Validate all fields
+// Xác minh toàn bộ các trường
 const validateAll = () => {
   validateName()
   validateEmail()
@@ -319,12 +319,12 @@ const validateAll = () => {
 const handleRegister = async () => {
   if (loading.value) return
   
-  // Validate all fields
+  // Xác minh toàn bộ
   if (!validateAll()) {
     return
   }
 
-  // Validate Turnstile token
+  // Lấy Turnstile token để chống bot
   const token = getToken()
   if (!token) {
     errors.turnstile = 'Vui lòng xác minh bạn không phải robot.'

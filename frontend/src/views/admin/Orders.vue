@@ -34,7 +34,7 @@
       </div>
     </div>
 
-    <div class="flex flex-col md:flex-row gap-4 justify-between items-center bg-card p-4 rounded-xl border">
+    <div class="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl border shadow-sm">
       <div class="w-full md:w-auto flex items-center gap-2">
          <span class="text-sm font-medium">Trạng thái:</span>
          <select v-model="filterStatus" @change="fetchOrders(1)" class="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
@@ -64,6 +64,41 @@
       </div>
     </div>
 
+    <!-- Bulk Action Bar -->
+    <div class="flex flex-col md:flex-row gap-4 justify-between items-center bg-blue-50/50 p-4 rounded-xl border border-blue-100 shadow-sm transition-all duration-300" :class="{'opacity-60': selectedOrders.length === 0}">
+      <div class="flex items-center gap-2">
+         <span class="text-sm font-medium text-blue-700">
+            <template v-if="selectedOrders.length > 0">
+               Đã chọn <span class="font-bold border-b border-blue-700">{{ selectedOrders.length }}</span> đơn hàng
+            </template>
+            <template v-else>
+               Chưa chọn đơn hàng nào
+            </template>
+         </span>
+      </div>
+      <div class="w-full md:w-auto flex items-center gap-2">
+         <select v-model="bulkStatus" :disabled="selectedOrders.length === 0" class="px-3 py-2 border border-blue-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50 disabled:bg-gray-50 disabled:cursor-not-allowed">
+            <option value="">Chọn trạng thái cần đổi...</option>
+            <option value="confirmed">Đã xác nhận</option>
+            <option value="packing">Đang đóng gói</option>
+            <option value="picked_up">Đã giao ĐVVC</option>
+            <option value="in_transit">Đang vận chuyển</option>
+            <option value="arrived_hub">Đã đến kho</option>
+            <option value="out_for_delivery">Đang giao hàng</option>
+            <option value="delivered">Giao thành công</option>
+            <option value="cancelled">Đã hủy</option>
+         </select>
+         <button 
+           @click="updateBulkStatus" 
+           :disabled="!bulkStatus || isUpdatingBulk || selectedOrders.length === 0"
+           class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+         >
+           <svg v-if="isUpdatingBulk" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+           Cập nhật
+         </button>
+      </div>
+    </div>
+
     <div class="bg-card rounded-xl border overflow-hidden overflow-x-auto">
       <div v-if="loading" class="p-8 text-center text-muted-foreground">
         Đang tải dữ liệu...
@@ -71,6 +106,9 @@
       <table v-else class="w-full">
         <thead class="bg-muted/50">
           <tr>
+            <th class="p-4 w-12">
+               <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" class="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer" />
+            </th>
             <th class="text-left p-4 font-medium text-sm">Mã đơn</th>
             <th class="text-left p-4 font-medium text-sm">Khách hàng</th>
             <th class="text-left p-4 font-medium text-sm">Tổng tiền</th>
@@ -81,6 +119,9 @@
         </thead>
         <tbody>
           <tr v-for="order in orders" :key="order.id" class="border-t border-border hover:bg-muted/50 transition-colors">
+            <td class="p-4" @click.stop>
+               <input type="checkbox" v-model="selectedOrders" :value="order.id" class="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer" />
+            </td>
             <td class="p-4 font-mono text-sm" :title="order.order_code">#{{ order.order_code ? order.order_code.slice(0, 8).toUpperCase() : order.id }}</td>
             <td class="p-4 text-sm">{{ order.customer_name }}</td>
             <td class="p-4 text-sm font-medium">{{ formatCurrency(order.total_amount) }}</td>
@@ -91,29 +132,52 @@
             </td>
             <td class="p-4 text-sm text-muted-foreground">{{ formatDate(order.createdAt) }}</td>
             <td class="p-4 text-right">
-              <router-link :to="`/admin/orders/${order.id}`" class="text-sm text-primary hover:underline">Chi tiết</router-link>
+              <router-link :to="{ path: `/admin/orders/${order.id}`, query: { page: currentPage } }" class="text-sm text-primary hover:underline">Chi tiết</router-link>
             </td>
           </tr>
           <tr v-if="orders.length === 0" class="border-t border-border">
-             <td colspan="6" class="p-8 text-center text-muted-foreground">Không tìm thấy đơn hàng phù hợp</td>
+             <td colspan="7" class="p-8 text-center text-muted-foreground">Không tìm thấy đơn hàng phù hợp</td>
           </tr>
         </tbody>
       </table>
       
-      <!-- Pagination -->
-      <div v-if="totalPages > 1" class="p-4 border-t flex items-center justify-center gap-2">
+    </div>
+
+    <!-- Pagination -->
+    <div v-if="totalPages > 1" class="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p class="text-sm text-muted-foreground">
+        Hiển thị <span class="font-medium text-foreground">{{ (currentPage - 1) * limit + 1 }}-{{ Math.min(currentPage * limit, totalOrdersCount) }}</span> trong tổng số <span class="font-medium text-foreground">{{ totalOrdersCount }}</span> đơn hàng
+      </p>
+      
+      <div class="flex items-center gap-1">
         <button 
-          @click="changePage(currentPage - 1)" 
+          @click="goToPage(currentPage - 1)"
           :disabled="currentPage === 1"
-          class="px-3 py-1 text-sm border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="min-w-[70px] px-3 py-1.5 rounded-lg border bg-background hover:bg-accent hover:text-accent-foreground text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Trước
         </button>
-        <span class="text-sm font-medium px-2">Trang {{ currentPage }} / {{ totalPages }}</span>
+        
+        <div class="flex items-center gap-1 mx-2">
+          <button 
+            v-for="page in displayedPages" 
+            :key="page"
+            @click="goToPage(page)"
+            :class="[
+              'w-8 h-8 rounded-lg text-sm font-medium transition-colors flex items-center justify-center',
+              currentPage === page 
+                ? 'bg-primary text-primary-foreground shadow-sm' 
+                : 'hover:bg-accent text-muted-foreground hover:text-foreground'
+            ]"
+          >
+            {{ page }}
+          </button>
+        </div>
+
         <button 
-          @click="changePage(currentPage + 1)" 
+          @click="goToPage(currentPage + 1)"
           :disabled="currentPage === totalPages"
-          class="px-3 py-1 text-sm border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="min-w-[70px] px-3 py-1.5 rounded-lg border bg-background hover:bg-accent hover:text-accent-foreground text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Sau
         </button>
@@ -197,10 +261,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
+const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 const orders = ref([])
 const stats = ref({ pending: 0, processing: 0, shipping: 0, completed: 0, totalRevenue: 0, totalOrders: 0 })
@@ -208,12 +275,42 @@ const showOrderModal = ref(false)
 const selectedOrder = ref(null)
 const loading = ref(false)
 
+// Bulk Actions
+const selectedOrders = ref([])
+const bulkStatus = ref('')
+const isUpdatingBulk = ref(false)
+
+const isAllSelected = computed(() => {
+  return orders.value.length > 0 && orders.value.every(order => selectedOrders.value.includes(order.id))
+})
+
+const toggleSelectAll = (e) => {
+  if (e.target.checked) {
+    const currentIds = orders.value.map(o => o.id)
+    const newSelections = currentIds.filter(id => !selectedOrders.value.includes(id))
+    selectedOrders.value.push(...newSelections)
+  } else {
+    selectedOrders.value = selectedOrders.value.filter(id => !orders.value.some(o => o.id === id))
+  }
+}
+
 // Pagination and Filters
 const currentPage = ref(1)
 const totalPages = ref(1)
+const totalOrdersCount = ref(0)
 const limit = 10
 const searchQuery = ref('')
 const filterStatus = ref('')
+
+// Computed: display up to 5 page numbers around current page
+const displayedPages = computed(() => {
+  const total = totalPages.value
+  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1)
+  const start = Math.max(1, currentPage.value - 2)
+  const end = Math.min(total, start + 4)
+  const adjusted = Math.max(1, end - 4)
+  return Array.from({ length: end - adjusted + 1 }, (_, i) => adjusted + i)
+})
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -233,6 +330,7 @@ const fetchOrders = async (page = 1) => {
       if (json.pagination) {
         currentPage.value = json.pagination.page
         totalPages.value = json.pagination.totalPages
+        totalOrdersCount.value = json.pagination.total || (json.pagination.totalPages * limit)
       }
     } else {
       toast.error(json.message || 'Lỗi tải danh sách đơn hàng')
@@ -245,9 +343,10 @@ const fetchOrders = async (page = 1) => {
   }
 }
 
-const changePage = (page) => {
+const goToPage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     fetchOrders(page)
+    router.replace({ query: { ...route.query, page } })
   }
 }
 
@@ -333,11 +432,47 @@ const updateStatus = async (orderId, newStatus) => {
   }
 }
 
+const updateBulkStatus = async () => {
+  if (!bulkStatus.value || selectedOrders.value.length === 0) return
+  
+  if (!confirm(`Bạn có chắc muốn cập nhật ${selectedOrders.value.length} đơn hàng sang trạng thái "${getStatusLabel(bulkStatus.value)}"?`)) return;
+
+  isUpdatingBulk.value = true
+  try {
+    const res = await fetch(`${API_URL}/orders/admin/bulk-status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authStore.accessToken}`
+      },
+      body: JSON.stringify({ 
+         orderIds: selectedOrders.value,
+         status: bulkStatus.value 
+      })
+    })
+    const json = await res.json()
+    if (json.status) {
+      toast.success(json.message)
+      selectedOrders.value = []
+      bulkStatus.value = ''
+      fetchOrders(currentPage.value)
+      fetchStats()
+    } else {
+      toast.error(json.message)
+    }
+  } catch (e) {
+    toast.error('Có lỗi xảy ra khi cập nhật hàng loạt')
+  } finally {
+    isUpdatingBulk.value = false
+  }
+}
+
 const formatCurrency = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value || 0)
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('vi-VN')
 
 onMounted(() => {
-  fetchOrders()
+  const page = parseInt(route.query.page)
+  fetchOrders(!isNaN(page) && page > 0 ? page : 1)
   fetchStats()
 })
 </script>

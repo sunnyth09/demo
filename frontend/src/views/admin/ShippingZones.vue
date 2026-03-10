@@ -1,7 +1,7 @@
 <template>
-  <div class="p-6">
+  <div class="p-6 space-y-6">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold">Quản lý phí vận chuyển</h1>
         <p class="text-muted-foreground">Cấu hình phí ship theo khu vực</p>
@@ -15,6 +15,23 @@
         </svg>
         Thêm khu vực
       </button>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl border shadow-sm">
+      <div class="w-full md:w-72 relative">
+        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input 
+          v-model="searchQuery"
+          type="text" 
+          placeholder="Tìm tên khu vực..." 
+          class="w-full h-10 pl-10 pr-10 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+          @input="debouncedSearch"
+        />
+        <button v-if="searchQuery" @click="searchQuery = ''; fetchZones(1)" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">✕</button>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -91,8 +108,51 @@
                 </div>
               </td>
             </tr>
+            <tr v-if="zones.length === 0">
+              <td colspan="7" class="p-8 text-center text-muted-foreground">
+                Không tìm thấy khu vực nào.
+              </td>
+            </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div v-if="totalZones > 0" class="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p class="text-sm text-muted-foreground">
+        Hiển thị {{ (currentPage - 1) * limit + 1 }}-{{ Math.min(currentPage * limit, totalZones) }} trong tổng số {{ totalZones }} khu vực
+      </p>
+      <div class="flex items-center gap-1">
+        <button
+          @click="goToPage(currentPage - 1)"
+          :disabled="currentPage <= 1"
+          class="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          Trước
+        </button>
+        <template v-for="p in displayedPages" :key="p">
+          <span v-if="p === '...'" class="px-2 text-muted-foreground">...</span>
+          <button
+            v-else
+            @click="goToPage(p)"
+            :class="[
+              'w-9 h-9 text-sm rounded-lg transition-colors',
+              p === currentPage 
+                ? 'bg-primary text-primary-foreground font-bold' 
+                : 'hover:bg-muted border'
+            ]"
+          >
+            {{ p }}
+          </button>
+        </template>
+        <button
+          @click="goToPage(currentPage + 1)"
+          :disabled="currentPage >= totalPages"
+          class="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          Sau
+        </button>
       </div>
     </div>
 
@@ -269,6 +329,44 @@ const isEditing = ref(false)
 const saving = ref(false)
 const zoneToDelete = ref(null)
 
+// Search & Pagination
+const searchQuery = ref('')
+const currentPage = ref(1)
+const totalPages = ref(1)
+const totalZones = ref(0)
+const limit = 10
+
+let searchTimer = null
+const debouncedSearch = () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    fetchZones(1)
+  }, 300)
+}
+
+const displayedPages = computed(() => {
+  const pages = []
+  const total = totalPages.value
+  const current = currentPage.value
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (current > 3) pages.push('...')
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+      pages.push(i)
+    }
+    if (current < total - 2) pages.push('...')
+    pages.push(total)
+  }
+  return pages
+})
+
+const goToPage = (page) => {
+  if (page < 1 || page > totalPages.value) return
+  fetchZones(page)
+}
+
 const form = ref({
   name: '',
   provinces: [],
@@ -306,10 +404,10 @@ const formatCurrency = (value) => {
   }).format(value || 0)
 }
 
-const fetchZones = async () => {
+const fetchZones = async (page = 1) => {
   loading.value = true
   try {
-    const res = await fetch(`${API_URL}/shipping/admin/zones`, {
+    const res = await fetch(`${API_URL}/shipping/admin/zones?page=${page}&limit=${limit}&search=${encodeURIComponent(searchQuery.value)}`, {
       headers: {
         Authorization: `Bearer ${authStore.accessToken}`
       }
@@ -317,6 +415,11 @@ const fetchZones = async () => {
     const data = await res.json()
     if (data.status) {
       zones.value = data.data
+      if (data.pagination) {
+        currentPage.value = data.pagination.page
+        totalPages.value = data.pagination.totalPages
+        totalZones.value = data.pagination.total
+      }
     }
   } catch (error) {
     console.error('Error fetching zones:', error)
@@ -382,7 +485,7 @@ const saveZone = async () => {
     if (data.status) {
       showModal.value = false
       toast.success(isEditing.value ? 'Cập nhật thành công' : 'Thêm mới thành công')
-      await fetchZones()
+      await fetchZones(currentPage.value)
     } else {
       toast.error(data.message || 'Có lỗi xảy ra')
     }
@@ -413,7 +516,7 @@ const deleteZone = async () => {
       showDeleteModal.value = false
       zoneToDelete.value = null
       toast.success('Xóa thành công')
-      await fetchZones()
+      await fetchZones(currentPage.value)
     } else {
       toast.error(data.message || 'Có lỗi xảy ra')
     }

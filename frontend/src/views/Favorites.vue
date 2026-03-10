@@ -24,7 +24,7 @@
             :alt="fav.product.name"
             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-           <!-- Remove Icon Top Right -->
+           <!-- Biểu tượng Xóa Góc trên Bên phải -->
            <button
               @click.stop="removeFavorite(fav.product)"
               class="absolute top-2 right-2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm hover:bg-gray-50 transition-colors group/btn"
@@ -48,7 +48,7 @@
                 {{ formatCurrency(fav.product.price) }}
             </div>
 
-            <!-- Rating (Static for now) -->
+            <!-- Đánh giá (Tạm thời là tĩnh) -->
             <div class="flex items-center gap-1">
                 <div class="flex text-yellow-400 text-sm">
                   <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>

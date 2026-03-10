@@ -53,15 +53,20 @@
                   <span class="text-xs text-gray-500">{{ formatDate(review.created_at) }}</span>
                   
                   <!-- Kebab Menu -->
-                  <div v-if="authStore.isAuthenticated" class="relative group">
-                    <button class="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
+                  <div v-if="authStore.isAuthenticated" class="relative">
+                    <button 
+                      @click.stop="openDropdownId = openDropdownId === review.id ? null : review.id"
+                      class="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+                    >
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                       </svg>
                     </button>
 
                     <!-- Dropdown -->
-                    <div class="absolute right-0 top-full mt-1 w-32 bg-white rounded-lg shadow-lg border border-gray-100 py-1 hidden group-hover:block z-10">
+                    <div 
+                      :class="['absolute right-0 top-[calc(100%+0.25rem)] w-32 bg-white rounded-lg shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-gray-100 py-1 z-50', openDropdownId === review.id ? 'block' : 'hidden']"
+                    >
                       <!-- Owner Actions -->
                       <template v-if="authStore.user?.id === review.user_id">
                         <button 
@@ -117,13 +122,26 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { toast } from 'vue-sonner';
 import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
 const authStore = useAuthStore();
 const emit = defineEmits(['edit-review', 'refresh']);
+const openDropdownId = ref(null);
+
+const closeDropdown = () => {
+  openDropdownId.value = null;
+};
+
+onMounted(() => {
+  window.addEventListener('click', closeDropdown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('click', closeDropdown);
+});
 
 const props = defineProps({
   productId: {

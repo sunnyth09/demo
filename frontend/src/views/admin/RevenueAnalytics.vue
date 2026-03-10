@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-     <!-- Top Bar -->
+     <!-- Thanh công cụ trên cùng -->
      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
            <h2 class="text-2xl font-bold">Thống kê doanh thu</h2>
@@ -20,9 +20,9 @@
         </div>
      </div>
 
-     <!-- KPI Cards -->
+     <!-- Các thẻ chỉ số (KPI Cards) -->
      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Revenue Card -->
+        <!-- Thẻ Doanh thu -->
         <div class="bg-card rounded-2xl border p-6 hover:shadow-lg transition-all duration-300 group">
            <div class="flex justify-between items-start mb-4">
               <div class="p-3 bg-green-100 text-green-600 rounded-xl group-hover:rotate-12 transition-transform duration-300">
@@ -34,7 +34,7 @@
            <h3 class="text-3xl font-bold mt-1 tracking-tight text-green-600">{{ formatCurrency(summary.totalRevenue) }}</h3>
         </div>
 
-        <!-- Orders Card -->
+        <!-- Thẻ Số lượng đơn hàng -->
         <div class="bg-card rounded-2xl border p-6 hover:shadow-lg transition-all duration-300 group">
            <div class="flex justify-between items-start mb-4">
               <div class="p-3 bg-blue-100 text-blue-600 rounded-xl group-hover:rotate-12 transition-transform duration-300">
@@ -46,7 +46,7 @@
            <h3 class="text-3xl font-bold mt-1 tracking-tight">{{ summary.totalOrders }}</h3>
         </div>
 
-        <!-- AOV Card -->
+        <!-- Thẻ Giá trị trung bình (AOV) -->
         <div class="bg-card rounded-2xl border p-6 hover:shadow-lg transition-all duration-300 group">
            <div class="flex justify-between items-start mb-4">
               <div class="p-3 bg-purple-100 text-purple-600 rounded-xl group-hover:rotate-12 transition-transform duration-300">
@@ -58,7 +58,7 @@
            <h3 class="text-3xl font-bold mt-1 tracking-tight">{{ formatCurrency(summary.aov) }}</h3>
         </div>
 
-        <!-- Completion Rate Card -->
+        <!-- Thẻ Tỷ lệ hoàn thành -->
         <div class="bg-card rounded-2xl border p-6 hover:shadow-lg transition-all duration-300 group">
            <div class="flex justify-between items-start mb-4">
               <div class="p-3 bg-orange-100 text-orange-600 rounded-xl group-hover:rotate-12 transition-transform duration-300">
@@ -74,44 +74,72 @@
         </div>
      </div>
 
-     <!-- Chart Section -->
-     <div class="bg-card rounded-2xl border p-6 shadow-sm">
-        <h3 class="text-lg font-bold mb-6">Biểu đồ tăng trưởng</h3>
-        <!-- Custom CSS Chart Implementation -->
-        <div class="relative h-80 flex items-end gap-2 sm:gap-4 px-2">
-           <!-- Y-Axis Grid -->
-           <div class="absolute inset-0 flex flex-col justify-between py-1 pointer-events-none opacity-10">
-              <div v-for="i in 5" :key="i" class="border-t border-foreground w-full"></div>
-           </div>
-
-           <div 
-             v-for="(item, index) in chartData" 
-             :key="index" 
-             class="flex-1 relative group h-full flex items-end justify-center"
-           >
-              <!-- Bar -->
-              <div 
-                 class="w-full max-w-[40px] bg-blue-600 rounded-t-sm transition-all duration-500 hover:opacity-80 relative min-h-[1px]"
-                 :style="{ height: `${calculateHeight(item.revenue)}%` }"
-              >
-                  <!-- Tooltip -->
-                 <div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-xs p-2 rounded-lg shadow-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none border">
-                    <p class="font-bold">{{ item.label }}</p>
-                    <p class="text-green-600 font-bold">{{ formatCurrency(item.revenue) }}</p>
-                    <p class="text-muted-foreground text-[10px]">{{ item.orders }} đơn hàng</p>
+     <!-- Phần Biểu đồ (theo kiểu biểu đồ vùng shadcn-vue) -->
+     <div class="bg-card rounded-2xl border pt-0 shadow-sm overflow-hidden">
+        <div class="flex items-center gap-2 space-y-0 border-b py-5 px-6 flex-col sm:flex-row">
+           <div class="grid flex-1 gap-1">
+              <h3 class="text-lg font-bold tracking-tight">Biểu đồ tăng trưởng</h3>
+              <div class="flex items-center gap-4 mt-1">
+                 <div class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full" style="background: hsl(221, 83%, 53%)"></span>
+                    <span class="text-xs text-muted-foreground">Doanh thu</span>
                  </div>
-              </div>
-              
-              <!-- Date Label -->
-              <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-medium text-muted-foreground whitespace-nowrap">
-                 {{ item.label }}
+                 <div class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full" style="background: hsl(25, 95%, 53%)"></span>
+                    <span class="text-xs text-muted-foreground">Đơn hàng</span>
+                 </div>
               </div>
            </div>
         </div>
-        <br class="mb-4"/>
+        <div class="px-2 pt-4 sm:px-6 sm:pt-6 pb-4">
+           <ChartContainer v-if="chartData.length > 0" :config="analyticsChartConfig" class="aspect-auto h-[300px] w-full">
+              <VisXYContainer
+                 :data="chartData"
+                 :svg-defs="analyticsSvgDefs"
+                 :margin="{ left: 5, top: 10 }"
+              >
+                 <VisArea
+                    :x="(d, i) => i"
+                    :y="[(d) => d.orders, (d) => d.revenue]"
+                    :color="(d, i) => ['url(#fillAnalyticsOrders)', 'url(#fillAnalyticsRevenue)'][i]"
+                    :opacity="0.4"
+                 />
+                 <VisLine
+                    :x="(d, i) => i"
+                    :y="[(d) => d.orders, (d) => d.revenue]"
+                    :color="(d, i) => [analyticsChartConfig.orders.color, analyticsChartConfig.revenue.color][i]"
+                    :line-width="1"
+                 />
+                 <VisAxis
+                    type="x"
+                    :x="(d, i) => i"
+                    :tick-line="false"
+                    :domain-line="false"
+                    :grid-line="false"
+                    :num-ticks="Math.min(chartData.length, 10)"
+                    :tick-format="(i) => chartData[Math.round(i)]?.label || ''"
+                 />
+                 <VisAxis
+                    type="y"
+                    :num-ticks="3"
+                    :tick-line="false"
+                    :domain-line="false"
+                    :tick-format="() => ''"
+                 />
+                 <ChartTooltip />
+                 <ChartCrosshair
+                    :template="analyticsTooltipTemplate"
+                    :color="(d, i) => [analyticsChartConfig.orders.color, analyticsChartConfig.revenue.color][i % 2]"
+                 />
+              </VisXYContainer>
+           </ChartContainer>
+           <div v-else class="h-[300px] flex items-center justify-center text-muted-foreground text-sm">
+              Không có dữ liệu trong khoảng thời gian này
+           </div>
+        </div>
      </div>
 
-     <!-- Detailed Data Table -->
+     <!-- Bảng Dữ liệu chi tiết -->
      <div class="bg-card rounded-2xl border shadow-sm overflow-hidden">
         <div class="p-6 border-b">
            <h3 class="text-lg font-bold">Dữ liệu chi tiết</h3>
@@ -149,11 +177,13 @@
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from 'vue-sonner'
+import { ChartContainer, ChartCrosshair, ChartTooltip, ChartTooltipContent, ChartLegendContent, componentToString } from '@/components/ui/chart'
+import { VisArea, VisAxis, VisLine, VisXYContainer } from '@unovis/vue'
 
 const authStore = useAuthStore()
 const API_URL = import.meta.env.VITE_API_URL
 
-// Helper to get default date range (Last 30 days)
+// Hàm hỗ trợ để lấy khoảng thời gian mặc định (30 ngày gần nhất)
 const getDefaultRange = () => {
   const end = new Date()
   const start = new Date()
@@ -183,18 +213,46 @@ const summary = ref({
 const chartData = ref([])
 const loading = ref(false)
 
+// Cấu hình Biểu đồ phân tích (theo kiểu shadcn-vue)
+const analyticsChartConfig = {
+  revenue: {
+    label: 'Doanh thu ',
+    color: 'hsl(221, 83%, 53%)'
+  },
+  orders: {
+    label: 'Đơn hàng',
+    color: 'hsl(25, 95%, 53%)'
+  }
+}
+
+const analyticsSvgDefs = `
+  <linearGradient id="fillAnalyticsRevenue" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="5%" stop-color="var(--color-revenue)" stop-opacity="0.8" />
+    <stop offset="95%" stop-color="var(--color-revenue)" stop-opacity="0.1" />
+  </linearGradient>
+  <linearGradient id="fillAnalyticsOrders" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="5%" stop-color="var(--color-orders)" stop-opacity="0.8" />
+    <stop offset="95%" stop-color="var(--color-orders)" stop-opacity="0.1" />
+  </linearGradient>
+`
+
+
+const analyticsTooltipTemplate = componentToString(analyticsChartConfig, ChartTooltipContent, {
+  labelFormatter: (x) => {
+    const idx = Math.round(x)
+    if (idx >= 0 && idx < chartData.value.length) {
+      return chartData.value[idx]?.label || ''
+    }
+    return ''
+  }
+})
+
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('vi-VN', {
      style: 'currency',
      currency: 'VND',
      maximumFractionDigits: 0
   }).format(value || 0)
-}
-
-const calculateHeight = (value) => {
-  if (!chartData.value.length) return 0
-  const max = Math.max(...chartData.value.map(item => parseFloat(item.revenue) || 0))
-  return max > 0 ? (parseFloat(value) / max) * 100 : 0
 }
 
 const fetchAnalytics = async () => {
@@ -211,7 +269,6 @@ const fetchAnalytics = async () => {
      if (json.status) {
         summary.value = json.data.summary
         chartData.value = json.data.chartData
-        console.log('Chart Data:', chartData.value)
      } else {
         toast.error(json.message)
      }

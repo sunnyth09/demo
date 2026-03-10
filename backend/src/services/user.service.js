@@ -96,10 +96,23 @@ export const changePassword = async (userId, oldPassword, newPassword) => {
 /**
  * Lấy danh sách tất cả người dùng (có phân trang)
  */
-export const getAllUsers = async (page = 1, limit = 10) => {
+export const getAllUsers = async (page = 1, limit = 10, search = '', role = '') => {
   const offset = (page - 1) * limit;
   
+  const where = {};
+  if (search && search.trim()) {
+    where[Op.or] = [
+      { name: { [Op.like]: `%${search.trim()}%` } },
+      { email: { [Op.like]: `%${search.trim()}%` } }
+    ];
+  }
+
+  if (role) {
+    where.role = role;
+  }
+
   const { count, rows } = await User.findAndCountAll({
+    where,
     attributes: ['id', 'name', 'email', 'role', 'phone', 'created_at'],
     order: [['id', 'DESC']],
     limit,

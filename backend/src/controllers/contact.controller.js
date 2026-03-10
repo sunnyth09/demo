@@ -1,5 +1,6 @@
 import Contact from "../models/sequelize/Contact.js";
 import { sendEmail } from "../services/email.service.js";
+import { Op } from "sequelize";
 
 /**
  * Tạo liên hệ mới (Public)
@@ -34,12 +35,20 @@ export const createContact = async (req, res) => {
  */
 export const getAllContacts = async (req, res) => {
   try {
-    const { page = 1, limit = 10, status } = req.query;
+    const { page = 1, limit = 10, status, search = '' } = req.query;
     const offset = (page - 1) * limit;
 
     const where = {};
     if (status) {
       where.status = status;
+    }
+
+    if (search && search.trim()) {
+      where[Op.or] = [
+        { name: { [Op.like]: `%${search.trim()}%` } },
+        { email: { [Op.like]: `%${search.trim()}%` } },
+        { subject: { [Op.like]: `%${search.trim()}%` } }
+      ];
     }
 
     const { count, rows } = await Contact.findAndCountAll({

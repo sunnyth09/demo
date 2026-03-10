@@ -2,7 +2,7 @@
   <div class="container max-w-7xl mx-auto px-4 py-12">
     <h1 class="text-3xl font-bold mb-2">Thanh toán</h1>
 
-    <!-- Step Indicator -->
+    <!-- Chỉ báo Bước -->
     <div class="flex items-center gap-3 mb-8">
       <div class="flex items-center gap-2">
         <span 
@@ -21,18 +21,18 @@
       </div>
     </div>
 
-    <!-- ============ STEP 1: FORM ============ -->
+    <!-- ============ BƯỚC 1: BIỂU MẪU ============ -->
     <div v-if="currentStep === 1" class="grid lg:grid-cols-3 gap-8">
-      <!-- Checkout Form -->
+      <!-- Biểu mẫu Thanh toán -->
       <div class="lg:col-span-2 space-y-8">
-        <!-- Shipping Info -->
+        <!-- Thông tin Vận chuyển -->
         <div class="bg-card rounded-xl border p-6">
           <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
             <span class="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm">1</span>
             Thông tin giao hàng
           </h2>
           
-          <!-- Select Existing Address -->
+          <!-- Lựa chọn Địa chỉ có sẵn -->
           <div v-if="authStore.isAuthenticated" class="mb-6">
             <div v-if="userAddresses.length > 0">
               <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
@@ -138,7 +138,7 @@
           </div>
         </div>
 
-        <!-- Payment Method -->
+        <!-- Phương thức Thanh toán -->
         <div class="bg-card rounded-xl border p-6">
           <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
             <span class="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm">2</span>
@@ -200,12 +200,12 @@
         </div>
       </div>
 
-      <!-- Order Summary (Step 1) -->
+      <!-- Tóm tắt Đơn hàng (Bước 1) -->
       <div class="lg:col-span-1">
         <div class="bg-card rounded-xl border p-6 sticky top-24">
           <h3 class="font-semibold text-lg mb-4">Đơn hàng của bạn</h3>
           
-          <!-- Items Preview -->
+          <!-- Xem trước Sản phẩm -->
           <div class="space-y-4 mb-6 max-h-60 overflow-y-auto px-2 pt-3 custom-scrollbar">
             <div v-for="item in checkoutItems" :key="item.id" class="flex gap-3 relative">
               <div class="w-16 h-20 rounded bg-muted flex-shrink-0 relative overflow-hidden border">
@@ -222,7 +222,7 @@
             </div>
           </div>
 
-          <!-- Coupon Selector Trigger -->
+          <!-- Bộ Chọn Voucher -->
           <div class="py-3 border-y border-dashed border-gray-300 my-4 flex items-center justify-between">
              <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -249,7 +249,7 @@
              </div>
           </div>
 
-          <!-- Coupon Modal -->
+          <!-- Modal Voucher -->
           <div v-if="showVoucherModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
              <div class="bg-white rounded-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
                 <!-- Header -->
@@ -260,7 +260,7 @@
                    </button>
                 </div>
 
-                <!-- Input Section -->
+                <!-- Phần Nhập Liệu -->
                 <div class="p-4 bg-gray-50 border-b">
                    <div class="flex gap-2">
                       <label class="flex-1 text-sm font-medium text-gray-700 flex items-center gap-2 bg-white border rounded-md px-3 h-10">
@@ -283,7 +283,7 @@
                    </div>
                 </div>
 
-                <!-- Voucher List -->
+                <!-- Danh sách Voucher -->
                 <div class="flex-1 overflow-y-auto p-4 bg-gray-100 min-h-[300px]">
                    <p class="text-xs text-gray-500 mb-3 font-medium">Mã giảm giá có sẵn</p>
                    
@@ -297,7 +297,7 @@
                         :key="coupon.id"
                         class="bg-white rounded-lg border flex overflow-hidden shadow-sm relative group hover:border-primary transition-colors"
                       >
-                         <!-- Left Ticket Part -->
+                         <!-- Phần Vé Trái -->
                          <div 
                            class="w-24 flex flex-col items-center justify-center text-white border-r border-dashed border-white relative p-2 text-center"
                            :class="coupon.type === 'free_shipping' ? 'bg-green-500' : 'bg-primary'"
@@ -310,11 +310,11 @@
                             </span>
                             <span v-if="coupon.type === 'free_shipping'" class="text-[10px] font-bold mt-1">SHIP</span>
                             
-                            <!-- Circles for ticket effect -->
+                            <!-- Hiệu ứng viền vé -->
                             <div class="absolute -top-2 -right-2 w-4 h-4 bg-gray-100 rounded-full"></div>
                             <div class="absolute -bottom-2 -right-2 w-4 h-4 bg-gray-100 rounded-full"></div>
                          </div>
-                         <!-- Content -->
+                         <!-- Nội Dung -->
                          <div class="flex-1 p-3 flex flex-col justify-center">
                             <h4 class="font-bold text-sm line-clamp-1">{{ coupon.description || coupon.code }}</h4>
                             <p class="text-xs text-gray-500 mt-1">Mã: <strong class="text-gray-700">{{ coupon.code }}</strong></p>
@@ -339,7 +339,7 @@
                    </div>
                 </div>
 
-                <!-- Footer -->
+                <!-- Phần Cuối -->
                 <div class="p-4 border-t bg-white flex justify-end">
                    <button @click="showVoucherModal = false" class="px-6 py-2 border rounded-md hover:bg-gray-50 font-medium">Đóng</button>
                 </div>
@@ -376,9 +376,9 @@
       </div>
     </div>
 
-    <!-- ============ STEP 2: REVIEW ============ -->
+    <!-- ============ BƯỚC 2: XEM LẠI ============ -->
     <div v-else-if="currentStep === 2" class="max-w-4xl mx-auto space-y-6">
-      <!-- Review Header -->
+      <!-- Đầu trang Xem Lại -->
       <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/>
@@ -391,9 +391,9 @@
       </div>
 
       <div class="grid lg:grid-cols-3 gap-6">
-        <!-- Left: Info Review -->
+        <!-- Trái: Xem lại Thông tin -->
         <div class="lg:col-span-2 space-y-6">
-          <!-- Shipping Info Review -->
+          <!-- Xem lại Thông tin Giao hàng -->
           <div class="bg-card rounded-xl border p-6">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-bold flex items-center gap-2">
@@ -429,7 +429,7 @@
             </div>
           </div>
 
-          <!-- Payment Method Review -->
+          <!-- Xem lại Phương thức Thanh toán -->
           <div class="bg-card rounded-xl border p-6">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-bold flex items-center gap-2">
@@ -452,7 +452,7 @@
             </div>
           </div>
 
-          <!-- Items Review -->
+          <!-- Xem lại Sản phẩm -->
           <div class="bg-card rounded-xl border p-6">
             <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -482,7 +482,7 @@
           </div>
         </div>
 
-        <!-- Right: Price Summary + Actions -->
+        <!-- Phải: Tóm tắt Giá + Hành động -->
         <div class="lg:col-span-1">
           <div class="bg-card rounded-xl border p-6 sticky top-24">
             <h3 class="font-semibold text-lg mb-4">Tóm tắt thanh toán</h3>
@@ -560,7 +560,7 @@ const { items: cartItems, subtotal } = storeToRefs(cartStore)
 
 const API_URL = import.meta.env.VITE_API_URL
 
-// Filter only selected items
+// Lọc các sản phẩm đã chọn
 const checkoutItems = computed(() => cartItems.value.filter(item => item.selected !== false))
 
 const form = ref({
@@ -582,7 +582,7 @@ const saveAddress = ref(false)
 const currentStep = ref(1)
 const isManualAddress = ref(false)
 
-// Location Data
+// Dữ liệu Vị trí
 const provinces = ref([])
 const districts = ref([])
 const wards = ref([])
@@ -614,7 +614,7 @@ const fetchWards = async (code) => {
     } catch(e) { console.error(e) }
 }
 
-// Watchers
+// Các Watcher
 watch(selectedProvince, (newVal) => {
     districts.value = []
     wards.value = []
@@ -662,7 +662,7 @@ const total = computed(() => {
 
 const formatCurrency = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value)
 
-// Fetch user addresses if logged in
+// Lấy danh sách địa chỉ người dùng nếu đã đăng nhập
 const fetchAddresses = async () => {
   if (authStore.isAuthenticated) {
     try {
@@ -672,7 +672,7 @@ const fetchAddresses = async () => {
       const json = await res.json()
       if (json.status) {
         userAddresses.value = json.data
-        // Auto select default
+        // Tự động chọn địa chỉ mặc định
         const defaultAddr = json.data.find(a => a.is_default) || json.data[0]
         if (defaultAddr) {
           selectAddress(defaultAddr)
@@ -690,15 +690,15 @@ const selectAddress = (addr) => {
   form.value.phone = addr.phone
   form.value.address = addr.street
   
-  // Try to map back to dropdowns (Best effort)
-  // This might trigger watchers, but that's okay, we just want to set the values.
-  // Note: Since we only have names, we search by name.
+  // Cố gắng ánh xạ lại với dropdown (Cách tốt nhất)
+  // Điều này có thể kích hoạt các watcher, nhưng không sao, chúng ta chỉ muốn thiết lập giá trị.
+  // Ghi chú: Vì chúng ta chỉ có tên, nên sẽ tìm kiếm theo tên.
   
-  // Wait for provinces if not loaded (unlikely since onMounted)
+  // Đợi tỉnh/thành được tải nếu chưa (ít khả năng xảy ra do onMounted)
   const prov = provinces.value.find(p => p.name === addr.city || p.name.includes(addr.city))
   if (prov) {
       selectedProvince.value = prov
-      // We need to wait for districts to load to set district
+      // Cần đợi quận/huyện được tải để thiết lập
        fetchDistricts(prov.code).then(() => {
            const dist = districts.value.find(d => d.name === addr.district || d.name.includes(addr.district))
            if (dist) {
@@ -710,17 +710,17 @@ const selectAddress = (addr) => {
            }
        })
   } else {
-     // If mapping fails, at least set the text values to form (which we did below indirectly via watchers? No, watchers override form)
-     // Issue: Watchers will set form to '' if selectedProvince is null.
-     // So we must manually set form AFTER setting selected refs (or lack thereof).
-     // Actually, if we can't map, the dropdowns will be blank. 
-     // We should probably rely on the form values being correct for submission, but the UI might look desynced.
-     // For now, let's assume the matching works for standard addresses.
+     // Nếu ánh xạ thất bại, ít nhất thiết lập giá trị văn bản cho form
+     // Vấn đề: Watcher sẽ thiết lập form thành '' nếu selectedProvince là null.
+     // Nên chúng ta phải thiết lập form thủ công SAU khi thiết lập các tham chiếu đã chọn (hoặc không).
+     // Thực ra, nếu không ánh xạ được, dropdown sẽ trống. 
+     // Nên tin tưởng vào form gửi đi là chính xác, dù giao diện có khác một chút.
+     // Hiện tại, giả định việc khớp sẽ hoạt động cho các địa chỉ chuẩn.
   }
 }
 
 
-// Watchers for shipping calculation
+// Các Watcher cho việc tính toán phí vận chuyển
 const calculateFee = async () => {
     if (!form.value.city) {
         shippingFee.value = 0
@@ -750,11 +750,11 @@ watch(() => [form.value.city, form.value.district, subtotal.value], () => {
     calculateFee()
 }, { deep: true })
 
-// Existing watchers need to be preserved or merged? 
-// The existing watchers update form values. My new watcher listens to form values.
-// So it should chain correctly.
+// Các watcher hiện tại cần được giữ lại hay gộp? 
+// Các watcher hiện tại cập nhật giá trị form. Watcher mới của tôi lắng nghe giá trị form.
+// Nên nó có thể nối kết đúng.
 
-const couponCode = ref('') // Legacy ref, keep for safety or refactor
+const couponCode = ref('') // Tham chiếu cũ, giữ cho an toàn
 const couponInput = ref('')
 const showVoucherModal = ref(false)
 const appliedCoupon = ref('')
@@ -831,13 +831,13 @@ watch(showVoucherModal, (val) => {
     if (val) fetchAvailableCoupons()
 })
 
-// Full address computed for review step
+// Tính toán địa chỉ đầy đủ cho bước xem lại
 const fullAddress = computed(() => {
   const parts = [form.value.address, form.value.ward, form.value.district, form.value.city].filter(Boolean)
   return parts.join(', ')
 })
 
-// Payment method display info for review step
+// Thông tin hiển thị phương thức thanh toán trong bước xem lại
 const paymentMethodStyle = computed(() => {
   const map = {
     cod: { label: 'Thanh toán khi nhận hàng (COD)', desc: 'Thanh toán bằng tiền mặt khi nhận hàng', icon: '💵', bg: 'bg-green-100' },
@@ -848,7 +848,7 @@ const paymentMethodStyle = computed(() => {
   return map[form.value.paymentMethod] || map.cod
 })
 
-// Validate and go to review step
+// Xác minh và đi đến bước xem lại
 const goToReview = () => {
   if (checkoutItems.value.length === 0) {
     toast.warning('Vui lòng chọn sản phẩm để thanh toán')
@@ -868,7 +868,7 @@ const goToReview = () => {
 const handleCheckout = async () => {
   isOrdering.value = true
   try {
-    // 1. Save address if requested
+    // 1. Lưu địa chỉ nếu được yêu cầu
     if (saveAddress.value && authStore.isAuthenticated) {
       try {
         await fetch(`${API_URL}/addresses`, {
@@ -884,16 +884,16 @@ const handleCheckout = async () => {
              city: form.value.city,
              district: form.value.district,
              ward: form.value.ward, 
-             is_default: userAddresses.value.length === 0 // If first address, make default
+             is_default: userAddresses.value.length === 0 // Nếu là địa chỉ đầu tiên, gán làm mặc định
           })
         })
-        // Refresh addresses (optional)
+        // Làm mới danh sách địa chỉ (tùy chọn)
       } catch (e) {
         console.error('Failed to save address', e)
       }
     }
 
-    // 2. Create Order
+    // 2. Tạo Đơn hàng
     const orderData = {
       customer_name: form.value.name,
       customer_phone: form.value.phone,
@@ -903,7 +903,7 @@ const handleCheckout = async () => {
       payment_method: form.value.paymentMethod,
       total_amount: total.value,
       shipping_fee: shippingFee.value,
-      discount_amount: appliedDiscount.value, // Add discount to order (capped)
+      discount_amount: appliedDiscount.value, // Thêm mức giảm giá vào đơn hàng (đã giới hạn)
       items: checkoutItems.value.map(item => ({
         id: item.id,
         quantity: item.quantity
@@ -966,10 +966,10 @@ onMounted(() => {
     // router.push('/products')
   }
   
-  fetchProvinces() // Load location data
+  fetchProvinces() // Tải dữ liệu vị trí
 
   if (authStore.isAuthenticated) {
-    // Pre-fill user info if available
+    // Điền trước thông tin người dùng nếu có
     form.value.name = authStore.user?.name || ''
     form.value.email = authStore.user?.email || ''
     fetchAddresses()
