@@ -167,7 +167,7 @@ const itemToDelete = ref(null)
 const tabs = [
   { key: 'categories', label: 'Danh mục', api: '/categories' },
   { key: 'products', label: 'Sản phẩm', api: '/products' },
-  { key: 'users', label: 'Người dùng', api: '/users/admin/users' },
+  { key: 'users', label: 'Người dùng', api: '/user/admin/users' },
   { key: 'articles', label: 'Bài viết', api: '/articles' },
 ]
 
@@ -231,9 +231,7 @@ const restoreItem = async (id) => {
   actionLoading.value = true
   try {
     const method = activeTab.value === 'products' ? 'PUT' : 'PATCH'
-    const restorePath = activeTab.value === 'users' 
-      ? `${API_BASE}/users/admin/users/${id}/restore`
-      : `${API_BASE}${currentTabApi.value}/${id}/restore`
+    const restorePath = `${API_BASE}${currentTabApi.value}/${id}/restore`
     
     const res = await fetch(restorePath, { method, headers: headers() })
     const json = await res.json()
@@ -261,9 +259,7 @@ const forceDeleteItem = async () => {
   if (!itemToDelete.value) return
   actionLoading.value = true
   try {
-    const deletePath = activeTab.value === 'users'
-      ? `${API_BASE}/users/admin/users/${itemToDelete.value.id}/force`
-      : `${API_BASE}${currentTabApi.value}/${itemToDelete.value.id}/force`
+    const deletePath = `${API_BASE}${currentTabApi.value}/${itemToDelete.value.id}/force`
 
     const res = await fetch(deletePath, { method: 'DELETE', headers: headers() })
     const json = await res.json()

@@ -481,7 +481,7 @@ const saveUser = async () => {
 }
 
 const deleteUser = async (id) => {
-  const ok = await confirm('Xóa người dùng', 'Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể hoàn tác.', { actionLabel: 'Xóa vĩnh viễn', actionClass: 'bg-red-100 text-red-600 hover:bg-red-200' })
+  const ok = await confirm('Xóa người dùng', 'Bạn có chắc chắn muốn xóa người dùng này? Người dùng sẽ được chuyển vào thùng rác.', { actionLabel: 'Xóa', actionClass: 'bg-red-100 text-red-600 hover:bg-red-200' })
   if (!ok) return
 
   try {
