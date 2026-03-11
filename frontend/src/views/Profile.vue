@@ -590,6 +590,57 @@
     </div>
   </div>
 
+  <!-- Hủy đơn hàng modal -->
+  <div v-if="showCancelModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showCancelModal = false"></div>
+    <div class="bg-card rounded-xl shadow-lg w-full max-w-md p-6 relative animate-in fade-in zoom-in-95 duration-200">
+      <button @click="showCancelModal = false" class="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      </button>
+
+      <h3 class="text-xl font-bold mb-4">Lý do hủy đơn hàng</h3>
+      <p class="text-sm text-muted-foreground mb-4">Vui lòng chọn lý do bạn muốn hủy đơn.</p>
+
+      <div class="space-y-3 mb-6 max-h-[50vh] overflow-y-auto pr-2">
+        <label v-for="(reason, index) in cancelReasons" :key="index" class="flex items-start gap-3 cursor-pointer">
+          <input type="radio" :value="reason" v-model="cancelReason" name="cancel_reason_profile" class="mt-1 flex-shrink-0" />
+          <span class="text-sm">{{ reason }}</span>
+        </label>
+
+        <div v-if="cancelReason === 'Lý do khác'" class="pl-7 mt-2">
+          <textarea 
+            v-model="otherCancelReason" 
+            placeholder="Nhập lý do cụ thể..." 
+            class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+            rows="3"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="flex gap-3 justify-end">
+        <button 
+          @click="showCancelModal = false" 
+          class="px-4 py-2 border rounded-lg hover:bg-muted text-sm font-medium transition-colors"
+        >
+          Quay lại
+        </button>
+        <button 
+          @click="submitCancelOrderFromProfile" 
+          class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium flex items-center gap-2 transition-colors"
+          :disabled="cancellingOrderId !== null"
+        >
+          <svg v-if="cancellingOrderId !== null" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span>Xác nhận hủy</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
 </template>
 
 <script setup>
@@ -1289,27 +1340,58 @@ const repurchase = (order) => {
 
 // Cancel order from profile page
 const cancellingOrderId = ref(null)
+const showCancelModal = ref(false)
+const cancelReason = ref('')
+const otherCancelReason = ref('')
+const orderToCancel = ref(null)
 
-const cancelOrderFromProfile = async (order) => {
+const cancelReasons = [
+  'Muốn thay đổi địa chỉ giao hàng',
+  'Muốn thay đổi sản phẩm trong đơn hàng (Màu sắc, số lượng...)',
+  'Tìm thấy giá rẻ hơn ở chỗ khác',
+  'Thời gian giao hàng quá lâu',
+  'Đổi ý, không muốn mua nữa',
+  'Lý do khác'
+]
+
+const cancelOrderFromProfile = (order) => {
   if (!order) return
+  orderToCancel.value = order
+  cancelReason.value = ''
+  otherCancelReason.value = ''
+  showCancelModal.value = true
+}
+
+const submitCancelOrderFromProfile = async () => {
+  if (!orderToCancel.value) return
   
-  const { prompt } = useConfirmDialog()
-  const reason = await prompt('Hủy đơn hàng', 'Vui lòng cho chúng tôi biết lý do bạn muốn hủy đơn hàng này.', {
-    actionLabel: 'Xác nhận hủy',
-    actionClass: 'bg-red-100 text-red-600 hover:bg-red-200',
-    placeholder: 'Nhập lý do hủy (không bắt buộc)...'
-  })
-  if (reason === null) return
+  let finalReason = cancelReason.value
   
-  cancellingOrderId.value = order.id
+  if (!finalReason) {
+    toast.error('Vui lòng chọn lý do hủy đơn hàng')
+    return
+  }
+  
+  if (finalReason === 'Lý do khác') {
+    if (!otherCancelReason.value.trim()) {
+      toast.error('Vui lòng nhập lý do cụ thể')
+      return
+    }
+    finalReason = otherCancelReason.value.trim()
+  }
+
+  showCancelModal.value = false
+  const orderId = orderToCancel.value.id
+  cancellingOrderId.value = orderId
+  
   try {
-    const res = await fetch(`${API_URL}/orders/my-orders/${order.id}/cancel`, {
+    const res = await fetch(`${API_URL}/orders/my-orders/${orderId}/cancel`, {
       method: 'PUT',
       headers: { 
         'Authorization': `Bearer ${authStore.accessToken}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ cancel_reason: reason || undefined })
+      body: JSON.stringify({ cancel_reason: finalReason })
     })
     const json = await res.json()
     if (json.status) {
@@ -1317,7 +1399,7 @@ const cancelOrderFromProfile = async (order) => {
       // Refresh orders list
       await fetchMyOrders()
       // Close modal if open
-      if (showOrderModal.value && selectedOrder.value?.id === order.id) {
+      if (showOrderModal.value && selectedOrder.value?.id === orderId) {
         showOrderModal.value = false
       }
     } else {
@@ -1327,6 +1409,7 @@ const cancelOrderFromProfile = async (order) => {
     toast.error('Có lỗi xảy ra')
   } finally {
     cancellingOrderId.value = null
+    orderToCancel.value = null
   }
 }
 </script>

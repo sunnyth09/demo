@@ -264,3 +264,59 @@ export const adminResetPassword = async (userId, newPassword) => {
   
   return { message: "Đã reset mật khẩu thành công" };
 };
+
+// ========== SOFT DELETE MANAGEMENT ==========
+
+/**
+ * Lấy danh sách người dùng đã bị xóa mềm (Thùng rác)
+ */
+export const getTrashedUsers = async () => {
+  return await User.findAll({
+    where: { deleted_at: { [Op.not]: null } },
+    attributes: ['id', 'name', 'email', 'role', 'phone', 'created_at', 'deleted_at'],
+    paranoid: false,
+    order: [['deleted_at', 'DESC']]
+  });
+};
+
+/**
+ * Khôi phục người dùng đã xóa mềm
+ */
+export const restoreUser = async (userId) => {
+  const user = await User.findByPk(userId, { paranoid: false });
+  
+  if (!user) {
+    throw new Error("Không tìm thấy người dùng");
+  }
+  
+  if (!user.deleted_at) {
+    throw new Error("Người dùng chưa bị xóa, không cần khôi phục");
+  }
+
+  // Kiểm tra xung đột email: có user khác đang dùng email này không?
+  const emailConflict = await User.findOne({
+    where: { email: user.email, id: { [Op.ne]: userId } }
+  });
+  
+  if (emailConflict) {
+    throw new Error(`Không thể khôi phục: Email "${user.email}" đã được tài khoản khác sử dụng.`);
+  }
+
+  await user.restore();
+  return user;
+};
+
+/**
+ * Xóa vĩnh viễn người dùng (Hard Delete)
+ */
+export const forceRemoveUser = async (userId) => {
+  const user = await User.findByPk(userId, { paranoid: false });
+  
+  if (!user) {
+    throw new Error("Không tìm thấy người dùng");
+  }
+
+  await user.destroy({ force: true });
+  return true;
+};
+

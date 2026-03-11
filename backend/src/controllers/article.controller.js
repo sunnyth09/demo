@@ -90,3 +90,35 @@ export const remove = async (req, res) => {
     });
   }
 };
+
+// ========== SOFT DELETE MANAGEMENT ==========
+
+export const getTrashed = async (req, res) => {
+  try {
+    const data = await ArticleService.getTrashed();
+    res.json({ status: true, data });
+  } catch (error) {
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+export const restoreArticle = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await ArticleService.restoreArticle(id);
+    res.json({ status: true, message: "Khôi phục bài viết thành công" });
+  } catch (error) {
+    res.status(400).json({ status: false, message: error.message });
+  }
+};
+
+export const forceRemove = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await ArticleService.forceRemove(id);
+    res.json({ status: true, message: "Đã xóa vĩnh viễn bài viết" });
+  } catch (error) {
+    res.status(400).json({ status: false, message: error.message });
+  }
+};
+

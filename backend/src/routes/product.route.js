@@ -1,5 +1,5 @@
 import express from "express";
-import { getAll, getDetail, create, update, remove, restore } from "../controllers/product.controller.js";
+import { getAll, getDetail, create, update, remove, restore, getTrashed, forceRemove } from "../controllers/product.controller.js";
 import { checkToken, checkAdmin, handleValidate } from "../middlewares/auth.middleware.js";
 import upload from "../middlewares/upload.middleware.js";
 import { validateProduct } from "../middlewares/product.validate.js";
@@ -8,6 +8,10 @@ const router = express.Router();
 
 // Public routes
 router.get("/", getAll);
+
+// Soft Delete routes (Admin) - phải đặt TRƯỚC /:id
+router.get("/trash", checkToken, checkAdmin, getTrashed);
+
 router.get("/:id", getDetail);
 
 router.post("/", checkToken, checkAdmin, upload.fields([
@@ -21,6 +25,7 @@ router.put("/:id", checkToken, checkAdmin, upload.fields([
 ]), validateProduct, handleValidate, update);
 
 router.put("/:id/restore", checkToken, checkAdmin, restore);
+router.delete("/:id/force", checkToken, checkAdmin, forceRemove);
 router.delete("/:id", checkToken, checkAdmin, remove);
 
 export default router;

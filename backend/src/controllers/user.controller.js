@@ -167,3 +167,33 @@ export const adminResetPassword = async (req, res) => {
     });
   }
 };
+
+// ========== SOFT DELETE MANAGEMENT ==========
+
+export const getTrashedUsers = async (req, res) => {
+  try {
+    const data = await userService.getTrashedUsers();
+    res.json({ status: true, data });
+  } catch (err) {
+    res.status(500).json({ status: false, message: err.message });
+  }
+};
+
+export const restoreUser = async (req, res) => {
+  try {
+    await userService.restoreUser(req.params.id);
+    res.json({ status: true, msg: "Khôi phục người dùng thành công" });
+  } catch (err) {
+    res.status(500).json({ status: false, message: err.message });
+  }
+};
+
+export const forceRemoveUser = async (req, res) => {
+  try {
+    await userService.forceRemoveUser(req.params.id);
+    res.json({ status: true, msg: "Đã xóa vĩnh viễn người dùng" });
+  } catch (err) {
+    res.status(500).json({ status: false, message: err.message });
+  }
+};
+

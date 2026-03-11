@@ -270,8 +270,7 @@ export const removeAll = async () => {
   }
 
   await Category.destroy({
-    where: {},
-    truncate: true
+    where: {}
   });
   return true;
 };
@@ -296,3 +295,57 @@ export const getAllChildIds = async (parentId) => {
   findChildren(parseInt(parentId));
   return childIds;
 };
+
+// ========== SOFT DELETE MANAGEMENT ==========
+
+/**
+ * Lấy danh sách danh mục đã bị xóa mềm (Thùng rác)
+ */
+export const getTrashed = async () => {
+  return await Category.findAll({
+    where: { deleted_at: { [Op.not]: null } },
+    paranoid: false,
+    order: [['deleted_at', 'DESC']]
+  });
+};
+
+/**
+ * Khôi phục danh mục đã xóa mềm
+ */
+export const restoreCategory = async (id) => {
+  const category = await Category.findByPk(id, { paranoid: false });
+  
+  if (!category) {
+    throw new Error("Không tìm thấy danh mục");
+  }
+  
+  if (!category.deleted_at) {
+    throw new Error("Danh mục chưa bị xóa, không cần khôi phục");
+  }
+
+  // Nếu danh mục có parent_id, kiểm tra parent có đang tồn tại không
+  if (category.parent_id) {
+    const parent = await Category.findByPk(category.parent_id);
+    if (!parent) {
+      throw new Error("Không thể khôi phục: Danh mục cha đã bị xóa. Hãy khôi phục danh mục cha trước.");
+    }
+  }
+
+  await category.restore();
+  return category;
+};
+
+/**
+ * Xóa vĩnh viễn danh mục (Hard Delete)
+ */
+export const forceRemove = async (id) => {
+  const category = await Category.findByPk(id, { paranoid: false });
+  
+  if (!category) {
+    throw new Error("Không tìm thấy danh mục");
+  }
+
+  await category.destroy({ force: true });
+  return true;
+};
+

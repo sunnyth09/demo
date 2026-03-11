@@ -37,7 +37,9 @@ const Article = sequelize.define('Article', {
   }
 }, {
   tableName: 'articles',
-  timestamps: true, // createdAt, updatedAt
+  timestamps: true,
+  paranoid: true,
+  deletedAt: 'deleted_at'
 });
 
 export default Article;

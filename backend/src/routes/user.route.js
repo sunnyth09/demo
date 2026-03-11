@@ -70,6 +70,14 @@ router.put(
 // ========== ROUTES QUẢN LÝ NGƯỜI DÙNG (ADMIN) ==========
 // Tất cả routes yêu cầu xác thực + quyền admin
 
+// Soft Delete routes (phải đặt TRƯỚC /:id)
+router.get(
+  "/admin/users/trash",
+  checkToken,
+  checkAdmin,
+  userController.getTrashedUsers
+);
+
 router.get(
   "/admin/users",
   checkToken,
@@ -114,6 +122,21 @@ router.put(
   checkToken,
   checkAdmin,
   userController.adminResetPassword
+);
+
+// Soft Delete restore & force delete
+router.patch(
+  "/admin/users/:id/restore",
+  checkToken,
+  checkAdmin,
+  userController.restoreUser
+);
+
+router.delete(
+  "/admin/users/:id/force",
+  checkToken,
+  checkAdmin,
+  userController.forceRemoveUser
 );
 
 export default router;

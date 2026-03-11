@@ -52,7 +52,11 @@ const Category = sequelize.define('Category', {
   }
 }, {
   tableName: 'categories',
-  timestamps: false
+  timestamps: true,
+  paranoid: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
+  deletedAt: 'deleted_at'
 });
 
 // Quan hệ tự tham chiếu: Category có thể có parent

@@ -80,7 +80,9 @@ const Coupon = sequelize.define('Coupon', {
   }
 }, {
   tableName: 'coupons',
-  timestamps: true
+  timestamps: true,
+  paranoid: true,
+  deletedAt: 'deleted_at'
 });
 
 export default Coupon;

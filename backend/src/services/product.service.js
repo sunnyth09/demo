@@ -404,3 +404,48 @@ export const restore = async (id) => {
   await product.restore();
   return product;
 };
+
+/**
+ * Lấy danh sách sản phẩm đã bị xóa mềm (Thùng rác)
+ */
+export const getTrashed = async () => {
+  const products = await Product.findAll({
+    where: { deleted_at: { [Op.not]: null } },
+    attributes: ['id', 'name', 'slug', 'sku', 'price', 'thumbnail', 'status', 'deleted_at'],
+    include: [{ model: Category, as: 'category', attributes: ['name'] }],
+    paranoid: false,
+    order: [['deleted_at', 'DESC']]
+  });
+
+  return products.map(p => ({
+    ...p.toJSON(),
+    thumbnail: getFullUrl(p.thumbnail),
+    category_name: p.category?.name || null
+  }));
+};
+
+/**
+ * Xóa vĩnh viễn sản phẩm (Hard Delete) - kèm xóa file ảnh
+ */
+export const forceRemove = async (id) => {
+  const product = await Product.findByPk(id, { paranoid: false });
+  
+  if (!product) {
+    throw new Error("Không tìm thấy sản phẩm");
+  }
+
+  // Xóa ảnh khi xóa vĩnh viễn
+  if (product.thumbnail) {
+    try { await deleteFile(product.thumbnail); } catch(e) { /* ignore */ }
+  }
+  if (product.image) {
+    try {
+      const images = JSON.parse(product.image);
+      await Promise.all(images.map(img => deleteFile(img).catch(() => {})));
+    } catch(e) { /* ignore */ }
+  }
+
+  await product.destroy({ force: true });
+  return true;
+};
+

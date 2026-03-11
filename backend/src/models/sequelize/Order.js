@@ -111,7 +111,11 @@ const Order = sequelize.define('Order', {
   }
 }, {
   tableName: 'orders',
-  timestamps: true
+  timestamps: true,
+  paranoid: true,
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deleted_at'
 });
 
 export default Order;

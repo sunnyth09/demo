@@ -108,3 +108,25 @@ export const restore = async (req, res) => {
     });
   }
 };
+
+// ========== SOFT DELETE MANAGEMENT ==========
+
+export const getTrashed = async (req, res) => {
+  try {
+    const data = await ProductService.getTrashed();
+    res.json({ status: true, data });
+  } catch (error) {
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+export const forceRemove = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await ProductService.forceRemove(id);
+    res.json({ status: true, message: "Đã xóa vĩnh viễn sản phẩm" });
+  } catch (error) {
+    res.status(400).json({ status: false, message: error.message });
+  }
+};
+

@@ -58,7 +58,9 @@ const ShippingZone = sequelize.define('ShippingZone', {
 }, {
   tableName: 'shipping_zones',
   timestamps: true,
-  underscored: true
+  paranoid: true,
+  underscored: true,
+  deletedAt: 'deleted_at'
 });
 
 export default ShippingZone;

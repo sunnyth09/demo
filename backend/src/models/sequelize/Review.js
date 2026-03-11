@@ -45,7 +45,11 @@ const Review = sequelize.define('Review', {
   }
 }, {
   tableName: 'reviews',
-  timestamps: false
+  timestamps: true,
+  paranoid: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
+  deletedAt: 'deleted_at'
 });
 
 export default Review;

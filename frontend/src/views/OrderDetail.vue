@@ -19,7 +19,7 @@
       <!-- Header -->
       <div class="bg-card rounded-xl border p-6 mb-6">
         <div class="flex flex-col gap-4">
-          <!-- Order Info Row -->
+          <!-- Row thông tin đơn hàng -->
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div class="flex items-center gap-3 flex-wrap">
               <h1 class="text-2xl font-bold">
@@ -44,7 +44,7 @@
             <p class="text-muted-foreground text-sm">Đặt ngày {{ formatDate(order.createdAt) }}</p>
           </div>
           
-          <!-- Action Buttons Row -->
+          <!-- Row các nút hành động -->
           <div class="flex flex-wrap gap-3">
             <!-- Mua lại button -->
             <button 
@@ -74,7 +74,7 @@
             <!-- Hủy đơn button -->
             <button 
               v-if="order.status === 'pending'"
-              @click="cancelOrder"
+              @click="openCancelModal"
               :disabled="cancelling"
               class="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-2"
             >
@@ -103,13 +103,13 @@
       </div>
 
 
-      <!-- Tracking Timeline - Horizontal -->
+      <!-- Lịch sử đơn hàng -->
       <div class="bg-card rounded-xl border p-6 mb-6">
         <h2 class="text-lg font-bold mb-6">Trạng thái đơn hàng</h2>
         
         <div v-if="order.status !== 'cancelled'" class="mb-8">
           <div class="relative">
-            <!-- Progress Bar Background -->
+            <!-- Background của thanh tiến hành đơn hàng -->
             <div class="absolute top-5 left-0 w-full h-1 bg-gray-200 rounded-full"></div>
             
             <!-- Active Progress Bar -->
@@ -118,7 +118,7 @@
               :style="{ width: mainProgress + '%' }"
             ></div>
 
-            <!-- Steps -->
+            <!-- Bước tiến hành đơn hàng -->
             <div class="flex justify-between relative">
               <div v-for="(step, index) in mainSteps" :key="index" class="flex flex-col items-center">
                 <div 
@@ -163,7 +163,7 @@
           </div>
         </div>
 
-        <!-- Cancelled State -->
+        <!-- Đơn hàng đã hủy -->
         <div v-else class="p-4 bg-red-50 border border-red-100 rounded-lg text-red-700 mb-6">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0 text-xl">✕</div>
@@ -177,7 +177,7 @@
           </div>
         </div>
 
-        <!-- Vertical Timeline - Detail History -->
+        <!-- Chi tiết vận chuyển -->
         <div class="border-t pt-6">
           <h4 class="font-medium mb-4">Chi tiết vận chuyển</h4>
           <div class="space-y-0 max-h-[400px] overflow-y-auto">
@@ -200,7 +200,7 @@
       </div>
 
       <div class="grid md:grid-cols-2 gap-6">
-        <!-- Shipping Info -->
+        <!-- Thông tin giao hàng -->
         <div class="bg-card rounded-xl border p-6">
           <h2 class="text-lg font-bold mb-4">Địa chỉ nhận hàng</h2>
           <div class="space-y-2 text-sm">
@@ -213,7 +213,7 @@
           </div>
         </div>
 
-        <!-- Payment Info -->
+        <!-- Thông tin thanh toán -->
         <div class="bg-card rounded-xl border p-6">
           <h2 class="text-lg font-bold mb-4">Thanh toán</h2>
           <div class="space-y-3 text-sm">
@@ -231,7 +231,7 @@
         </div>
       </div>
 
-      <!-- Order Items -->
+      <!-- Danh sách sản phẩm trong đơn hàng -->
       <div class="bg-card rounded-xl border p-6 mt-6">
         <h2 class="text-lg font-bold mb-4">Sản phẩm ({{ order.items?.length || 0 }})</h2>
         <div class="space-y-4">
@@ -255,7 +255,7 @@
           </router-link>
         </div>
 
-        <!-- Payment Summary -->
+        <!-- tóm tắt đơn hàng -->
         <div class="border-t mt-6 pt-4 space-y-3">
           <div class="flex justify-between text-sm">
             <span class="text-muted-foreground">Tổng tiền hàng</span>
@@ -283,6 +283,56 @@
       <p class="text-muted-foreground">Không tìm thấy đơn hàng</p>
       <router-link to="/orders" class="text-primary hover:underline mt-2 inline-block">Quay lại</router-link>
     </div>
+
+    <!-- Hủy đơn hàng modal -->
+    <div v-if="showCancelModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div class="bg-card rounded-xl shadow-lg w-full max-w-md p-6 relative">
+        <button @click="showCancelModal = false" class="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+
+        <h3 class="text-xl font-bold mb-4">Lý do hủy đơn hàng</h3>
+        <p class="text-sm text-muted-foreground mb-4">Vui lòng chọn lý do bạn muốn hủy đơn.</p>
+
+        <div class="space-y-3 mb-6 max-h-[50vh] overflow-y-auto pr-2">
+          <label v-for="(reason, index) in cancelReasons" :key="index" class="flex items-start gap-3 cursor-pointer">
+            <input type="radio" :value="reason" v-model="cancelReason" name="cancel_reason" class="mt-1 flex-shrink-0" />
+            <span class="text-sm">{{ reason }}</span>
+          </label>
+
+          <div v-if="cancelReason === 'Lý do khác'" class="pl-7 mt-2">
+            <textarea 
+              v-model="otherCancelReason" 
+              placeholder="Nhập lý do cụ thể..." 
+              class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+              rows="3"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="flex gap-3 justify-end">
+          <button 
+            @click="showCancelModal = false" 
+            class="px-4 py-2 border rounded-lg hover:bg-muted text-sm font-medium transition-colors"
+          >
+            Quay lại
+          </button>
+          <button 
+            @click="submitCancelOrder" 
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium flex items-center gap-2 transition-colors"
+            :disabled="cancelling"
+          >
+            <svg v-if="cancelling" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span>Xác nhận hủy</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -304,6 +354,18 @@ const { confirm } = useConfirmDialog()
 const order = ref(null)
 const loading = ref(true)
 const cancelling = ref(false)
+const showCancelModal = ref(false)
+const cancelReason = ref('')
+const otherCancelReason = ref('')
+
+const cancelReasons = [
+  'Muốn thay đổi địa chỉ giao hàng',
+  'Muốn thay đổi sản phẩm trong đơn hàng (Màu sắc, số lượng...)',
+  'Tìm thấy giá rẻ hơn ở chỗ khác',
+  'Thời gian giao hàng quá lâu',
+  'Đổi ý, không muốn mua nữa',
+  'Lý do khác'
+]
 
 // Check if order can be cancelled
 const canCancel = computed(() => {
@@ -487,16 +549,29 @@ const fetchOrder = async () => {
   }
 }
 
-const cancelOrder = async () => {
-  const { prompt } = useConfirmDialog()
-  const reason = await prompt('Hủy đơn hàng', 'Vui lòng cho chúng tôi biết lý do bạn muốn hủy đơn hàng này.', {
-    actionLabel: 'Xác nhận hủy',
-    actionClass: 'bg-red-100 text-red-600 hover:bg-red-200',
-    placeholder: 'Nhập lý do hủy (không bắt buộc)...'
-  })
-  // prompt returns null if cancelled, empty string or text if confirmed
-  if (reason === null) return
+const openCancelModal = () => {
+  cancelReason.value = ''
+  otherCancelReason.value = ''
+  showCancelModal.value = true
+}
+
+const submitCancelOrder = async () => {
+  let finalReason = cancelReason.value
   
+  if (!finalReason) {
+    toast.error('Vui lòng chọn lý do hủy đơn hàng')
+    return
+  }
+  
+  if (finalReason === 'Lý do khác') {
+    if (!otherCancelReason.value.trim()) {
+      toast.error('Vui lòng nhập lý do cụ thể')
+      return
+    }
+    finalReason = otherCancelReason.value.trim()
+  }
+
+  showCancelModal.value = false
   cancelling.value = true
   try {
     const res = await fetch(`${API_URL}/orders/my-orders/${order.value.id}/cancel`, {
@@ -505,7 +580,7 @@ const cancelOrder = async () => {
         'Authorization': `Bearer ${authStore.accessToken}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ cancel_reason: reason || undefined })
+      body: JSON.stringify({ cancel_reason: finalReason })
     })
     const json = await res.json()
     if (json.status) {

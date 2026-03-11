@@ -137,10 +137,59 @@ export const remove = async (id) => {
   const article = await Article.findByPk(id);
   if (!article) throw new Error("Bài viết không tồn tại");
 
+  // Với Soft Delete, KHÔNG xóa file ảnh ngay lập tức
+  // Vì có thể khôi phục lại bài viết sau này.
+  await article.destroy();
+  return true;
+};
+
+// ========== SOFT DELETE MANAGEMENT ==========
+
+/**
+ * Lấy danh sách bài viết đã bị xóa mềm (Thùng rác)
+ */
+export const getTrashed = async () => {
+  return await Article.findAll({
+    where: { deleted_at: { [Op.not]: null } },
+    paranoid: false,
+    order: [['deleted_at', 'DESC']]
+  });
+};
+
+/**
+ * Khôi phục bài viết đã xóa mềm
+ */
+export const restoreArticle = async (id) => {
+  const article = await Article.findByPk(id, { paranoid: false });
+  
+  if (!article) {
+    throw new Error("Không tìm thấy bài viết");
+  }
+  
+  if (!article.deleted_at) {
+    throw new Error("Bài viết chưa bị xóa, không cần khôi phục");
+  }
+
+  await article.restore();
+  return article;
+};
+
+/**
+ * Xóa vĩnh viễn bài viết (Hard Delete) - kèm xóa file ảnh
+ */
+export const forceRemove = async (id) => {
+  const article = await Article.findByPk(id, { paranoid: false });
+  
+  if (!article) {
+    throw new Error("Không tìm thấy bài viết");
+  }
+
+  // Xóa ảnh thumbnail khỏi storage khi xóa vĩnh viễn
   if (article.thumbnail) {
     await deleteFile(article.thumbnail);
   }
 
-  await article.destroy();
+  await article.destroy({ force: true });
   return true;
 };
+

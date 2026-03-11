@@ -129,3 +129,37 @@ export const bulkRemove = async (req, res) => {
   }
 };
 
+// ========== SOFT DELETE MANAGEMENT ==========
+
+// Danh sách thùng rác
+export const getTrashed = async (req, res) => {
+  try {
+    const data = await CategoryService.getTrashed();
+    res.json({ status: true, data });
+  } catch (err) {
+    res.status(500).json({ status: false, message: err.message });
+  }
+};
+
+// Khôi phục
+export const restore = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await CategoryService.restoreCategory(id);
+    res.json({ status: true, msg: "Khôi phục danh mục thành công" });
+  } catch (err) {
+    res.status(500).json({ status: false, message: err.message });
+  }
+};
+
+// Xóa vĩnh viễn
+export const forceRemove = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await CategoryService.forceRemove(id);
+    res.json({ status: true, msg: "Đã xóa vĩnh viễn danh mục" });
+  } catch (err) {
+    res.status(500).json({ status: false, message: err.message });
+  }
+};
+

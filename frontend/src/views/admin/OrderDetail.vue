@@ -39,6 +39,84 @@
     <div v-else-if="order" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Left Column: Tracking + Update -->
       <div class="lg:col-span-2 space-y-6">
+        <!-- Update Status -->
+        <div class="bg-card rounded-xl border p-6">
+          <h3 class="text-lg font-bold mb-4">Cập nhật trạng thái</h3>
+          <div class="flex flex-wrap gap-4 items-end">
+            <!-- Cancellation Request Logic -->
+             <div v-if="order.status === 'request_cancel'" class="w-full mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <h4 class="font-bold text-orange-800 flex items-center gap-2 mb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  Yêu cầu hủy đơn hàng
+                </h4>
+                <p class="text-sm text-orange-700 mb-2">
+                  Khách hàng muốn hủy đơn này. Lý do: <strong>{{ order.cancel_reason || 'Không có lý do' }}</strong>
+                </p>
+                
+                <!-- Warning for PAID orders -->
+                <div v-if="order.payment_status === 'paid'" class="mb-3 p-3 bg-red-100 text-red-700 rounded border border-red-200 text-sm">
+                   <strong>Lưu ý:</strong> Đơn hàng đã thanh toán. Vui lòng <strong>hoàn tiền thủ công</strong> cho khách trước khi duyệt hủy.
+                </div>
+
+                <div class="flex gap-2 mt-3">
+                  <button 
+                     @click="approveCancel" 
+                     class="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                  >
+                     Duyệt hủy đơn {{ order.payment_status === 'paid' ? '(Đã hoàn tiền)' : '' }}
+                  </button>
+                  <button 
+                     @click="rejectCancel" 
+                     class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                     Từ chối hủy
+                  </button>
+                </div>
+             </div>
+
+            <div class="flex-1 min-w-[200px]">
+              <label class="block text-sm font-medium mb-2"
+                >Trạng thái mới</label
+              >
+              <select
+                v-model="newStatus"
+                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                :disabled="order.status === 'cancelled' || order.status === 'request_cancel'"
+              >
+                <option
+                  v-for="opt in availableStatusOptions"
+                  :key="opt.value"
+                  :value="opt.value"
+                >
+                  {{ opt.label }} 
+                </option>
+              </select>
+            </div>
+            <button
+              @click="updateOrderStatus"
+              :disabled="
+                updating ||
+                newStatus === order.status ||
+                isStatusDisabled(newStatus)
+              "
+              class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ updating ? "Đang cập nhật..." : "Xác nhận" }}
+            </button>
+          </div>
+
+          <p
+            v-if="order.status === 'cancelled'"
+            class="text-sm text-red-600 mt-3"
+          >
+            Đơn hàng đã bị hủy.
+          </p>
+        </div>
+
         <!-- Tracking Timeline -->
         <div class="bg-card rounded-xl border p-6">
           <h3 class="text-lg font-bold mb-6">Trạng thái vận chuyển</h3>
@@ -192,7 +270,7 @@
             <div v-if="statusLogs.length === 0" class="text-sm text-muted-foreground">
               Chưa có lịch sử.
             </div>
-            <div class="space-y-0">
+            <div class="space-y-0 max-h-[300px] overflow-y-auto pr-2">
               <div
                 v-for="(log, index) in statusLogs"
                 :key="log.id"
@@ -233,87 +311,7 @@
           </div>
         </div>
 
-        <!-- Update Status -->
-        <div class="bg-card rounded-xl border p-6">
-          <h3 class="text-lg font-bold mb-4">Cập nhật trạng thái</h3>
-          <div class="flex flex-wrap gap-4 items-end">
-            <!-- Cancellation Request Logic -->
-             <div v-if="order.status === 'request_cancel'" class="w-full mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                <h4 class="font-bold text-orange-800 flex items-center gap-2 mb-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                  </svg>
-                  Yêu cầu hủy đơn hàng
-                </h4>
-                <p class="text-sm text-orange-700 mb-2">
-                  Khách hàng muốn hủy đơn này. Lý do: <strong>{{ order.cancel_reason || 'Không có lý do' }}</strong>
-                </p>
-                
-                <!-- Warning for PAID orders -->
-                <div v-if="order.payment_status === 'paid'" class="mb-3 p-3 bg-red-100 text-red-700 rounded border border-red-200 text-sm">
-                   <strong>Lưu ý:</strong> Đơn hàng đã thanh toán. Vui lòng <strong>hoàn tiền thủ công</strong> cho khách trước khi duyệt hủy.
-                </div>
 
-                <div class="flex gap-2 mt-3">
-                  <button 
-                     @click="approveCancel" 
-                     class="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors"
-                  >
-                     Duyệt hủy đơn {{ order.payment_status === 'paid' ? '(Đã hoàn tiền)' : '' }}
-                  </button>
-                  <button 
-                     @click="rejectCancel" 
-                     class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                     Từ chối hủy
-                  </button>
-                </div>
-             </div>
-
-            <div class="flex-1 min-w-[200px]">
-              <label class="block text-sm font-medium mb-2"
-                >Trạng thái mới</label
-              >
-              <select
-                v-model="newStatus"
-                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                :disabled="
-                order.status === 'cancelled'
-                "
-              >
-                <option value="request_cancel" disabled>Đang yêu cầu hủy</option>
-                <option
-                  v-for="opt in statusOptions"
-                  :key="opt.value"
-                  :value="opt.value"
-                  :disabled="isStatusDisabled(opt.value)"
-                >
-                  {{ opt.label }} 
-                </option>
-              </select>
-            </div>
-            <button
-              @click="updateOrderStatus"
-              :disabled="
-                updating ||
-                newStatus === order.status ||
-                isStatusDisabled(newStatus)
-              "
-              class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {{ updating ? "Đang cập nhật..." : "Xác nhận" }}
-            </button>
-          </div>
-
-          <p
-            v-if="order.status === 'cancelled'"
-            class="text-sm text-red-600 mt-3"
-          >
-            Đơn hàng đã bị hủy.
-          </p>
-        </div>
 
         <!-- Order Items -->
         <div class="bg-card rounded-xl border p-6">
@@ -437,14 +435,15 @@
           <h3 class="text-lg font-bold mb-4">Thao tác</h3>
           <div class="space-y-3">
             <button
-              v-if="
-                order.status !== 'delivered' && order.status !== 'cancelled'
-              "
+               v-if="['pending', 'confirmed', 'packing'].includes(order.status)"
               @click="cancelOrder"
               class="w-full px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors"
             >
               Hủy đơn hàng
             </button>
+             <p v-else-if="order.status !== 'cancelled' && order.status !== 'delivered'" class="text-sm text-muted-foreground text-center italic">
+              Không thể hủy khi đơn hàng đã bàn giao cho ĐVVC.
+             </p>
           </div>
         </div>
       </div>
@@ -475,7 +474,7 @@
              <textarea 
                 v-model="cancelReasonInput"
                 rows="4"
-                placeholder="Nhập lý do hủy (không bắt buộc)..."
+                placeholder="Nhập lý do hủy (bắt buộc)..."
                 class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white resize-none transition-colors"
                 @keyup.enter.ctrl="submitCancelOrder"
              ></textarea>
@@ -530,19 +529,30 @@ const statusFlow = [
 const isStatusDisabled = (optionValue) => {
   if (!order.value) return false;
   
-  // Always allow moving to cancelled (unless already delivered/cancelled)
-  if (optionValue === 'cancelled') return false; 
-  if (optionValue === 'request_cancel') return true; // Cannot manually select this
+  // Trạng thái hiện tại của đơn hàng
+  const currentStatus = order.value.status;
   
-  // If current status is not in flow (e.g. cancelled), lock everything except maybe specific flows (future feature)
-  // For now, if cancelled, everything is disabled by the parent select disabled logic
+  // Cho phép chọn lại trạng thái hiện tại (để không báo lỗi disable option đang được select)
+  if (optionValue === currentStatus) return false;
   
-  const currentIndex = statusFlow.indexOf(order.value.status);
+  // Trạng thái request_cancel là do người dùng yêu cầu, admin không được tự chọn vào trạng thái này
+  if (optionValue === 'request_cancel') return true; 
+  
+  // Nếu đơn hàng đang ở trạng thái request_cancel, admin phải ra quyết định duyệt/từ chối 
+  // thông qua các nút action riêng ở giao diện chứ không đổi select nhảy cóc
+  if (currentStatus === 'request_cancel') return true;
+
+  // Nếu đơn hàng đã hủy thì không cho đổi sang trạng thái hệ thống khác nữa
+  if (currentStatus === 'cancelled') return true;
+  
+  const currentIndex = statusFlow.indexOf(currentStatus);
   const optionIndex = statusFlow.indexOf(optionValue);
   
-  if (currentIndex === -1 || optionIndex === -1) return false;
+  // Nếu trạng thái không nằm trong luồng chuẩn thì khóa
+  if (currentIndex === -1 || optionIndex === -1) return true;
   
-  return optionIndex < currentIndex;
+  // QUAN TRỌNG: Chỉ cho phép chọn trạng thái "kế tiếp" duy nhất trong luồng (không được nhảy cóc)
+  return optionIndex !== currentIndex + 1;
 }
 
 const statusOptions = [
@@ -554,10 +564,13 @@ const statusOptions = [
   { value: "arrived_hub", label: "Đã đến kho" },
   { value: "out_for_delivery", label: "Đang giao hàng" },
   { value: "delivered", label: "Giao thành công" },
-  { value: "cancelled", label: "Đã hủy" },
-  { value: "request_cancel", label: "Đang yêu cầu hủy" },
+    { value: "request_cancel", label: "Đang yêu cầu hủy" },
 
 ];
+
+const availableStatusOptions = computed(() => {
+  return statusOptions.filter(opt => !isStatusDisabled(opt.value));
+});
 
 // Main timeline steps (5 steps)
 const mainSteps = computed(() => {
@@ -787,13 +800,13 @@ const closeCancelDialog = () => {
 const submitCancelOrder = async () => {
    const reason = cancelReasonInput.value.trim();
    
-   // Dù UI ghi không bắt buộc, nhưng nếu hệ thống cũ đang expect có thì ta vẫn có thể require, 
-   // hoặc cho phép trống và pass string rỗng. Dựa theo yêu cầu "nhập lý do như ảnh" ("không bắt buộc").
-   // Nếu ảnh UX cho phép không bắt buộc thì ta cứ truyền "" hoặc text default.
-   const finalReason = reason || "Hủy đơn hàng không có lý do cụ thể";
+   if (!reason) {
+     toast.error("Vui lòng nhập lý do hủy đơn hàng");
+     return;
+   }
    
    newStatus.value = "cancelled";
-   await updateOrderStatus({ cancel_reason: finalReason, note: `Admin hủy đơn: ${finalReason}` });
+   await updateOrderStatus({ cancel_reason: reason, note: `Admin hủy đơn: ${reason}` });
    
    if (!toast.error) {
       closeCancelDialog();

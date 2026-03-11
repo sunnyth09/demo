@@ -65,7 +65,11 @@ const Contact = sequelize.define('Contact', {
   }
 }, {
   tableName: 'contacts',
-  timestamps: false
+  timestamps: true,
+  paranoid: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
+  deletedAt: 'deleted_at'
 });
 
 export default Contact;

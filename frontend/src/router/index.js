@@ -91,6 +91,7 @@ const routes = [
       { path: 'shipping', name: 'admin-shipping', component: () => import('@/views/admin/ShippingZones.vue'), meta: { title: 'Phí vận chuyển' } },
       { path: 'coupons', name: 'admin-coupons', component: () => import('@/views/admin/Coupons.vue'), meta: { title: 'Mã giảm giá' } },
       { path: 'reviews', name: 'admin-reviews', component: () => import('@/views/admin/Reviews.vue'), meta: { title: 'Đánh giá & Bình luận' } },
+      { path: 'trash', name: 'admin-trash', component: () => import('@/views/admin/Trash.vue'), meta: { title: 'Thùng rác' } },
     ]
   },
 
