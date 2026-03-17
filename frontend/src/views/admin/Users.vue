@@ -5,16 +5,33 @@
         <h2 class="text-2xl font-bold">Quản lý người dùng</h2>
         <p class="text-muted-foreground">Quản lý tài khoản người dùng</p>
       </div>
-      <button 
-        @click="openAddModal"
-        class="h-10 px-4 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
-      >
-        + Thêm người dùng
-      </button>
+      <div class="flex gap-2">
+        <button 
+          @click="toggleTrashView"
+          class="inline-flex items-center gap-2 h-10 px-4 rounded-md border font-medium hover:bg-accent transition-colors"
+          :class="showTrash ? 'bg-destructive/10 text-destructive border-destructive/20' : 'bg-background text-muted-foreground border-border/50'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6V20a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Thùng rác
+        </button>
+        <button 
+          v-if="!showTrash"
+          @click="openAddModal"
+          class="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors shadow-sm"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14"/><path d="M12 5v14"/>
+          </svg>
+          Thêm người dùng
+        </button>
+      </div>
     </div>
 
     <!-- Search Bar -->
-    <div class="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl border shadow-sm">
+    <!-- Search Bar -->
+    <div v-show="!showTrash" class="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl border shadow-sm">
       <div class="w-full md:w-72 relative">
         <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
@@ -49,7 +66,8 @@
       </div>
     </div>
 
-    <div class="bg-card rounded-xl border overflow-hidden">
+    <!-- Table -->
+    <div v-if="!showTrash" class="bg-card rounded-xl border overflow-hidden">
       <div v-if="loading" class="p-8 text-center text-muted-foreground">
         Đang tải dữ liệu...
       </div>
@@ -117,8 +135,38 @@
       </div>
     </div>
 
+    <!-- Trash View -->
+    <div v-else-if="showTrash" class="bg-card rounded-xl border shadow-sm overflow-hidden">
+      <div class="grid grid-cols-12 gap-4 px-6 py-4 bg-muted/50 border-b font-medium text-sm text-muted-foreground">
+        <div class="col-span-1">ID</div>
+        <div class="col-span-4">Người dùng</div>
+        <div class="col-span-4">Email</div>
+        <div class="col-span-3 text-right">Thao tác</div>
+      </div>
+      <div class="divide-y divide-border">
+        <template v-for="item in trashedUsers" :key="item.id">
+          <div class="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-muted/30 transition-colors">
+            <div class="col-span-1 text-sm text-muted-foreground">#{{ item.id }}</div>
+            <div class="col-span-4 font-medium">{{ item.name }}</div>
+            <div class="col-span-4 text-sm text-muted-foreground">{{ item.email }}</div>
+            <div class="col-span-3 flex items-center justify-end gap-2">
+              <button @click="restoreUser(item.id)" :disabled="restoring" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors disabled:opacity-50">
+                Khôi phục
+              </button>
+              <button @click="confirmForceDelete(item)" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors">
+                Xóa vĩnh viễn
+              </button>
+            </div>
+          </div>
+        </template>
+        <div v-if="trashedUsers?.length === 0" class="px-6 py-12 text-center text-muted-foreground">
+          Thùng rác trống
+        </div>
+      </div>
+    </div>
+
     <!-- Pagination -->
-    <div v-if="totalUsers > 0" class="flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div v-if="!showTrash && totalUsers > 0" class="flex flex-col sm:flex-row items-center justify-between gap-4">
       <p class="text-sm text-muted-foreground">
         Hiển thị {{ (currentPage - 1) * limit + 1 }}-{{ Math.min(currentPage * limit, totalUsers) }} trong tổng số {{ totalUsers }} người dùng
       </p>
@@ -152,6 +200,23 @@
         >
           Sau
         </button>
+      </div>
+    </div>
+
+    <!-- Force Delete Confirmation Modal -->
+    <div v-if="showForceDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showForceDeleteModal = false"></div>
+      <div class="relative bg-card rounded-xl border shadow-xl w-full max-w-sm p-6 m-4 animate-in fade-in zoom-in-95 duration-200">
+        <h3 class="text-xl font-bold mb-2 text-destructive">Cảnh báo: Xóa vĩnh viễn</h3>
+        <p class="text-muted-foreground mb-4 text-sm">
+          Hành động này không thể hoàn tác. Người dùng "<strong>{{ userToForceDelete?.name }}</strong>" sẽ bị xóa vĩnh viễn khỏi hệ thống.
+        </p>
+        <div class="flex gap-3">
+          <button @click="showForceDeleteModal = false" class="flex-1 px-4 py-2 border rounded-md hover:bg-accent transition-colors">Hủy</button>
+          <button @click="forceDeleteUser" :disabled="forceDeleting" class="flex-1 px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors disabled:opacity-50">
+            {{ forceDeleting ? 'Đang xóa...' : 'Xóa vĩnh viễn' }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -262,8 +327,86 @@ import { useConfirmDialog } from '@/composables/useConfirmDialog'
 const authStore = useAuthStore()
 const { confirm } = useConfirmDialog()
 const users = ref([])
+const trashedUsers = ref([])
 const loading = ref(false)
 const isLoadingAction = ref(false)
+const restoring = ref(false)
+const forceDeleting = ref(false)
+const showTrash = ref(false)
+const showForceDeleteModal = ref(false)
+const userToForceDelete = ref(null)
+
+const toggleTrashView = async () => {
+  showTrash.value = !showTrash.value
+  if (showTrash.value) {
+    await fetchTrashed()
+  }
+}
+
+const fetchTrashed = async () => {
+  try {
+    const res = await fetch(`${API_URL}/user/admin/users/trash`, {
+      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+    })
+    const json = await res.json()
+    if (json.status) {
+      trashedUsers.value = json.data
+    }
+  } catch (error) {
+    console.error('Error fetching trashed:', error)
+  }
+}
+
+const restoreUser = async (id) => {
+  restoring.value = true
+  try {
+    const res = await fetch(`${API_URL}/user/admin/users/${id}/restore`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+    })
+    const json = await res.json()
+    if (json.status) {
+      toast.success('Khôi phục người dùng thành công!')
+      await fetchTrashed()
+      await fetchUsers(currentPage.value)
+    } else {
+      toast.error(json.message || 'Lỗi khi khôi phục')
+    }
+  } catch (error) {
+    toast.error('Lỗi khi khôi phục người dùng')
+  } finally {
+    restoring.value = false
+  }
+}
+
+const confirmForceDelete = (user) => {
+  userToForceDelete.value = user
+  showForceDeleteModal.value = true
+}
+
+const forceDeleteUser = async () => {
+  if (!userToForceDelete.value) return
+  forceDeleting.value = true
+  try {
+    const res = await fetch(`${API_URL}/user/admin/users/${userToForceDelete.value.id}/force`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+    })
+    const json = await res.json()
+    if (json.status) {
+      toast.success('Đã xóa vĩnh viễn!')
+      showForceDeleteModal.value = false
+      userToForceDelete.value = null
+      await fetchTrashed()
+    } else {
+      toast.error(json.message || 'Lỗi khi xóa vĩnh viễn')
+    }
+  } catch (error) {
+    toast.error('Lỗi khi xóa vĩnh viễn')
+  } finally {
+    forceDeleting.value = false
+  }
+}
 
 // Search & Pagination
 const searchQuery = ref('')
@@ -506,5 +649,6 @@ const deleteUser = async (id) => {
 
 onMounted(() => {
   fetchUsers()
+  fetchTrashed()
 })
 </script>

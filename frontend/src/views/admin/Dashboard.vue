@@ -135,13 +135,13 @@
               class="absolute right-0 top-full mt-1.5 w-44 bg-card border border-border/50 shadow-xl rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
             >
               <button 
-                @click="setTopProductsSort('sold')"
+                @mousedown="setTopProductsSort('sold')"
                 :class="['w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-muted transition-colors', topProductsSort === 'sold' ? 'text-primary bg-primary/5' : 'text-muted-foreground']"
               >
                 Số lượng bán ra
               </button>
               <button 
-                @click="setTopProductsSort('revenue')"
+                @mousedown="setTopProductsSort('revenue')"
                 :class="['w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-muted transition-colors border-t border-border/50', topProductsSort === 'revenue' ? 'text-primary bg-primary/5' : 'text-muted-foreground']"
               >
                 Doanh thu
@@ -193,13 +193,45 @@
       <div class="bg-card rounded-2xl border p-6 shadow-sm overflow-hidden">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-lg font-bold">Đơn hàng hiện tại</h3>
-          <router-link to="/admin/orders" class="p-2 rounded-lg hover:bg-muted transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-          </router-link>
+          <div class="flex items-center gap-2">
+            <!-- Order Status Filter -->
+            <div class="relative z-10 w-[140px] sm:w-[160px]">
+              <button 
+                @click="isOrderStatusDropdownOpen = !isOrderStatusDropdownOpen"
+                @blur="closeOrderStatusDropdown"
+                class="w-full flex items-center justify-between gap-2 text-xs font-semibold bg-muted hover:bg-muted/80 border border-border/50 py-2 px-3 rounded-lg transition-all"
+              >
+                <span class="truncate">{{ mapStatusName(orderStatusFilter) || 'Tất cả trạng thái' }}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" :class="['w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200', isOrderStatusDropdownOpen ? 'rotate-180' : '']" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <div 
+                v-show="isOrderStatusDropdownOpen"
+                class="absolute right-0 top-full mt-1.5 w-48 bg-card border border-border/50 shadow-xl rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+              >
+                <button 
+                  @mousedown="setOrderStatusFilter('')"
+                  :class="['w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-muted transition-colors', orderStatusFilter === '' ? 'text-primary bg-primary/5' : 'text-muted-foreground']"
+                >
+                  Tất cả trạng thái
+                </button>
+                <button 
+                  v-for="status in orderStatuses"
+                  :key="status.value"
+                  @mousedown="setOrderStatusFilter(status.value)"
+                  :class="['w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-muted transition-colors border-t border-border/50', orderStatusFilter === status.value ? 'text-primary bg-primary/5' : 'text-muted-foreground']"
+                >
+                  {{ status.label }}
+                </button>
+              </div>
+            </div>
+            <router-link to="/admin/orders" class="p-2 rounded-lg hover:bg-muted transition-colors border border-transparent hover:border-border">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </router-link>
+          </div>
         </div>
         <div class="space-y-3">
           <div 
-            v-for="order in recentOrders" 
+            v-for="order in filteredRecentOrders" 
             :key="order.id"
             @click="openOrderModal(order)"
             class="group flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-all duration-300 border border-transparent hover:border-border cursor-pointer"
@@ -221,6 +253,9 @@
               </span>
             </div>
           </div>
+        </div>
+        <div v-if="filteredRecentOrders.length === 0" class="py-8 text-center text-muted-foreground text-sm">
+          Không có đơn hàng nào
         </div>
       </div>
 
@@ -324,7 +359,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { ChartContainer, ChartCrosshair, ChartTooltip, ChartTooltipContent, componentToString } from '@/components/ui/chart'
@@ -338,6 +373,8 @@ const loading = ref(true)
 const chartDays = ref(7)
 const topProductsSort = ref('sold')
 const isSortDropdownOpen = ref(false)
+const orderStatusFilter = ref('')
+const isOrderStatusDropdownOpen = ref(false)
 
 // SVG Icons
 const icons = {
@@ -357,19 +394,19 @@ const stats = ref([
     bgColor: 'bg-green-100 dark:bg-green-900/30 text-green-600' 
   },
   { 
-    title: 'Đơn hàng', 
+    title: 'Đang giao', 
     value: '0', 
     change: '---', 
     changeType: 'up',
-    iconRaw: icons.order, 
+    iconRaw: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" intWidth="15" intHeight="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>`, 
     bgColor: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' 
   },
   { 
-    title: 'Khách hàng', 
+    title: 'Hoàn thành', 
     value: '0', 
     change: '---', 
     changeType: 'up',
-    iconRaw: icons.user, 
+    iconRaw: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`, 
     bgColor: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600' 
   },
   { 
@@ -384,8 +421,25 @@ const stats = ref([
 
 const revenueChartData = ref([])
 const recentOrders = ref([])
+const filteredRecentOrders = computed(() => {
+  if (!orderStatusFilter.value) return recentOrders.value
+  return recentOrders.value.filter(order => order.rawStatus === orderStatusFilter.value)
+})
 const topProducts = ref([])
 const activities = ref([])
+
+const orderStatuses = [
+  { value: 'pending', label: 'Chờ xác nhận' },
+  { value: 'confirmed', label: 'Đã xác nhận' },
+  { value: 'packing', label: 'Đang đóng gói' },
+  { value: 'picked_up', label: 'Đã giao ĐVVC' },
+  { value: 'in_transit', label: 'Đang vận chuyển' },
+  { value: 'arrived_hub', label: 'Đã đến kho' },
+  { value: 'out_for_delivery', label: 'Đang giao hàng' },
+  { value: 'delivered', label: 'Giao thành công' },
+  { value: 'cancelled', label: 'Đã hủy' },
+  { value: 'request_cancel', label: 'Đang yêu cầu hủy' }
+]
 
 // Revenue Chart Config (shadcn-vue style)
 const revenueChartConfig = {
@@ -478,12 +532,17 @@ const mapStatusName = (status) => {
     'pending': 'Chờ xác nhận',
     'confirmed': 'Đã xác nhận',
     'packing': 'Đang đóng gói',
-    'picked_up': 'Đã lấy hàng',
+    'picked_up': 'Đã giao ĐVVC',
     'in_transit': 'Đang vận chuyển',
-    'arrived_hub': 'Đến kho phân loại',
+    'arrived_hub': 'Đã đến kho',
     'out_for_delivery': 'Đang giao hàng',
-    'delivered': 'Đã giao hàng',
-    'cancelled': 'Đã hủy'
+    'delivered': 'Giao thành công',
+    'cancelled': 'Đã hủy',
+    'request_cancel': 'Đang yêu cầu hủy',
+    // Legacy status support
+    'processing': 'Đang xử lý',
+    'shipped': 'Đang giao hàng',
+    'completed': 'Hoàn thành'
   }
   return map[status] || status
 }
@@ -504,8 +563,8 @@ const fetchData = async () => {
       // Update Stats
       if (data.counts) {
         stats.value[0].value = formatCurrency(data.counts.totalRevenue || 0)
-        stats.value[1].value = (data.counts.totalOrders || 0).toLocaleString()
-        stats.value[2].value = (data.counts.totalUsers || 0).toLocaleString()
+        stats.value[1].value = (data.counts.shipping || 0).toLocaleString()
+        stats.value[2].value = (data.counts.completed || 0).toLocaleString()
         stats.value[3].value = (data.counts.totalProducts || 0).toLocaleString()
       }
       
@@ -581,6 +640,17 @@ const setTopProductsSort = (val) => {
 const closeSortDropdown = () => {
   setTimeout(() => {
     isSortDropdownOpen.value = false;
+  }, 200);
+}
+
+const setOrderStatusFilter = (status) => {
+  orderStatusFilter.value = status;
+  isOrderStatusDropdownOpen.value = false;
+}
+
+const closeOrderStatusDropdown = () => {
+  setTimeout(() => {
+    isOrderStatusDropdownOpen.value = false;
   }, 200);
 }
 

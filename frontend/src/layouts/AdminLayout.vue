@@ -175,7 +175,6 @@ const menuItems = [
       { name: 'Bài viết', path: '/admin/articles' },
       { name: 'Đánh giá', path: '/admin/reviews' },
       { name: 'Thống kê', path: '/admin/revenue' },
-      { name: 'Thùng rác', path: '/admin/trash' },
     ]
   },
   { name: 'Liên hệ', path: '/admin/contacts', icon: MessageSquare },

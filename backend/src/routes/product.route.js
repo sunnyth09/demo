@@ -1,5 +1,5 @@
 import express from "express";
-import { getAll, getDetail, create, update, remove, restore, getTrashed, forceRemove } from "../controllers/product.controller.js";
+import { getAll, getDetail, create, update, remove, restore, getTrashed, forceRemove, bulkUpdateStatus, bulkRemove, bulkRestore, bulkForceRemove } from "../controllers/product.controller.js";
 import { checkToken, checkAdmin, handleValidate } from "../middlewares/auth.middleware.js";
 import upload from "../middlewares/upload.middleware.js";
 import { validateProduct } from "../middlewares/product.validate.js";
@@ -11,6 +11,12 @@ router.get("/", getAll);
 
 // Soft Delete routes (Admin) - phải đặt TRƯỚC /:id
 router.get("/trash", checkToken, checkAdmin, getTrashed);
+
+// Bulk Actions (Admin) - phải đặt TRƯỚC /:id
+router.put("/bulk-status", checkToken, checkAdmin, bulkUpdateStatus);
+router.delete("/bulk", checkToken, checkAdmin, bulkRemove);
+router.put("/bulk-restore", checkToken, checkAdmin, bulkRestore);
+router.delete("/bulk-force", checkToken, checkAdmin, bulkForceRemove);
 
 router.get("/:id", getDetail);
 

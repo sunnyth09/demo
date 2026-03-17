@@ -33,13 +33,20 @@ const generateSlug = (name) => {
 /**
  * Lấy danh sách sản phẩm với phân trang và lọc theo danh mục
  */
-export const getProducts = async ({ limit = 10, offset = 0, category_id = null, search = null }) => {
+export const getProducts = async ({ limit = 10, offset = 0, category_id = null, search = null, status = 'active' }) => {
   const whereClause = {};
 
   if (category_id) {
     const childIds = await getAllChildIds(category_id);
     whereClause.category_id = { [Op.in]: [category_id, ...childIds] };
   }
+
+  // Khách hàng vãng lai chỉ thấy sản phẩm đang bán
+  // (Admin có query param riêng hoặc truyền status cụ thể)
+  if (status !== 'all') { // Phục vụ cho Admin có thể lấy toàn bộ nếu cần
+    whereClause.status = status;
+  }
+
 
   if (search) {
     whereClause[Op.or] = [
@@ -446,6 +453,65 @@ export const forceRemove = async (id) => {
   }
 
   await product.destroy({ force: true });
+  return true;
+};
+
+/**
+ * Cập nhật trạng thái nhiều sản phẩm
+ */
+export const bulkUpdateStatus = async (ids, status) => {
+  await Product.update(
+    { status },
+    { where: { id: { [Op.in]: ids } } }
+  );
+  return true;
+};
+
+/**
+ * Xóa mềm nhiều sản phẩm
+ */
+export const bulkRemove = async (ids) => {
+  await Product.destroy({
+    where: { id: { [Op.in]: ids } }
+  });
+  return true;
+};
+
+/**
+ * Khôi phục nhiều sản phẩm
+ */
+export const bulkRestore = async (ids) => {
+  await Product.restore({
+    where: { id: { [Op.in]: ids } }
+  });
+  return true;
+};
+
+/**
+ * Xóa vĩnh viễn nhiều sản phẩm
+ */
+export const bulkForceRemove = async (ids) => {
+  const products = await Product.findAll({
+    where: { id: { [Op.in]: ids } },
+    paranoid: false
+  });
+
+  for (const product of products) {
+    if (product.thumbnail) {
+      try { await deleteFile(product.thumbnail); } catch(e) {}
+    }
+    if (product.image) {
+      try {
+        const images = JSON.parse(product.image);
+        await Promise.all(images.map(img => deleteFile(img).catch(() => {})));
+      } catch(e) {}
+    }
+  }
+
+  await Product.destroy({
+    where: { id: { [Op.in]: ids } },
+    force: true
+  });
   return true;
 };
 

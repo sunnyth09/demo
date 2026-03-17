@@ -15,7 +15,11 @@ export const getAll = async (req, res) => {
       if (cat) category_id = cat.id;
     }
     
-    const products = await ProductService.getProducts({ limit, offset, category_id, search });
+    // Admin có thể truyền status=all để xem cả sản phẩm inactive
+    // Client (public API) sẽ gọi mặc định là active (do service handle)
+    const status = req.query.status || 'active';
+
+    const products = await ProductService.getProducts({ limit, offset, category_id, search, status });
     res.status(200).json({
       status: true,
       data: products,
@@ -127,6 +131,63 @@ export const forceRemove = async (req, res) => {
     res.json({ status: true, message: "Đã xóa vĩnh viễn sản phẩm" });
   } catch (error) {
     res.status(400).json({ status: false, message: error.message });
+  }
+};
+
+// ========== BULK ACTIONS ==========
+
+export const bulkUpdateStatus = async (req, res) => {
+  try {
+    const { productIds, status } = req.body;
+    if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+      return res.status(400).json({ status: false, message: "Danh sách sản phẩm không hợp lệ" });
+    }
+    if (!['active', 'inactive'].includes(status)) {
+      return res.status(400).json({ status: false, message: "Trạng thái không hợp lệ" });
+    }
+    await ProductService.bulkUpdateStatus(productIds, status);
+    res.json({ status: true, message: `Cập nhật trạng thái ${productIds.length} sản phẩm thành công` });
+  } catch (error) {
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+export const bulkRemove = async (req, res) => {
+  try {
+    const { productIds } = req.body;
+    if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+      return res.status(400).json({ status: false, message: "Danh sách sản phẩm không hợp lệ" });
+    }
+    await ProductService.bulkRemove(productIds);
+    res.json({ status: true, message: `Đã xóa ${productIds.length} sản phẩm (Soft Delete)` });
+  } catch (error) {
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+export const bulkRestore = async (req, res) => {
+  try {
+    const { productIds } = req.body;
+    if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+      return res.status(400).json({ status: false, message: "Danh sách sản phẩm không hợp lệ" });
+    }
+    await ProductService.bulkRestore(productIds);
+    res.json({ status: true, message: `Đã khôi phục ${productIds.length} sản phẩm` });
+  } catch (error) {
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+export const bulkForceRemove = async (req, res) => {
+  try {
+    const { productIds } = req.body;
+    if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+      return res.status(400).json({ status: false, message: "Danh sách sản phẩm không hợp lệ" });
+    }
+    await ProductService.bulkForceRemove(productIds);
+    res.json({ status: true, message: `Đã xóa vĩnh viễn ${productIds.length} sản phẩm` });
+  } catch (error) {
+    res.status(500).json({ status: false, message: error.message });
   }
 };
 

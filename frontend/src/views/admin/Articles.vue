@@ -6,19 +6,32 @@
         <h2 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">Quản lý bài viết</h2>
         <p class="text-sm text-muted-foreground mt-1">Quản lý danh sách tin tức, bài viết</p>
       </div>
-      <router-link 
-        to="/admin/articles/create"
-        class="inline-flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-all shadow-sm hover:shadow"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12h14"/><path d="M12 5v14"/>
-        </svg>
-        Viết bài mới
-      </router-link>
+      <div class="flex gap-2">
+        <button 
+          @click="toggleTrashView"
+          class="inline-flex items-center gap-2 h-10 px-4 rounded-md border font-medium hover:bg-accent transition-colors"
+          :class="showTrash ? 'bg-destructive/10 text-destructive border-destructive/20' : 'bg-background text-muted-foreground border-border/50'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6V20a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Thùng rác
+        </button>
+        <router-link 
+          v-if="!showTrash"
+          to="/admin/articles/create"
+          class="inline-flex items-center gap-2 h-10 px-6 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-all shadow-sm hover:shadow"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/><path d="M12 5v14"/>
+          </svg>
+          Viết bài mới
+        </router-link>
+      </div>
     </div>
 
     <!-- Filters Bar -->
-    <div class="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-xl border shadow-sm">
+    <div v-show="!showTrash" class="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-xl border shadow-sm">
       <div class="flex-1 relative">
         <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
@@ -40,7 +53,7 @@
     </div>
 
     <!-- Table -->
-    <div v-else class="bg-card rounded-xl border shadow-sm overflow-hidden">
+    <div v-else-if="!showTrash" class="bg-card rounded-xl border shadow-sm overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead>
@@ -154,8 +167,43 @@
       </div>
     </div>
 
+    <!-- Trash View -->
+    <div v-else-if="showTrash" class="bg-card rounded-xl border overflow-hidden">
+      <div class="grid grid-cols-12 gap-4 px-6 py-4 bg-muted/50 border-b font-medium text-sm text-muted-foreground">
+        <div class="col-span-1">ID</div>
+        <div class="col-span-5">Tiêu đề bài viết</div>
+        <div class="col-span-3">Ngày xóa</div>
+        <div class="col-span-3 text-right">Thao tác</div>
+      </div>
+      <div class="divide-y divide-border">
+        <template v-for="item in trashedArticles" :key="item.id">
+          <div class="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-muted/30 transition-colors">
+            <div class="col-span-1 text-sm text-muted-foreground">#{{ item.id }}</div>
+            <div class="col-span-5">
+              <div class="font-medium truncate">{{ item.title }}</div>
+              <div class="text-xs text-muted-foreground">{{ item.slug }}</div>
+            </div>
+            <div class="col-span-3 text-sm text-muted-foreground">
+              {{ formatDate(item.deleted_at) }}
+            </div>
+            <div class="col-span-3 flex items-center justify-end gap-2">
+              <button @click="restoreArticle(item.id)" :disabled="restoring" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors disabled:opacity-50">
+                Khôi phục
+              </button>
+              <button @click="confirmForceDelete(item)" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors">
+                Xóa vĩnh viễn
+              </button>
+            </div>
+          </div>
+        </template>
+        <div v-if="trashedArticles.length === 0" class="px-6 py-12 text-center text-muted-foreground">
+          Thùng rác trống
+        </div>
+      </div>
+    </div>
+
     <!-- Pagination -->
-    <div v-if="articles.length > 0" class="flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div v-if="!showTrash && articles.length > 0" class="flex flex-col sm:flex-row items-center justify-between gap-4">
       <p class="text-sm text-muted-foreground">
         Hiển thị <span class="font-medium text-foreground">{{ offset + 1 }}-{{ Math.min(offset + limit, totalArticles) }}</span> trong tổng số <span class="font-medium text-foreground">{{ totalArticles }}</span> bài viết
       </p>
@@ -176,6 +224,23 @@
         >
           Sau
         </button>
+      </div>
+    </div>
+
+    <!-- Force Delete Confirmation Modal -->
+    <div v-if="showForceDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showForceDeleteModal = false"></div>
+      <div class="relative bg-card rounded-xl border shadow-xl w-full max-w-sm p-6 m-4 animate-in fade-in zoom-in-95 duration-200">
+        <h3 class="text-xl font-bold mb-2 text-destructive">Cảnh báo: Xóa vĩnh viễn</h3>
+        <p class="text-muted-foreground mb-4 text-sm">
+          Hành động này không thể hoàn tác. Bài viết "<strong>{{ articleToForceDelete?.title }}</strong>" sẽ bị xóa vĩnh viễn khỏi hệ thống.
+        </p>
+        <div class="flex gap-3">
+          <button @click="showForceDeleteModal = false" class="flex-1 px-4 py-2 border rounded-md hover:bg-accent transition-colors">Hủy</button>
+          <button @click="forceDeleteArticle" :disabled="forceDeleting" class="flex-1 px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors disabled:opacity-50">
+            {{ forceDeleting ? 'Đang xóa...' : 'Xóa vĩnh viễn' }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -242,8 +307,86 @@ const authStore = useAuthStore()
 const API_URL = import.meta.env.VITE_API_URL
 
 const articles = ref([])
+const trashedArticles = ref([])
 const loading = ref(true)
 const deleting = ref(false)
+const restoring = ref(false)
+const forceDeleting = ref(false)
+const showTrash = ref(false)
+const showForceDeleteModal = ref(false)
+const articleToForceDelete = ref(null)
+
+const toggleTrashView = async () => {
+  showTrash.value = !showTrash.value
+  if (showTrash.value) {
+    await fetchTrashed()
+  }
+}
+
+const fetchTrashed = async () => {
+  try {
+    const res = await fetch(`${API_URL}/articles/trash`, {
+      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+    })
+    const json = await res.json()
+    if (json.status) {
+      trashedArticles.value = json.data
+    }
+  } catch (error) {
+    console.error('Error fetching trashed:', error)
+  }
+}
+
+const restoreArticle = async (id) => {
+  restoring.value = true
+  try {
+    const res = await fetch(`${API_URL}/articles/${id}/restore`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+    })
+    const json = await res.json()
+    if (json.status) {
+      showToast('Khôi phục bài viết thành công!')
+      await fetchTrashed()
+      await fetchArticles()
+    } else {
+      showToast(json.message || 'Lỗi khi khôi phục', 'error')
+    }
+  } catch (error) {
+    showToast('Lỗi khi khôi phục', 'error')
+  } finally {
+    restoring.value = false
+  }
+}
+
+const confirmForceDelete = (article) => {
+  articleToForceDelete.value = article
+  showForceDeleteModal.value = true
+}
+
+const forceDeleteArticle = async () => {
+  if (!articleToForceDelete.value) return
+  forceDeleting.value = true
+  try {
+    const res = await fetch(`${API_URL}/articles/${articleToForceDelete.value.id}/force`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+    })
+    const json = await res.json()
+    if (json.status) {
+      showToast('Đã xóa vĩnh viễn!')
+      showForceDeleteModal.value = false
+      articleToForceDelete.value = null
+      await fetchTrashed()
+    } else {
+      showToast(json.message || 'Lỗi khi xóa vĩnh viễn', 'error')
+    }
+  } catch (error) {
+    showToast('Lỗi khi xóa vĩnh viễn', 'error')
+  } finally {
+    forceDeleting.value = false
+  }
+}
 
 const searchQuery = ref('')
 const limit = ref(10)
@@ -354,5 +497,6 @@ const deleteArticle = async () => {
 
 onMounted(() => {
   fetchArticles()
+  fetchTrashed()
 })
 </script>

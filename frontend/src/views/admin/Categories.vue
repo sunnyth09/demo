@@ -6,15 +6,28 @@
         <h2 class="text-2xl font-bold">Quản lý danh mục</h2>
         <p class="text-muted-foreground">Quản lý các danh mục sản phẩm theo cấu trúc phân cấp</p>
       </div>
-      <button 
-        @click="openAddModal()"
-        class="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12h14"/><path d="M12 5v14"/>
-        </svg>
-        Thêm danh mục
-      </button>
+      <div class="flex gap-2">
+        <button 
+          @click="toggleTrashView"
+          class="inline-flex items-center gap-2 h-10 px-4 rounded-md border font-medium hover:bg-accent transition-colors"
+          :class="showTrash ? 'bg-destructive/10 text-destructive border-destructive/20' : 'bg-background text-muted-foreground border-border/50'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6V20a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Thùng rác
+        </button>
+        <button 
+          v-if="!showTrash"
+          @click="openAddModal()"
+          class="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/><path d="M12 5v14"/>
+          </svg>
+          Thêm danh mục
+        </button>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -24,7 +37,7 @@
     </div>
 
     <!-- Tree Table -->
-    <div v-else class="bg-card rounded-xl border overflow-hidden">
+    <div v-else-if="!showTrash" class="bg-card rounded-xl border overflow-hidden">
       <!-- Table Header -->
       <div class="grid grid-cols-12 gap-4 px-6 py-4 bg-muted/50 border-b font-medium text-sm text-muted-foreground">
         <div class="col-span-5">Tên danh mục</div>
@@ -148,8 +161,64 @@
       </div>
     </div>
 
+    <!-- Trash View -->
+    <div v-else-if="showTrash" class="bg-card rounded-xl border overflow-hidden">
+      <!-- Trash Table Header -->
+      <div class="grid grid-cols-12 gap-4 px-6 py-4 bg-muted/50 border-b font-medium text-sm text-muted-foreground">
+        <div class="col-span-1">ID</div>
+        <div class="col-span-5">Tên danh mục</div>
+        <div class="col-span-3">Ngày xóa</div>
+        <div class="col-span-3 text-right">Thao tác</div>
+      </div>
+
+      <!-- Trash Table Body -->
+      <div class="divide-y divide-border">
+        <template v-for="item in trashedCategories" :key="item.id">
+          <div class="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-muted/30 transition-colors">
+            <div class="col-span-1 text-sm text-muted-foreground">#{{ item.id }}</div>
+            <div class="col-span-5">
+              <div class="font-medium">{{ item.name }}</div>
+              <div class="text-xs text-muted-foreground">{{ item.slug }}</div>
+            </div>
+            <div class="col-span-3 text-sm text-muted-foreground">
+              {{ formatDate(item.deleted_at) }}
+            </div>
+            <div class="col-span-3 flex items-center justify-end gap-2">
+              <button 
+                @click="restoreCategory(item.id)"
+                :disabled="restoring"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-green-600 bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-900/50 rounded-md transition-colors disabled:opacity-50"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+                </svg>
+                Khôi phục
+              </button>
+              <button 
+                @click="confirmForceDelete(item)"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-900/50 rounded-md transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                </svg>
+                Xóa vĩnh viễn
+              </button>
+            </div>
+          </div>
+        </template>
+        <!-- Empty state -->
+        <div v-if="trashedCategories.length === 0" class="px-6 py-12 text-center text-muted-foreground">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6V20a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          <p class="font-medium text-lg">Thùng rác trống</p>
+          <p class="text-sm">Không có danh mục nào bị xóa</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Quick Stats -->
-    <div class="grid grid-cols-3 gap-4">
+    <div v-if="!showTrash" class="grid grid-cols-3 gap-4">
       <div class="bg-card rounded-xl border p-4">
         <div class="text-2xl font-bold text-primary">{{ rootCategories.length }}</div>
         <div class="text-sm text-muted-foreground">Danh mục gốc</div>
@@ -332,6 +401,33 @@
       </div>
     </div>
 
+    <!-- Force Delete Confirmation Modal -->
+    <div v-if="showForceDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-black/50" @click="showForceDeleteModal = false"></div>
+      <div class="relative bg-card rounded-xl border shadow-xl w-full max-w-sm p-6 m-4">
+        <h3 class="text-xl font-bold mb-2 text-destructive">Cảnh báo: Xóa vĩnh viễn</h3>
+        <p class="text-muted-foreground mb-4">
+          Hành động này không thể hoàn tác. Danh mục "<strong>{{ categoryToForceDelete?.name }}</strong>" sẽ bị xóa vĩnh viễn khỏi hệ thống.
+        </p>
+        <div class="flex gap-3">
+          <button 
+            @click="showForceDeleteModal = false"
+            class="flex-1 px-4 py-2 border rounded-md hover:bg-accent transition-colors"
+          >
+            Hủy
+          </button>
+          <button 
+            @click="forceDeleteCategory"
+            :disabled="forceDeleting"
+            class="flex-1 px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+          >
+            <span v-if="forceDeleting" class="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin"></span>
+            {{ forceDeleting ? 'Đang xóa...' : 'Xóa vĩnh viễn' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast Message -->
     <Transition
       enter-active-class="transition ease-out duration-300"
@@ -363,10 +459,16 @@ const authStore = useAuthStore()
 const API_URL = `${import.meta.env.VITE_API_URL}/categories`
 
 const categories = ref([])
+const trashedCategories = ref([])
 const loading = ref(true)
 const saving = ref(false)
 const deleting = ref(false)
+const restoring = ref(false)
+const forceDeleting = ref(false)
 const expandedIds = ref([])
+const showTrash = ref(false)
+const showForceDeleteModal = ref(false)
+const categoryToForceDelete = ref(null)
 
 const showModal = ref(false)
 const showDeleteModal = ref(false)
@@ -703,7 +805,95 @@ const deleteCategory = async () => {
   }
 }
 
+// Format date helper
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+// ========== SOFT DELETE MANAGEMENT ==========
+
+// Toggle trash view
+const toggleTrashView = async () => {
+  showTrash.value = !showTrash.value
+  if (showTrash.value) {
+    await fetchTrashed()
+  }
+}
+
+// Fetch trashed categories
+const fetchTrashed = async () => {
+  try {
+    const res = await fetch(`${API_URL}/trash`, {
+      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+    })
+    const json = await res.json()
+    if (json.status) {
+      trashedCategories.value = json.data
+    }
+  } catch (error) {
+    console.error('Error fetching trashed:', error)
+    showToast('Lỗi khi tải thùng rác', 'error')
+  }
+}
+
+// Restore category
+const restoreCategory = async (id) => {
+  restoring.value = true
+  try {
+    const res = await fetch(`${API_URL}/${id}/restore`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+    })
+    const json = await res.json()
+    if (json.status) {
+      showToast('Khôi phục danh mục thành công!')
+      await fetchTrashed()
+      await fetchCategories() // Reload main categories
+    } else {
+      showToast(json.message || 'Lỗi khi khôi phục', 'error')
+    }
+  } catch (error) {
+    showToast('Lỗi khi khôi phục danh mục', 'error')
+  } finally {
+    restoring.value = false
+  }
+}
+
+// Confirm force delete
+const confirmForceDelete = (category) => {
+  categoryToForceDelete.value = category
+  showForceDeleteModal.value = true
+}
+
+// Force delete category
+const forceDeleteCategory = async () => {
+  if (!categoryToForceDelete.value) return
+  forceDeleting.value = true
+  try {
+    const res = await fetch(`${API_URL}/${categoryToForceDelete.value.id}/force`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${authStore.accessToken}` }
+    })
+    const json = await res.json()
+    if (json.status) {
+      showToast('Đã xóa vĩnh viễn!')
+      showForceDeleteModal.value = false
+      categoryToForceDelete.value = null
+      await fetchTrashed()
+    } else {
+      showToast(json.message || 'Lỗi khi xóa vĩnh viễn', 'error')
+    }
+  } catch (error) {
+    showToast('Lỗi khi xóa vĩnh viễn', 'error')
+  } finally {
+    forceDeleting.value = false
+  }
+}
+
 onMounted(() => {
   fetchCategories()
+  fetchTrashed() // Pre-fetch to get count for badge
 })
 </script>
